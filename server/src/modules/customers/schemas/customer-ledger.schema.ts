@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type CustomerLedgerDocument = CustomerLedger & Document;
 
 @Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: 'customer_ledgers' })
-export class CustomerLedger {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class CustomerLedger extends TenantBaseEntity {
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true, index: true })
   customerId: Types.ObjectId;
 
@@ -35,10 +33,7 @@ export class CustomerLedger {
 
   @Prop({ trim: true })
   remarks?: string;
-
-  createdAt?: Date;
 }
 
 export const CustomerLedgerSchema = SchemaFactory.createForClass(CustomerLedger);
 CustomerLedgerSchema.index({ tenantId: 1, customerId: 1, createdAt: -1 });
-

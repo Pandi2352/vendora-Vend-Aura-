@@ -205,28 +205,28 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 #### ID and crypto
 - [x] UUID generation using `uuid` or Node.js `crypto`
 - [x] Public ID generation
-- [ ] Hash generation
+- [x] Hash generation
 - [x] Secure random token generation
-- [ ] Constant-time token comparison where applicable
+- [x] Constant-time token comparison where applicable
 
 #### Date and time
 - [x] Current UTC date
 - [x] ISO date formatting
-- [ ] Date parsing and validation
+- [x] Date parsing and validation
 - [x] Add/subtract days, hours and minutes
 - [x] Start/end of day with explicit timezone
-- [ ] Date comparison
+- [x] Date comparison
 - [x] Expiry calculation
-- [ ] Duration calculation
+- [x] Duration calculation
 
 #### String and object
 - [x] String trimming
 - [x] String normalization
 - [x] Slug generation
-- [ ] Case conversion
+- [x] Case conversion
 - [x] Object pick/omit
 - [x] Safe JSON parsing
-- [ ] Deep clone where appropriate
+- [x] Deep clone where appropriate
 - [x] Null/undefined checks
 
 #### Number and array
@@ -234,7 +234,7 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] Currency formatting
 - [x] Array deduplication
 - [x] Array grouping
-- [ ] Array sorting
+- [x] Array sorting
 - [x] Safe numeric parsing
 
 #### File and request

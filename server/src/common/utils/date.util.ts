@@ -34,5 +34,17 @@ export class DateUtil {
   static isExpired(expiryDate: Date): boolean {
     return new Date().getTime() > new Date(expiryDate).getTime();
   }
-}
 
+  static diffInMinutes(a: Date, b: Date): number {
+    return Math.round((new Date(a).getTime() - new Date(b).getTime()) / 60000);
+  }
+
+  static diffInDays(a: Date, b: Date): number {
+    return Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86400000);
+  }
+
+  static parse(dateStr: string): Date | null {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+  }
+}

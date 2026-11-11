@@ -21,5 +21,14 @@ export class ArrayUtil {
       return acc;
     }, {} as Record<string, T[]>);
   }
-}
 
+  static sortBy<T>(arr: T[], keyFn: (item: T) => any, order: 'asc' | 'desc' = 'asc'): T[] {
+    return [...arr].sort((a, b) => {
+      const valA = keyFn(a);
+      const valB = keyFn(b);
+      if (valA < valB) return order === 'asc' ? -1 : 1;
+      if (valA > valB) return order === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+}

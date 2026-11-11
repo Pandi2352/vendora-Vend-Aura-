@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type OutletDocument = Outlet & Document;
 
 @Schema({ timestamps: true, collection: 'outlets' })
-export class Outlet {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class Outlet extends TenantBaseEntity {
   @Prop({ required: true, trim: true })
   name: string;
 
@@ -40,11 +38,7 @@ export class Outlet {
     pincode?: string;
     country?: string;
   };
-
-  @Prop({ default: true })
-  isActive: boolean;
 }
 
 export const OutletSchema = SchemaFactory.createForClass(Outlet);
 OutletSchema.index({ tenantId: 1, code: 1 }, { unique: true });
-

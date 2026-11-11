@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true, collection: 'products' })
-export class Product {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class Product extends TenantBaseEntity {
   @Prop({ required: true, trim: true })
   name: string;
 
@@ -34,15 +32,8 @@ export class Product {
 
   @Prop({ default: 'pcs' })
   unit: string;
-
-  @Prop({ default: true })
-  isActive: boolean;
-
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ tenantId: 1, barcode: 1 }, { unique: true });
 ProductSchema.index({ tenantId: 1, name: 'text' });
-

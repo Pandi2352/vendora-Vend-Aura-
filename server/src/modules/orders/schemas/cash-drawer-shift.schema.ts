@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type CashDrawerShiftDocument = CashDrawerShift & Document;
 
 @Schema({ timestamps: true, collection: 'cash_drawer_shifts' })
-export class CashDrawerShift {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class CashDrawerShift extends TenantBaseEntity {
   @Prop({ type: Types.ObjectId, ref: 'Outlet', required: true, index: true })
   outletId: Types.ObjectId;
 
@@ -58,12 +56,8 @@ export class CashDrawerShift {
 
   @Prop({ trim: true })
   notes?: string;
-
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export const CashDrawerShiftSchema = SchemaFactory.createForClass(CashDrawerShift);
 CashDrawerShiftSchema.index({ tenantId: 1, status: 1 });
 CashDrawerShiftSchema.index({ tenantId: 1, openedAt: -1 });
-

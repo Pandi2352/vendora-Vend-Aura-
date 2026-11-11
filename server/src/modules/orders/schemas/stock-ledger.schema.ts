@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type StockLedgerDocument = StockLedger & Document;
 
 @Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: 'stock_ledgers' })
-export class StockLedger {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class StockLedger extends TenantBaseEntity {
   @Prop({ type: Types.ObjectId, ref: 'Outlet', required: true, index: true })
   outletId: Types.ObjectId;
 
@@ -16,10 +14,10 @@ export class StockLedger {
 
   @Prop({
     required: true,
-    enum: ['OPENING', 'INWARD_PURCHASE', 'OUTWARD_SALE', 'ADJUSTMENT', 'RETURN'],
+    enum: ['OPENING', 'INWARD_PURCHASE', 'OUTWARD_SALE', 'ADJUSTMENT', 'RETURN', 'INWARD_RETURN'],
     index: true,
   })
-  movementType: 'OPENING' | 'INWARD_PURCHASE' | 'OUTWARD_SALE' | 'ADJUSTMENT' | 'RETURN';
+  movementType: 'OPENING' | 'INWARD_PURCHASE' | 'OUTWARD_SALE' | 'ADJUSTMENT' | 'RETURN' | 'INWARD_RETURN';
 
   @Prop({ default: 0, min: 0 })
   quantityDebit: number; // Stock reduction (sale)
@@ -38,10 +36,7 @@ export class StockLedger {
 
   @Prop()
   remarks?: string;
-
-  createdAt?: Date;
 }
 
 export const StockLedgerSchema = SchemaFactory.createForClass(StockLedger);
 StockLedgerSchema.index({ tenantId: 1, productId: 1, createdAt: -1 });
-

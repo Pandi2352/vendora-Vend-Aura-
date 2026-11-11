@@ -1,14 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 import { SubscriptionPlanCode } from '../../../shared';
+import { TenantBaseEntity } from '../../../common';
 
 export type SubscriptionDocument = Subscription & Document;
 
 @Schema({ timestamps: true, collection: 'subscriptions' })
-export class Subscription {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class Subscription extends TenantBaseEntity {
   @Prop({ required: true, enum: Object.values(SubscriptionPlanCode) })
   planCode: SubscriptionPlanCode;
 

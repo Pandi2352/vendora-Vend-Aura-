@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
+import { DateUtil } from './common';
 
 @Injectable()
 export class AppService {
@@ -15,14 +16,14 @@ export class AppService {
       tagline: 'One platform. Every retail operation.',
       version: '1.0.0',
       uptimeSeconds: Math.floor(process.uptime()),
-      timestamp: new Date().toISOString(),
+      timestamp: DateUtil.toIso(),
     };
   }
 
   getLiveness() {
     return {
       status: 'up',
-      timestamp: new Date().toISOString(),
+      timestamp: DateUtil.toIso(),
     };
   }
 
@@ -31,7 +32,7 @@ export class AppService {
     return {
       status: isDbConnected ? 'ready' : 'not_ready',
       database: isDbConnected ? 'connected' : 'disconnected',
-      timestamp: new Date().toISOString(),
+      timestamp: DateUtil.toIso(),
     };
   }
 }

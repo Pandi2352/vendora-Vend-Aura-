@@ -11,6 +11,27 @@ export class StringUtil {
       .replace(/-+$/, '');
   }
 
+  static capitalize(text: string): string {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  }
+
+  static toCamelCase(text: string): string {
+    return text
+      .replace(/(?:^\w|[A-Z]|\b\w)/g, (letter, index) =>
+        index === 0 ? letter.toLowerCase() : letter.toUpperCase()
+      )
+      .replace(/\s+/g, '');
+  }
+
+  static toSnakeCase(text: string): string {
+    return text
+      .replace(/\W+/g, ' ')
+      .split(/ |\B(?=[A-Z])/)
+      .map((string) => string.toLowerCase())
+      .join('_');
+  }
+
   static sanitizeAlphanumeric(text: string, maxLen?: number): string {
     const cleaned = text.toLowerCase().replace(/[^a-z0-9]/g, '');
     return maxLen ? cleaned.substring(0, maxLen) : cleaned;
@@ -29,4 +50,3 @@ export class StringUtil {
     return `******${clean.slice(-4)}`;
   }
 }
-

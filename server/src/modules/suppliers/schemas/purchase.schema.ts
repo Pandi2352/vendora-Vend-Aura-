@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type PurchaseDocument = Purchase & Document;
 
 @Schema({ timestamps: true, collection: 'purchases' })
-export class Purchase {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class Purchase extends TenantBaseEntity {
   @Prop({ type: Types.ObjectId, ref: 'Outlet', required: true, index: true })
   outletId: Types.ObjectId;
 
@@ -72,12 +70,8 @@ export class Purchase {
 
   @Prop({ trim: true })
   notes?: string;
-
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export const PurchaseSchema = SchemaFactory.createForClass(Purchase);
 PurchaseSchema.index({ tenantId: 1, grnNumber: 1 }, { unique: true });
 PurchaseSchema.index({ tenantId: 1, receivedDate: -1 });
-

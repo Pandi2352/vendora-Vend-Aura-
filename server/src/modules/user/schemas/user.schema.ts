@@ -1,14 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { UserRole } from '../../../shared';
+import { TenantBaseEntity } from '../../../common';
 
 export type UserDocument = User & Document;
 
 @Schema({ timestamps: true, collection: 'users' })
-export class User {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class User extends TenantBaseEntity {
   @Prop([{ type: Types.ObjectId, ref: 'Outlet' }])
   outletIds: Types.ObjectId[];
 
@@ -32,9 +30,6 @@ export class User {
 
   @Prop({ default: true })
   isTemporaryPassword: boolean;
-
-  @Prop({ default: true })
-  isActive: boolean;
 
   @Prop()
   lastLoginAt?: Date;

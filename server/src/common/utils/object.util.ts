@@ -28,5 +28,13 @@ export class ObjectUtil {
   static isNil(val: any): boolean {
     return val === null || val === undefined;
   }
-}
 
+  static deepClone<T>(obj: T): T {
+    if (obj === null || typeof obj !== 'object') return obj;
+    try {
+      return JSON.parse(JSON.stringify(obj));
+    } catch {
+      return obj;
+    }
+  }
+}

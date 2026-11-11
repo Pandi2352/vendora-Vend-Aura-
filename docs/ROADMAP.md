@@ -314,6 +314,32 @@ MILESTONE 1: FROM REGISTRATION TO FIRST BILL (MVP 01 - MVP 06)
 
 ---
 
+### 🔹 MVP 10 – Reports & Business Analytics
+**Status**: ✅ **COMPLETED**  
+**Primary Goal**: Live financial intelligence, executive gross margin tracking, GSTR-1 & GSTR-3B tax compliance reporting, and inventory valuation with slow-moving stock detection.
+
+#### Included Modules (10 Modules):
+125. **Executive Overview Dashboard**: Total gross sales, returns refunded, net revenue, estimated COGS, and gross profit margin (%).
+126. **Hourly Sales Heatmap**: 24-hour transaction frequency and revenue distribution bar chart.
+127. **Tender Split Analytics**: Percentage distribution of revenue across Cash, UPI, Card, and Customer Khata Credit.
+128. **Top Selling Products Matrix**: Live ranking of top 5 items by revenue with units sold and gross revenue contribution.
+129. **GSTR-1 Outward Supplies Engine**: Statutory tax breakdown segregated into B2C Small (< ₹2.5L) invoices, taxable turnover, CGST, and SGST.
+130. **GSTR-3B Tax Liability Computation**: Automatic reconciliation of Output Tax Liability (sales) vs Eligible Input Tax Credit (ITC from purchase GRNs) and Net Tax Payable.
+131. **Stock Valuation Matrix**: Total catalog inventory valuation at Purchase Cost Price vs Selling Price with potential gross margin calculation.
+132. **Slow-Moving / Dead Stock Detection**: Automated identification of stagnant products with zero sales in the last 30 days to mitigate working capital lockup.
+133. **Flexible Date Filtering**: Instant period pivoting (`Today`, `Last 7 Days`, `Last 30 Days`, `This FY`, `All Time`).
+134. **Reports Module Architecture**: Modular NestJS micro-services ([`sales-reports.service.ts`](file:///d:/mern/vendora/server/src/modules/reports/sales-reports.service.ts), [`gst-reports.service.ts`](file:///d:/mern/vendora/server/src/modules/reports/gst-reports.service.ts), [`inventory-reports.service.ts`](file:///d:/mern/vendora/server/src/modules/reports/inventory-reports.service.ts)) with shared query DTOs and type contracts.
+
+#### Deliverables & Acceptance Criteria:
+- [x] Backend [`ReportsModule`](file:///d:/mern/vendora/server/src/modules/reports/reports.module.ts) with `ReportsController` and 3 specialized services.
+- [x] `GET /api/v1/reports/executive`: Real-time P&L indicators, gross margin %, hourly distribution, and top-selling items.
+- [x] `GET /api/v1/reports/gst/gstr-1` & `GET /api/v1/reports/gst/gstr-3b`: Indian GST statutory return summaries with automated ITC deduction.
+- [x] `GET /api/v1/reports/inventory`: Instant catalog valuation at cost vs retail price, plus 30-day zero-sale stock velocity alerts.
+- [x] Modular Frontend UI in [`client/src/components/reports/`](file:///d:/mern/vendora/client/src/components/reports/): [`ReportsView.tsx`](file:///d:/mern/vendora/client/src/components/reports/ReportsView.tsx), [`ExecutiveOverviewTab.tsx`](file:///d:/mern/vendora/client/src/components/reports/ExecutiveOverviewTab.tsx), [`GstReportsTab.tsx`](file:///d:/mern/vendora/client/src/components/reports/GstReportsTab.tsx), and [`InventoryAnalyticsTab.tsx`](file:///d:/mern/vendora/client/src/components/reports/InventoryAnalyticsTab.tsx).
+- [x] 100% adherence to Red & Black theme, zero drop shadows, `rounded-md` controls, and strictly `< 300 lines per file`.
+
+---
+
 ### 🔹 MVP 14 – SaaS Platform Administration & Commercial Launch
 **Status**: ✅ **COMPLETED**  
 **Primary Goal**: Transform Vendora from an internal ERP into a commercially scalable SaaS with automated billing, plan limits, and super-admin monitoring.
@@ -357,9 +383,9 @@ gantt
     MVP 07 Purchase & Supplier Flow        :done,    m2_1, 2026-11-11, 2d
     MVP 08 Customer & Credit (Khata)       :done,    m2_2, 2026-11-11, 2d
     MVP 09 Advanced Sales Operations       :done,    m2_3, 2026-11-12, 4d
-    MVP 10 Reports & Analytics             :active,  m2_4, after m2_3, 5d
+    MVP 10 Reports & Analytics             :done,    m2_4, 2026-11-12, 3d
     section Milestone 3: ERP & Scale
-    MVP 11 Accounts & Finance              :         m3_1, after m2_4, 7d
+    MVP 11 Accounts & Finance              :active,  m3_1, after m2_4, 7d
     MVP 12 Multi-Outlet Branch Mgmt        :         m3_2, after m3_1, 5d
     MVP 13 Offline POS & Hardware Sync     :crit,    m3_3, after m3_2, 7d
     section Milestone 4: SaaS Commercial
@@ -370,20 +396,22 @@ gantt
 
 ## 🎯 What Next We Need To Do (Immediate Next Sprint)
 
-With **Milestone 1 (MVP 01 to MVP 06), Milestone 2 (MVP 07, MVP 08, MVP 09), and MVP 14** 100% complete, fully tested, and passing all builds with exit code 0, our immediate technical next steps are:
+With **Milestone 1 (MVP 01 to MVP 06), Milestone 2 (MVP 07, MVP 08, MVP 09, MVP 10), and MVP 14** 100% complete, fully tested, and passing all builds with exit code 0, our immediate technical next steps are:
 
-### Phase 1: MVP 10 – Reports & Business Analytics (Immediate Priority)
-1. **Merchant Executive Dashboard & Daily Summary**:
-   - Today's live sales volume, gross profit margin, hourly sales heat-map, top-selling products by quantity and revenue.
-2. **GST Filing Reports & Statutory Compliance**:
-   - GSTR-1 outward supplies export (B2B invoice breakdown + B2C summary) and GSTR-3B monthly tax computation.
-3. **Inventory Valuation & Fast/Slow Moving Matrix**:
-   - Total stock valuation at purchase cost vs selling price, dead stock alerts, and reorder point warnings.
+### Phase 1: MVP 11 – Accounts, Ledger & Financial Accounting (Active Sprint)
+1. **Chart of Accounts (COA)**:
+   - Asset, Liability, Equity, Income, and Expense ledger heads with standard numbering.
+2. **Double-Entry General Ledger (GL)**:
+   - Atomic debit/credit journal entries for all sales, purchases, repayments, refunds, and operating expenses.
+3. **Automated Trial Balance & Balance Sheet**:
+   - Real-time balance verification ensuring `Total Debits == Total Credits`.
+4. **Comprehensive P&L Statement**:
+   - Monthly and FY comparative breakdown of Gross Revenue, COGS, Gross Margin, Operating Expenses, and Net Profit.
 
-### Phase 2: MVP 11 – Accounts, Ledger & Financial Accounting
-1. **Double-Entry General Ledger**:
-   - Cash account, Bank account, Accounts Receivable (Customer Khata), Accounts Payable (Supplier Dues), and Sales Revenue.
-2. **Profit & Loss Statement (P&L)**:
-   - Gross Revenue, Cost of Goods Sold (COGS), Operating Expenses, and Net Profit.
-3. **Inventory Valuation & Fast/Slow Moving Matrix**:
-   - Total stock valuation at purchase cost (FIFO / AVCO) vs selling price.
+### Phase 2: MVP 12 – Multi-Outlet Branch Management & Inter-Store Transfers
+1. **Centralized Multi-Outlet Directory**:
+   - Branch setup, warehouse designation, and cashier assignment.
+2. **Inter-Store Stock Transfer (STN / STR)**:
+   - Dispatch and inward acceptance workflows with in-transit tracking.
+3. **Outlet-Wise P&L and Sales Comparison**:
+   - Branch performance benchmarking and consolidated financial reporting.

@@ -22,6 +22,7 @@ export * from './decorators/request-id.decorator';
 
 // Utils
 export * from './utils/uuid.util';
+export * from './utils/crypto.util';
 export * from './utils/date.util';
 export * from './utils/string.util';
 export * from './utils/number.util';

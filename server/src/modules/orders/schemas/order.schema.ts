@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type OrderDocument = Order & Document;
 
 @Schema({ timestamps: true, collection: 'orders' })
-export class Order {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class Order extends TenantBaseEntity {
   @Prop({ type: Types.ObjectId, ref: 'Outlet', required: true, index: true })
   outletId: Types.ObjectId;
 
@@ -78,12 +76,8 @@ export class Order {
 
   @Prop({ default: 'COMPLETED', enum: ['COMPLETED', 'CANCELLED'] })
   status: string;
-
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ tenantId: 1, invoiceNumber: 1 }, { unique: true });
 OrderSchema.index({ tenantId: 1, createdAt: -1 });
-

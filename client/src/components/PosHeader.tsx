@@ -11,11 +11,12 @@ import {
   Vault,
   ArrowUDownLeft,
   PauseCircle,
+  ChartLineUp,
 } from '@phosphor-icons/react';
 import type { AuthUser } from '../types/pos.types';
 import type { ShiftSummary } from '../types/shift-return.types';
 
-export type PosActiveTab = 'pos' | 'orders' | 'customers' | 'suppliers';
+export type PosActiveTab = 'pos' | 'orders' | 'customers' | 'suppliers' | 'reports';
 
 interface PosHeaderProps {
   currentUser: AuthUser | null;
@@ -122,7 +123,19 @@ export function PosHeader({
           }`}
         >
           <Truck weight={activeTab === 'suppliers' ? 'bold' : 'regular'} className="w-3.5 h-3.5" />
-          <span>Suppliers & Stock Inward</span>
+          <span>Suppliers</span>
+        </button>
+
+        <button
+          onClick={() => onTabChange('reports')}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'reports'
+              ? 'bg-red-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+          }`}
+        >
+          <ChartLineUp weight={activeTab === 'reports' ? 'bold' : 'regular'} className="w-3.5 h-3.5" />
+          <span>Reports & GST</span>
         </button>
       </nav>
 

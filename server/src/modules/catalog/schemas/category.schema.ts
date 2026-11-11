@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type CategoryDocument = Category & Document;
 
 @Schema({ timestamps: true, collection: 'categories' })
-export class Category {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class Category extends TenantBaseEntity {
   @Prop({ required: true, trim: true })
   name: string;
 
@@ -19,11 +17,7 @@ export class Category {
 
   @Prop({ default: 0 })
   displayOrder: number;
-
-  @Prop({ default: true })
-  isActive: boolean;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
 CategorySchema.index({ tenantId: 1, slug: 1 }, { unique: true });
-

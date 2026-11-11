@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { DEFAULT_MESSAGES } from '../constants/error-codes.constant';
+import { DateUtil } from '../utils/date.util';
 
 @Injectable()
 export class TransformResponseInterceptor<T>
@@ -51,7 +52,7 @@ export class TransformResponseInterceptor<T>
           message,
           data,
           meta,
-          timestamp: new Date().toISOString(),
+          timestamp: DateUtil.toIso(),
           path,
           requestId,
         };

@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
+import { TenantBaseEntity } from '../../../common';
 
 export type SupplierDocument = Supplier & Document;
 
 @Schema({ timestamps: true, collection: 'suppliers' })
-export class Supplier {
-  @Prop({ type: Types.ObjectId, ref: 'Tenant', required: true, index: true })
-  tenantId: Types.ObjectId;
-
+export class Supplier extends TenantBaseEntity {
   @Prop({ required: true, trim: true, index: true })
   name: string;
 
@@ -47,15 +45,8 @@ export class Supplier {
 
   @Prop({ default: 0 })
   balanceDue: number; // Outstanding amount owed to supplier
-
-  @Prop({ default: true })
-  isActive: boolean;
-
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export const SupplierSchema = SchemaFactory.createForClass(Supplier);
 SupplierSchema.index({ tenantId: 1, name: 1 });
 SupplierSchema.index({ tenantId: 1, phone: 1 });
-

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { X, ArrowUDownLeft, MagnifyingGlass, CheckCircle, WarningCircle } from '@phosphor-icons/react';
+import { X, ArrowUDownLeft, MagnifyingGlass, WarningCircle } from '@phosphor-icons/react';
 import type { OrderItemRecord } from '../../types/pos.types';
+import { ReturnItemsSelector } from './returns/ReturnItemsSelector';
+import type { ReturnItemState, ReturnReason } from './returns/ReturnItemsSelector';
+import { ReturnSuccessCard } from './returns/ReturnSuccessCard';
 
 const API_BASE = 'http://localhost:5000/api/v1';
 
@@ -25,8 +28,7 @@ export function SalesReturnModal({
   const [foundOrder, setFoundOrder] = useState<OrderItemRecord | null>(null);
   const [searchError, setSearchError] = useState('');
 
-  // Return item rows: Record<productId, { quantity: number; reason: string }>
-  const [returnItems, setReturnItems] = useState<Record<string, { qty: number; reason: 'CUSTOMER_REQUEST' | 'DEFECTIVE' | 'EXCHANGE' | 'WRONG_ITEM' }>>({});
+  const [returnItems, setReturnItems] = useState<Record<string, ReturnItemState>>({});
   const [refundMode, setRefundMode] = useState<'CASH' | 'UPI' | 'CREDIT_NOTE' | 'CUSTOMER_KHATA'>('CASH');
   const [remarks, setRemarks] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,7 +55,7 @@ export function SalesReturnModal({
         setSearchError(`No bill found with invoice number "${searchInvoice.trim()}".`);
       } else {
         setFoundOrder(match);
-        const initItems: Record<string, { qty: number; reason: 'CUSTOMER_REQUEST' | 'DEFECTIVE' | 'EXCHANGE' | 'WRONG_ITEM' }> = {};
+        const initItems: Record<string, ReturnItemState> = {};
         match.items?.forEach((it) => {
           initItems[it.productId] = { qty: 0, reason: 'CUSTOMER_REQUEST' };
         });
@@ -74,7 +76,7 @@ export function SalesReturnModal({
     }));
   };
 
-  const updateItemReason = (productId: string, reason: any) => {
+  const updateItemReason = (productId: string, reason: ReturnReason) => {
     setReturnItems((prev) => ({
       ...prev,
       [productId]: { ...prev[productId], reason },
@@ -154,18 +156,12 @@ export function SalesReturnModal({
         {/* Content */}
         <div className="p-4 overflow-y-auto flex-1 space-y-4">
           {successReturnNumber ? (
-            <div className="py-8 text-center space-y-3">
-              <CheckCircle weight="fill" className="w-14 h-14 text-emerald-500 mx-auto" />
-              <h4 className="font-bold text-base text-zinc-900">Return Processed Successfully</h4>
-              <p className="text-xs text-zinc-600">
-                Return Voucher Reference: <span className="font-mono font-bold text-red-600">{successReturnNumber}</span>
-              </p>
-              <div className="p-3 bg-zinc-50 rounded-md border border-zinc-200 inline-block text-left text-xs space-y-1">
-                <div>Original Bill: <span className="font-mono font-semibold">{foundOrder?.invoiceNumber}</span></div>
-                <div>Refund Amount: <span className="font-mono font-bold text-red-600">₹{totalRefundAmount}</span></div>
-                <div>Refund Tender: <span className="font-semibold">{refundMode}</span></div>
-              </div>
-            </div>
+            <ReturnSuccessCard
+              successReturnNumber={successReturnNumber}
+              foundOrder={foundOrder}
+              totalRefundAmount={totalRefundAmount}
+              refundMode={refundMode}
+            />
           ) : (
             <>
               {/* Search Bar */}
@@ -216,60 +212,12 @@ export function SalesReturnModal({
                     </div>
                   </div>
 
-                  {/* Return Items Selector */}
-                  <div className="border border-zinc-200 rounded-md overflow-hidden">
-                    <table className="w-full text-xs">
-                      <thead className="bg-zinc-100 border-b border-zinc-200 text-zinc-600 text-[11px]">
-                        <tr>
-                          <th className="p-2 text-left font-semibold">Item</th>
-                          <th className="p-2 text-center font-semibold">Purchased</th>
-                          <th className="p-2 text-center font-semibold">Return Qty</th>
-                          <th className="p-2 text-left font-semibold">Reason</th>
-                          <th className="p-2 text-right font-semibold">Refund (₹)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-200">
-                        {foundOrder.items?.map((it) => {
-                          const state = returnItems[it.productId] || { qty: 0, reason: 'CUSTOMER_REQUEST' };
-                          const lineRefund = it.unitPrice * state.qty;
-                          return (
-                            <tr key={it.productId} className={state.qty > 0 ? 'bg-red-50/40' : ''}>
-                              <td className="p-2">
-                                <div className="font-semibold text-zinc-900">{it.name}</div>
-                                <div className="text-[10px] text-zinc-400 font-mono">₹{it.unitPrice} each</div>
-                              </td>
-                              <td className="p-2 text-center font-mono">{it.quantity}</td>
-                              <td className="p-2 text-center">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={it.quantity}
-                                  value={state.qty}
-                                  onChange={(e) => updateItemQty(it.productId, it.quantity, parseInt(e.target.value) || 0)}
-                                  className="w-14 px-1.5 py-1 text-center font-mono font-bold text-xs rounded border border-zinc-300 focus:border-red-600"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <select
-                                  value={state.reason}
-                                  onChange={(e) => updateItemReason(it.productId, e.target.value)}
-                                  className="px-2 py-1 text-[11px] rounded border border-zinc-300 bg-white"
-                                >
-                                  <option value="CUSTOMER_REQUEST">Customer Request</option>
-                                  <option value="DEFECTIVE">Defective / Damaged</option>
-                                  <option value="EXCHANGE">Exchange</option>
-                                  <option value="WRONG_ITEM">Wrong Item</option>
-                                </select>
-                              </td>
-                              <td className="p-2 text-right font-mono font-bold text-zinc-950">
-                                ₹{lineRefund}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ReturnItemsSelector
+                    order={foundOrder}
+                    returnItems={returnItems}
+                    onUpdateQty={updateItemQty}
+                    onUpdateReason={updateItemReason}
+                  />
 
                   {/* Refund Tender & Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
@@ -338,4 +286,3 @@ export function SalesReturnModal({
     </div>
   );
 }
-

@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { RegistrationStatus, SubscriptionPlanCode, BusinessType } from '../../../shared';
+import { BaseEntity } from '../../../common';
 
 export type RegistrationSessionDocument = RegistrationSession & Document;
 
 @Schema({ timestamps: true, collection: 'registration_sessions' })
-export class RegistrationSession {
+export class RegistrationSession extends BaseEntity {
   @Prop({ required: true, unique: true, index: true })
   sessionId: string;
 
@@ -63,9 +64,6 @@ export class RegistrationSession {
     };
     gstin?: string;
   };
-
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export const RegistrationSessionSchema = SchemaFactory.createForClass(RegistrationSession);

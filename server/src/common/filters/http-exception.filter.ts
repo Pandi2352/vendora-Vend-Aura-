@@ -9,6 +9,7 @@ import {
 import { Request, Response } from 'express';
 import { ApiErrorResponse } from '../interfaces/api-response.interface';
 import { ERROR_CODES } from '../constants/error-codes.constant';
+import { DateUtil } from '../utils/date.util';
 
 @Catch()
 export class GlobalHttpExceptionFilter implements ExceptionFilter {
@@ -51,7 +52,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       message: Array.isArray(message) ? message[0] : message,
       errors: Array.isArray(message) && !errors ? message : errors,
       errorCode,
-      timestamp: new Date().toISOString(),
+      timestamp: DateUtil.toIso(),
       path: request.url,
       requestId: (request.headers['x-request-id'] as string) || undefined,
     };

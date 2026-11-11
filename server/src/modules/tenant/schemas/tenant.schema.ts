@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { BusinessType, TenantStatus } from '../../../shared';
+import { BaseEntity } from '../../../common';
 
 export type TenantDocument = Tenant & Document;
 
 @Schema({ timestamps: true, collection: 'tenants' })
-export class Tenant {
+export class Tenant extends BaseEntity {
   @Prop({ required: true, unique: true, index: true, lowercase: true, trim: true })
   shopId: string;
 
@@ -62,9 +63,6 @@ export class Tenant {
     };
     gstin?: string;
   };
-
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export const TenantSchema = SchemaFactory.createForClass(Tenant);
