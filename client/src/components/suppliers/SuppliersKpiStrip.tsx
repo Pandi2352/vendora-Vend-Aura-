@@ -18,7 +18,7 @@ export function SuppliersKpiStrip({
       <div className="bg-white p-3.5 rounded-md border border-zinc-200">
         <div className="flex items-center justify-between text-zinc-500 text-[11px] font-semibold mb-1">
           <span>Outstanding Supplier Payables</span>
-          <HandCoins className="w-4 h-4 text-red-600" />
+          <HandCoins className="w-4 h-4 text-primary-600" />
         </div>
         <div className="text-xl font-black font-mono text-red-600">
           ₹{totalPayablesDue.toLocaleString('en-IN')}

@@ -55,11 +55,11 @@ export function AddSupplierModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-md border border-zinc-200 w-full max-w-md p-5 space-y-4">
         <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <h3 className="font-bold text-sm text-zinc-950 flex items-center gap-2">
-            <Truck className="w-4 h-4 text-red-600" />
+            <Truck className="w-4 h-4 text-primary-600" />
             <span>Register Supplier / Distributor</span>
           </h3>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 cursor-pointer">
@@ -82,7 +82,7 @@ export function AddSupplierModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Sri Meenakshi Traders"
-              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none"
+              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none"
             />
           </div>
 
@@ -94,7 +94,7 @@ export function AddSupplierModal({
                 value={contactPerson}
                 onChange={(e) => setContactPerson(e.target.value)}
                 placeholder="e.g. Murugan K"
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none"
               />
             </div>
             <div>
@@ -105,7 +105,7 @@ export function AddSupplierModal({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. +91 98401 22334"
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono"
               />
             </div>
           </div>
@@ -118,7 +118,7 @@ export function AddSupplierModal({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="orders@supplier.in"
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none"
               />
             </div>
             <div>
@@ -128,7 +128,7 @@ export function AddSupplierModal({
                 value={gstin}
                 onChange={(e) => setGstin(e.target.value.toUpperCase())}
                 placeholder="33AAAAA..."
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono uppercase"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono uppercase"
               />
             </div>
           </div>
@@ -141,7 +141,7 @@ export function AddSupplierModal({
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="e.g. FMCG, Dairy, Spices"
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none"
               />
             </div>
             <div>
@@ -151,7 +151,7 @@ export function AddSupplierModal({
                 min="0"
                 value={creditDays}
                 onChange={(e) => setCreditDays(Number(e.target.value))}
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono"
               />
             </div>
           </div>
@@ -167,7 +167,7 @@ export function AddSupplierModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold cursor-pointer disabled:opacity-50"
+              className="px-4 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-semibold cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Register Supplier'}
             </button>

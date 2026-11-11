@@ -91,7 +91,7 @@ export function CustomersTable({
 
                   <button
                     onClick={() => onOpenStatement(c)}
-                    className="px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-zinc-800 hover:text-white text-zinc-700 font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-ink-soft hover:text-white text-zinc-700 font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1"
                     title="View Statement Ledger"
                   >
                     <BookOpen weight="bold" className="w-3 h-3" />

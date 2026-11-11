@@ -1,13 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AxiosResponse } from 'axios';
 import { api, unwrap, getErrorMessage } from '../../lib/api';
-import {
-  ChartLineUp,
-  Receipt,
-  Warehouse,
-  ArrowClockwise,
-  CalendarBlank,
-} from '@phosphor-icons/react';
+import { ChartLineUp, ArrowClockwise, CalendarBlank } from '@phosphor-icons/react';
+import { Tabs, type TabItem } from '../ui';
 import type {
   ReportPeriod,
   ExecutiveOverviewData,
@@ -19,7 +14,18 @@ import { ExecutiveOverviewTab } from './ExecutiveOverviewTab';
 import { GstReportsTab } from './GstReportsTab';
 import { InventoryAnalyticsTab } from './InventoryAnalyticsTab';
 
-type SubTab = 'overview' | 'gst' | 'inventory';
+export type ReportsTab = 'overview' | 'gst' | 'inventory';
+
+const TAB_ITEMS: TabItem<ReportsTab>[] = [
+  { value: 'overview', label: 'Executive Overview' },
+  { value: 'gst', label: 'GST Reports' },
+  { value: 'inventory', label: 'Inventory Analytics' },
+];
+
+interface ReportsViewProps {
+  tab: ReportsTab;
+  onTabChange: (tab: ReportsTab) => void;
+}
 
 const PERIOD_LABELS: { key: ReportPeriod; label: string }[] = [
   { key: 'today', label: 'Today' },
@@ -29,8 +35,7 @@ const PERIOD_LABELS: { key: ReportPeriod; label: string }[] = [
   { key: 'all', label: 'All Time' },
 ];
 
-export function ReportsView() {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('overview');
+export function ReportsView({ tab: activeSubTab, onTabChange }: ReportsViewProps) {
   const [period, setPeriod] = useState<ReportPeriod>('month');
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -79,7 +84,7 @@ export function ReportsView() {
       {/* Top Header / Switcher Bar */}
       <div className="bg-white border-b border-zinc-200 px-6 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
-          <ChartLineUp weight="bold" className="w-5 h-5 text-red-600" />
+          <ChartLineUp weight="bold" className="w-5 h-5 text-primary-600" />
           <h1 className="text-base font-bold text-zinc-900 tracking-tight">Analytics & Business Intelligence</h1>
           <span className="text-xs text-zinc-400 hidden sm:inline">| Live Ledger & GST Records</span>
         </div>
@@ -92,9 +97,9 @@ export function ReportsView() {
               <button
                 key={p.key}
                 onClick={() => setPeriod(p.key)}
-                className={`px-2.5 py-1 rounded-sm font-semibold transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
                   period === p.key
-                    ? 'bg-zinc-950 text-white shadow-xs'
+                    ? 'bg-primary-600 text-white'
                     : 'text-zinc-600 hover:text-zinc-900'
                 }`}
               >
@@ -114,43 +119,8 @@ export function ReportsView() {
         </div>
       </div>
 
-      {/* Sub Navigation Bar */}
-      <div className="bg-zinc-950 px-6 py-2 border-b border-zinc-800 flex items-center gap-2 shrink-0">
-        <button
-          onClick={() => setActiveSubTab('overview')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-            activeSubTab === 'overview'
-              ? 'bg-red-600 text-white'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
-          }`}
-        >
-          <ChartLineUp weight="bold" className="w-3.5 h-3.5" />
-          <span>Executive Overview & P&L</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('gst')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-            activeSubTab === 'gst'
-              ? 'bg-red-600 text-white'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
-          }`}
-        >
-          <Receipt weight="bold" className="w-3.5 h-3.5" />
-          <span>GST Reports (GSTR-1 & 3B)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('inventory')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-            activeSubTab === 'inventory'
-              ? 'bg-red-600 text-white'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
-          }`}
-        >
-          <Warehouse weight="bold" className="w-3.5 h-3.5" />
-          <span>Stock Valuation & Velocity</span>
-        </button>
+      <div className="bg-white px-6 py-2.5 border-b border-zinc-200 shrink-0">
+        <Tabs items={TAB_ITEMS} value={activeSubTab} onChange={onTabChange} />
       </div>
 
       {/* Main Content Area */}

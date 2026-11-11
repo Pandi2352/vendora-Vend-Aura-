@@ -55,8 +55,8 @@ export function CheckoutModal({
     !(paymentMode === 'CREDIT' && (!selectedCustomer || isCreditExceeded));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-xs font-sans">
-      <div className="bg-white rounded-md border border-zinc-300 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 font-sans">
+      <div className="bg-white rounded-md border border-zinc-300 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between shrink-0">
           <div>
@@ -81,7 +81,7 @@ export function CheckoutModal({
           />
 
           {/* Amount Due Banner */}
-          <div className="p-3.5 rounded-md bg-zinc-950 text-white text-center">
+          <div className="p-3.5 rounded-md bg-ink text-white text-center">
             <span className="text-[11px] text-zinc-400 uppercase tracking-wider block">Total Amount Due</span>
             <span className="font-mono font-black text-2xl text-red-500 mt-0.5 block">
               ₹{grandTotal.toLocaleString('en-IN')}
@@ -146,7 +146,7 @@ export function CheckoutModal({
               )
             }
             disabled={!canSubmit}
-            className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
+            className="px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
           >
             <CheckCircle weight="bold" className="w-4 h-4" />
             <span>{isSubmitting ? 'Saving Bill...' : 'Complete & Print Bill'}</span>

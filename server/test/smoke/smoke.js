@@ -121,6 +121,9 @@ function check(name, cond, extra) {
   r = await call('POST', '/orders/shifts/close', { shiftId: String(shift._id), actualCashCounted: shift.expectedCash }, accessToken);
   check('close shift', r.status === 201 && r.json.data.status === 'CLOSED' && r.json.data.variance === 0, r.json);
 
+  r = await call('GET', '/account/overview', null, accessToken);
+  check('account overview: plan + usage + terminal', r.status === 200 && r.json.data.plan.name && r.json.data.usage.users.used >= 1 && r.json.data.terminal.outletCode === 'OUT-01' && r.json.data.store.shopId === 'smoke', r.json?.data);
+
   // ---- reusable foundation checks ----
   r = await call('GET', '/orders?limit=2&page=1', null, accessToken);
   check('paginated orders: meta present', r.status === 200 && r.json.data.length === 2 && r.json.meta && r.json.meta.total === 7 && r.json.meta.hasNextPage, r.json?.meta);

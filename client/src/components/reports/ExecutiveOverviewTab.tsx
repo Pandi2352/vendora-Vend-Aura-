@@ -10,7 +10,7 @@ export function ExecutiveOverviewTab({ data, isLoading }: ExecutiveOverviewTabPr
   if (isLoading) {
     return (
       <div className="py-20 text-center text-zinc-400 text-xs">
-        <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
         Loading executive summary...
       </div>
     );
@@ -71,7 +71,7 @@ export function ExecutiveOverviewTab({ data, isLoading }: ExecutiveOverviewTabPr
           <div className="text-[10px] text-zinc-400 font-mono mt-0.5">Basket Size</div>
         </div>
 
-        <div className="p-3 bg-zinc-950 border border-zinc-900 rounded-md text-white">
+        <div className="p-3 bg-ink border border-zinc-900 rounded-md text-white">
           <div className="flex items-center justify-between text-zinc-400 mb-1">
             <span className="text-[11px] font-bold">Est. Gross Profit</span>
             <TrendUp weight="bold" className="w-3.5 h-3.5 text-emerald-400" />
@@ -86,7 +86,7 @@ export function ExecutiveOverviewTab({ data, isLoading }: ExecutiveOverviewTabPr
         {/* Payment Tender Breakdown */}
         <div className="p-4 bg-white border border-zinc-200 rounded-md space-y-3">
           <div className="flex items-center gap-2 border-b border-zinc-100 pb-2">
-            <CreditCard weight="bold" className="w-4 h-4 text-red-600" />
+            <CreditCard weight="bold" className="w-4 h-4 text-primary-600" />
             <h4 className="font-bold text-xs text-zinc-950">Payment Tender Distribution</h4>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -103,7 +103,7 @@ export function ExecutiveOverviewTab({ data, isLoading }: ExecutiveOverviewTabPr
         {/* Hourly Slot Trend */}
         <div className="p-4 bg-white border border-zinc-200 rounded-md space-y-3">
           <div className="flex items-center gap-2 border-b border-zinc-100 pb-2">
-            <Clock weight="bold" className="w-4 h-4 text-red-600" />
+            <Clock weight="bold" className="w-4 h-4 text-primary-600" />
             <h4 className="font-bold text-xs text-zinc-950">Store Rush & Time-Slot Trends</h4>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

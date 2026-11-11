@@ -39,7 +39,7 @@ export function CartPanel({
       {/* Cart Header */}
       <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ShoppingCart weight="bold" className="w-4 h-4 text-red-600" />
+          <ShoppingCart weight="bold" className="w-4 h-4 text-primary-600" />
           <h3 className="font-bold text-sm text-zinc-950">Current Register Bill</h3>
           <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-zinc-100 text-zinc-700 font-bold">
             {itemCount} {itemCount === 1 ? 'item' : 'items'}
@@ -183,7 +183,7 @@ export function CartPanel({
           <button
             onClick={onProceedCheckout}
             disabled={cart.length === 0}
-            className="flex-1 py-2.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 py-2.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span>Tender & Complete Bill</span>
             <ArrowRight weight="bold" className="w-4 h-4" />

@@ -46,7 +46,7 @@ export function LoginScreen({
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col justify-center items-center p-4 selection:bg-red-600 selection:text-white">
+    <div className="min-h-screen bg-ink flex flex-col justify-center items-center p-4 selection:bg-primary-600 selection:text-white">
       {/* Background radial gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-red-950/20 via-zinc-950 to-zinc-950 pointer-events-none" />
 
@@ -74,7 +74,7 @@ export function LoginScreen({
 
           {/* Error Alert */}
           {loginError && (
-            <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 flex items-start gap-2.5 text-xs animate-in fade-in">
+            <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 flex items-start gap-2.5 text-xs">
               <WarningCircle weight="bold" className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="flex-1 font-medium">{loginError}</div>
             </div>
@@ -94,7 +94,7 @@ export function LoginScreen({
                   value={shopId}
                   onChange={(e) => handleShopIdChange(e.target.value)}
                   placeholder="e.g. srimurugan"
-                  className="w-full pl-9 pr-24 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm font-mono text-zinc-950 focus:border-red-600 outline-none transition-colors"
+                  className="w-full pl-9 pr-24 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm font-mono text-zinc-950 focus:border-primary-600 outline-none transition-colors"
                 />
                 <span className="absolute right-3 top-2.5 text-[11px] font-mono text-zinc-400 pointer-events-none">
                   .vendora.com
@@ -115,7 +115,7 @@ export function LoginScreen({
                   value={username}
                   onChange={(e) => setUsername(e.target.value.trim())}
                   placeholder="e.g. srimurugan_admin"
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm font-mono text-zinc-950 focus:border-red-600 outline-none transition-colors"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm font-mono text-zinc-950 focus:border-primary-600 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -136,7 +136,7 @@ export function LoginScreen({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full pl-9 pr-10 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-red-600 outline-none transition-colors"
+                  className="w-full pl-9 pr-10 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-primary-600 outline-none transition-colors"
                 />
                 <button
                   type="button"
@@ -152,7 +152,7 @@ export function LoginScreen({
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full py-2.5 px-4 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
             >
               {isLoggingIn ? (
                 <>

@@ -1,5 +1,7 @@
 import { Printer, CheckCircle, X, Barcode } from '@phosphor-icons/react';
+import { useEffect } from 'react';
 import type { InvoiceData } from '../types/pos.types';
+import { usePreferences } from '../hooks/usePreferences';
 
 interface ThermalReceiptModalProps {
   invoice: InvoiceData | null;
@@ -7,20 +9,33 @@ interface ThermalReceiptModalProps {
   onNewSale: () => void;
 }
 
-export function ThermalReceiptModal({
+export function ThermalReceiptModal({ invoice, ...rest }: ThermalReceiptModalProps) {
+  if (!invoice) return null;
+  // Keyed by invoice so auto-print fires once per new bill.
+  return <ThermalReceipt key={invoice.invoiceNumber} invoice={invoice} {...rest} />;
+}
+
+function ThermalReceipt({
   invoice,
   onClose,
   onNewSale,
-}: ThermalReceiptModalProps) {
-  if (!invoice) return null;
+}: Omit<ThermalReceiptModalProps, 'invoice'> & { invoice: InvoiceData }) {
+  const { receiptWidth, autoPrintReceipt } = usePreferences();
 
   const handlePrint = () => {
     window.print();
   };
 
+  useEffect(() => {
+    if (!autoPrintReceipt) return;
+    // Let the receipt render before the print dialog opens.
+    const timer = window.setTimeout(() => window.print(), 150);
+    return () => window.clearTimeout(timer);
+  }, [autoPrintReceipt]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xs">
-      <div className="bg-white rounded-md border border-zinc-300 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+      <div className={`bg-white rounded-md border border-zinc-300 w-full ${receiptWidth === '58mm' ? 'max-w-[280px]' : 'max-w-sm'} overflow-hidden`}>
         {/* Receipt Header Actions */}
         <div className="p-3 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between print:hidden">
           <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-bold">
@@ -35,7 +50,7 @@ export function ThermalReceiptModal({
           </button>
         </div>
 
-        {/* 80mm Thermal Receipt Simulation */}
+        {/* Thermal receipt preview (paper width from Settings > POS) */}
         <div className="p-6 font-mono text-zinc-950 text-xs bg-white space-y-3 leading-tight select-text max-h-[70vh] overflow-y-auto">
           {/* Store Info */}
           <div className="text-center space-y-1">
@@ -159,7 +174,7 @@ export function ThermalReceiptModal({
           </button>
           <button
             onClick={handlePrint}
-            className="px-4 py-1.5 rounded-md bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-1.5 rounded-md bg-ink hover:bg-ink-soft text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Printer weight="bold" className="w-3.5 h-3.5" />
             <span>Print Receipt</span>

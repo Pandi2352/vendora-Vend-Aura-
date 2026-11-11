@@ -13,3 +13,6 @@ export const ROLE_GROUPS = {
 
 /** Upper bound for list endpoints that are not paginated by page number. */
 export const MAX_PAGE_SIZE = 100;
+
+/** Email OTP lifetime. Shown in the email and enforced on verify. */
+export const OTP_TTL_MINUTES = 10;

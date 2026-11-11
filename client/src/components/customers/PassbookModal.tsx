@@ -17,12 +17,12 @@ export function PassbookModal({
   if (!customer) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-md border border-zinc-200 w-full max-w-xl p-5 space-y-4 max-h-[85vh] flex flex-col font-sans">
         <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <div>
             <h3 className="font-bold text-sm text-zinc-950 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-red-600" />
+              <BookOpen className="w-4 h-4 text-primary-600" />
               <span>Khata Passbook: {customer.name}</span>
             </h3>
             <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
@@ -86,7 +86,7 @@ export function PassbookModal({
         <div className="pt-1 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-md bg-zinc-900 text-white font-semibold text-xs cursor-pointer"
+            className="px-4 py-1.5 rounded-md bg-ink text-white font-semibold text-xs cursor-pointer"
           >
             Close Passbook
           </button>

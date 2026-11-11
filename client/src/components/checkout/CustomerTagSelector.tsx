@@ -63,7 +63,7 @@ export function CustomerTagSelector({
             value={customerSearch}
             onChange={(e) => setCustomerSearch(e.target.value)}
             placeholder="Type customer name or mobile number (e.g. 9840...)"
-            className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none text-xs bg-white"
+            className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none text-xs bg-white"
           />
 
           {customerSearch.trim() && (

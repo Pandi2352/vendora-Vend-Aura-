@@ -110,12 +110,12 @@ export function SalesReturnModal({ onClose, onReturnSuccess }: SalesReturnModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white border border-zinc-200 rounded-md max-w-2xl w-full flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ArrowUDownLeft weight="bold" className="w-5 h-5 text-red-600" />
+            <ArrowUDownLeft weight="bold" className="w-5 h-5 text-primary-600" />
             <div>
               <h3 className="font-bold text-sm text-zinc-950">Sales Return & Exchange</h3>
               <p className="text-[11px] text-zinc-500">Restore inventory stock and issue customer refund</p>
@@ -142,13 +142,13 @@ export function SalesReturnModal({ onClose, onReturnSuccess }: SalesReturnModalP
                     value={searchInvoice}
                     onChange={(e) => setSearchInvoice(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-md border border-zinc-300 focus:border-red-600 focus:ring-1 focus:ring-red-600 font-mono uppercase"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-md border border-zinc-300 focus:border-primary-600 focus:ring-1 focus:ring-primary-600 font-mono uppercase"
                   />
                 </div>
                 <button
                   onClick={handleSearch}
                   disabled={isSearching || !searchInvoice.trim()}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-xs rounded-md cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs rounded-md cursor-pointer transition-colors"
                 >
                   {isSearching ? 'Finding...' : 'Find Bill'}
                 </button>
@@ -210,7 +210,7 @@ export function SalesReturnModal({ onClose, onReturnSuccess }: SalesReturnModalP
                         placeholder="Optional note / inspection remark..."
                         value={remarks}
                         onChange={(e) => setRemarks(e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-md border border-zinc-300 focus:border-red-600"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md border border-zinc-300 focus:border-primary-600"
                       />
                     </div>
                   </div>
@@ -250,7 +250,7 @@ export function SalesReturnModal({ onClose, onReturnSuccess }: SalesReturnModalP
               <button
                 onClick={handleSubmitReturn}
                 disabled={isSubmitting || activeReturnList.length === 0}
-                className="px-4 py-1.5 rounded-md bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-xs cursor-pointer transition-colors"
+                className="px-4 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs cursor-pointer transition-colors"
               >
                 {isSubmitting ? 'Processing...' : `Confirm Return (₹${totalRefundAmount.toFixed(2)})`}
               </button>

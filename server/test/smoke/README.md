@@ -16,3 +16,13 @@ node test/smoke/smoke.js "$(cat test/smoke/.ids.json)"
 ```
 
 Re-seed before every run (the run changes stock, credit balances and tenant status).
+
+## Registration flow (OTP -> credentials -> login -> password change -> dashboard data)
+
+Start the test server **without SMTP** so the OTP and welcome credentials are written to the log
+instead of being emailed, and capture the log:
+
+```bash
+MONGO_URI=mongodb://localhost:27017/vendora_smoketest PORT=5055 SMTP_USER= SMTP_PASS= npm run start > /tmp/flow.log
+node test/smoke/registration-flow.js /tmp/flow.log
+```

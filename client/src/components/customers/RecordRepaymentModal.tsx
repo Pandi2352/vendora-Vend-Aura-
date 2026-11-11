@@ -57,7 +57,7 @@ export function RecordRepaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-md border border-zinc-200 w-full max-w-sm p-5 space-y-4 font-sans">
         <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <h3 className="font-bold text-sm text-zinc-950 flex items-center gap-2">
@@ -96,7 +96,7 @@ export function RecordRepaymentModal({
               max={customer.currentCreditBalance}
               value={repayAmount}
               onChange={(e) => setRepayAmount(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono text-sm font-bold"
+              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono text-sm font-bold"
             />
           </div>
 
@@ -110,7 +110,7 @@ export function RecordRepaymentModal({
                   onClick={() => setRepayMode(mode)}
                   className={`py-1.5 rounded-md text-xs font-bold border transition-all cursor-pointer ${
                     repayMode === mode
-                      ? 'bg-zinc-900 text-white border-zinc-900'
+                      ? 'bg-ink text-white border-zinc-900'
                       : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                   }`}
                 >
@@ -127,7 +127,7 @@ export function RecordRepaymentModal({
               value={repayRef}
               onChange={(e) => setRepayRef(e.target.value)}
               placeholder="UPI UTR, receipt # or note"
-              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none"
+              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none"
             />
           </div>
 

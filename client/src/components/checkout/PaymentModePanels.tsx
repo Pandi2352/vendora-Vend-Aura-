@@ -38,7 +38,7 @@ export function PaymentModePanels({
             min={0}
             value={cashTendered || ''}
             onChange={(e) => onCashTenderedChange(Number(e.target.value))}
-            className="w-full px-3 py-2 rounded-md border border-zinc-300 font-mono font-bold text-base text-zinc-950 focus:border-red-600 outline-none"
+            className="w-full px-3 py-2 rounded-md border border-zinc-300 font-mono font-bold text-base text-zinc-950 focus:border-primary-600 outline-none"
           />
         </div>
 

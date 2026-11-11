@@ -61,7 +61,7 @@ export function ReturnItemsSelector({
                       max={it.returnableQty}
                       value={state.qty}
                       onChange={(e) => onUpdateQty(it.productId, it.returnableQty, parseInt(e.target.value) || 0)}
-                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-xs rounded border border-zinc-300 focus:border-red-600"
+                      className="w-14 px-1.5 py-1 text-center font-mono font-bold text-xs rounded-md border border-zinc-300 focus:border-primary-600"
                     />
                   )}
                 </td>
@@ -70,7 +70,7 @@ export function ReturnItemsSelector({
                     value={state.reason}
                     disabled={isFullyReturned}
                     onChange={(e) => onUpdateReason(it.productId, e.target.value as ReturnReason)}
-                    className="px-2 py-1 text-[11px] rounded border border-zinc-300 bg-white disabled:bg-zinc-100"
+                    className="px-2 py-1 text-[11px] rounded-md border border-zinc-300 bg-white disabled:bg-zinc-100"
                   >
                     <option value="CUSTOMER_REQUEST">Customer Request</option>
                     <option value="DEFECTIVE">Defective / Damaged</option>

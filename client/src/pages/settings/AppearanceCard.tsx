@@ -1,0 +1,74 @@
+import { Palette, Sun, Moon } from '@phosphor-icons/react';
+import { Card, CardHeader, OptionTile, Toggle } from '../../components/ui';
+import { usePreferences } from '../../hooks/usePreferences';
+import { CUSTOM_SCALE_RANGE, UI_SIZE_OPTIONS, type ThemeMode } from '../../lib/preferences';
+
+const THEMES: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
+  { value: 'light', label: 'Light', icon: <Sun /> },
+  { value: 'dark', label: 'Dark', icon: <Moon /> },
+];
+
+const SectionLabel = ({ children }: { children: string }) => (
+  <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500 mb-2">{children}</p>
+);
+
+export function AppearanceCard() {
+  const prefs = usePreferences();
+
+  return (
+    <Card>
+      <CardHeader icon={<Palette />} title="Appearance" />
+
+      <SectionLabel>Theme</SectionLabel>
+      <div className="flex gap-2 mb-5">
+        {THEMES.map((t) => (
+          <OptionTile
+            key={t.value}
+            title={t.label}
+            icon={t.icon}
+            selected={prefs.theme === t.value}
+            onSelect={() => prefs.update({ theme: t.value })}
+          />
+        ))}
+      </div>
+
+      <SectionLabel>UI size</SectionLabel>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {UI_SIZE_OPTIONS.map((size) => (
+          <OptionTile
+            key={size.value}
+            title={size.label}
+            subtitle={`${size.value === 'custom' ? prefs.customScale : size.scale}%`}
+            selected={prefs.uiSize === size.value}
+            onSelect={() => prefs.update({ uiSize: size.value })}
+          />
+        ))}
+      </div>
+
+      {prefs.uiSize === 'custom' && (
+        <div className="mt-3 flex items-center gap-3">
+          <input
+            type="range"
+            aria-label="Custom UI size"
+            min={CUSTOM_SCALE_RANGE.min}
+            max={CUSTOM_SCALE_RANGE.max}
+            step={CUSTOM_SCALE_RANGE.step}
+            value={prefs.customScale}
+            onChange={(e) => prefs.update({ customScale: Number(e.target.value) })}
+            className="flex-1 accent-primary-600"
+          />
+          <span className="text-sm font-bold text-zinc-900 w-14 text-right">{prefs.customScale}%</span>
+        </div>
+      )}
+
+      <p className="text-xs text-zinc-500 mt-3 mb-5">Applies everywhere, including the POS. Saved on this device.</p>
+
+      <Toggle
+        label="Kiosk mode"
+        description="Warn before closing or reloading the till. Full screen is the button in the top bar or F11."
+        checked={prefs.kioskMode}
+        onChange={(kioskMode) => prefs.update({ kioskMode })}
+      />
+    </Card>
+  );
+}

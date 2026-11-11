@@ -87,7 +87,7 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h2 className="text-lg font-black text-zinc-950 flex items-center gap-2">
-            <Truck className="w-5 h-5 text-red-600" />
+            <Truck className="w-5 h-5 text-primary-600" />
             <span>Suppliers & Inward Inventory (GRN)</span>
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
@@ -113,7 +113,7 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
           </button>
           <button
             onClick={() => setIsInwardModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-semibold cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold cursor-pointer"
           >
             <Package weight="bold" className="w-3.5 h-3.5" />
             <span>Inward Stock (GRN)</span>
@@ -141,7 +141,7 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
           <button
             onClick={() => setSubTab('suppliers')}
             className={`px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer ${
-              subTab === 'suppliers' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+              subTab === 'suppliers' ? 'bg-ink text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
             }`}
           >
             Suppliers Directory ({suppliers.length})
@@ -149,7 +149,7 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
           <button
             onClick={() => setSubTab('inwards')}
             className={`px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer ${
-              subTab === 'inwards' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+              subTab === 'inwards' ? 'bg-ink text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
             }`}
           >
             Inward GRN Shipments ({purchases.length})
@@ -165,7 +165,7 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
             placeholder={
               subTab === 'suppliers' ? 'Search suppliers by name, phone...' : 'Search GRN #, supplier, bill #...'
             }
-            className="w-full pl-9 pr-3 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-900 focus:border-red-600 outline-none"
+            className="w-full pl-9 pr-3 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-900 focus:border-primary-600 outline-none"
           />
         </div>
       </div>

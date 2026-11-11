@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { OTP_TTL_MINUTES, StringUtil } from '../../common';
 
 @Injectable()
 export class MailService {
@@ -24,17 +25,16 @@ export class MailService {
             pass,
           },
         });
-        this.logger.log(`✅ MailService initialized with SMTP host: ${host}:${port} (${user})`);
+        this.logger.log(`MailService using SMTP ${host}:${port}`);
       } catch (err: any) {
         this.logger.error(`❌ Failed to initialize SMTP transporter: ${err.message}`);
       }
     } else {
-      this.logger.warn(`⚠️ SMTP credentials not configured in .env. Falling back to console logging.`);
+      this.logger.warn('SMTP credentials not configured: emails are logged to the console (development only).');
     }
   }
 
   async sendOtpEmail(to: string, otp: string): Promise<boolean> {
-    const from = this.configService.get<string>('MAIL_FROM') || this.configService.get<string>('SMTP_FROM') || 'Vendora POS';
     const subject = `Your Vendora Verification Code: ${otp}`;
 
     const html = `
@@ -59,7 +59,7 @@ export class MailService {
           </div>
 
           <p style="font-size: 12px; color: #71717a; line-height: 1.5; margin: 0 0 16px 0;">
-            ⏳ This code is valid for <strong>10 minutes</strong>. If you did not request this verification, please safely disregard this email.
+            ⏳ This code is valid for <strong>${OTP_TTL_MINUTES} minutes</strong>. If you did not request this verification, please safely disregard this email.
           </p>
 
           <hr style="border: none; border-top: 1px solid #f4f4f5; margin: 24px 0;" />
@@ -71,25 +71,7 @@ export class MailService {
       </div>
     `;
 
-    // Console logging as fallback
-    this.logger.log(`\n📧 [EMAIL OTP DISPATCH] -> Recipient: ${to} | OTP: ${otp}`);
-
-    if (this.transporter) {
-      try {
-        await this.transporter.sendMail({
-          from,
-          to,
-          subject,
-          html,
-        });
-        this.logger.log(`✅ Real OTP email successfully delivered to ${to} via SMTP!`);
-        return true;
-      } catch (err: any) {
-        this.logger.error(`❌ SMTP Delivery Error to ${to}: ${err.message}`);
-      }
-    }
-
-    return true;
+    return this.deliver({ to, subject, html, devFallbackLog: `OTP for ${to}: ${otp}` });
   }
 
   async sendWelcomeCredentialsEmail(payload: {
@@ -101,7 +83,6 @@ export class MailService {
     temporaryPassword: string;
     shopUrl: string;
   }): Promise<boolean> {
-    const from = this.configService.get<string>('MAIL_FROM') || this.configService.get<string>('SMTP_FROM') || 'Vendora POS';
     const subject = `Welcome to Vendora! Your Store Login Details 🚀`;
 
     const html = `
@@ -169,27 +150,45 @@ export class MailService {
       </div>
     `;
 
-    this.logger.log(`\n================================================================`);
-    this.logger.log(`🚀 [WELCOME CREDENTIALS EMAIL]`);
-    this.logger.log(`To: ${payload.to} | Shop: ${payload.shopId} | User: ${payload.username} | Pass: ${payload.temporaryPassword}`);
-    this.logger.log(`URL: ${payload.shopUrl}`);
-    this.logger.log(`================================================================\n`);
+    return this.deliver({
+      to: payload.to,
+      subject,
+      html,
+      devFallbackLog: `Welcome email for ${payload.to} | shop ${payload.shopId} | user ${payload.username} | temp password ${payload.temporaryPassword} | ${payload.shopUrl}`,
+    });
+  }
 
-    if (this.transporter) {
-      try {
-        await this.transporter.sendMail({
-          from,
-          to: payload.to,
-          subject,
-          html,
-        });
-        this.logger.log(`✅ Welcome Credentials email successfully delivered to ${payload.to} via SMTP!`);
-        return true;
-      } catch (err: any) {
-        this.logger.error(`❌ SMTP Welcome Delivery Error to ${payload.to}: ${err.message}`);
+  /** True when real SMTP delivery is configured. */
+  get isConfigured(): boolean {
+    return this.transporter !== null;
+  }
+
+  /**
+   * Single delivery path for every email. Without SMTP (local dev) the content
+   * is logged instead — never in production, and never when SMTP is configured,
+   * so OTPs and passwords don't end up in production logs.
+   */
+  private async deliver(mail: { to: string; subject: string; html: string; devFallbackLog: string }): Promise<boolean> {
+    if (!this.transporter) {
+      if (this.configService.get<string>('NODE_ENV') === 'production') {
+        this.logger.error(`SMTP is not configured; email "${mail.subject.replace(/\d{6}/, '******')}" to ${StringUtil.maskEmail(mail.to)} was not sent.`);
+        return false;
       }
+      this.logger.warn(`[DEV EMAIL - SMTP not configured] ${mail.devFallbackLog}`);
+      return true;
     }
 
-    return true;
+    try {
+      await this.transporter.sendMail({ from: this.fromAddress, to: mail.to, subject: mail.subject, html: mail.html });
+      this.logger.log(`Email "${mail.subject.replace(/\d{6}/, '******')}" delivered to ${StringUtil.maskEmail(mail.to)}`);
+      return true;
+    } catch (err: any) {
+      this.logger.error(`SMTP delivery to ${StringUtil.maskEmail(mail.to)} failed: ${err.message}`);
+      return false;
+    }
+  }
+
+  private get fromAddress(): string {
+    return this.configService.get<string>('MAIL_FROM') || this.configService.get<string>('SMTP_FROM') || 'Vendora POS';
   }
 }

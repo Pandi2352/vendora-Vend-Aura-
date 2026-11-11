@@ -20,6 +20,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SequenceModule } from './modules/sequence/sequence.module';
+import { AccountModule } from './modules/account/account.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 
@@ -53,6 +54,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     CustomersModule,
     ReportsModule,
     SequenceModule,
+    AccountModule,
   ],
   controllers: [AppController],
   providers: [

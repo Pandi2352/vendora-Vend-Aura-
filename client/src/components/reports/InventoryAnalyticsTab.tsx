@@ -10,7 +10,7 @@ export function InventoryAnalyticsTab({ data, isLoading }: InventoryAnalyticsTab
   if (isLoading) {
     return (
       <div className="py-20 text-center text-zinc-400 text-xs">
-        <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
         Valuating inventory & detecting slow-moving stock...
       </div>
     );
@@ -53,7 +53,7 @@ export function InventoryAnalyticsTab({ data, isLoading }: InventoryAnalyticsTab
           <div className="text-[10px] text-zinc-400 font-mono mt-0.5">Expected Gross Value</div>
         </div>
 
-        <div className="p-3 bg-zinc-950 border border-zinc-900 rounded-md text-white">
+        <div className="p-3 bg-ink border border-zinc-900 rounded-md text-white">
           <div className="flex items-center justify-between text-zinc-400 mb-1">
             <span className="text-[11px] font-bold">Potential Gross Profit</span>
             <span className="text-[10px] font-bold text-emerald-400">Warehouse</span>
@@ -102,11 +102,11 @@ export function InventoryAnalyticsTab({ data, isLoading }: InventoryAnalyticsTab
                   <td className="p-2.5 text-right font-mono text-zinc-800">₹{item.unitPrice}</td>
                   <td className="p-2.5 text-center">
                     {item.stock <= 0 ? (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 font-bold text-[10px] rounded border border-red-200 inline-flex items-center gap-1">
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 font-bold text-[10px] rounded-md border border-red-200 inline-flex items-center gap-1">
                         <WarningOctagon className="w-3 h-3" /> Out of Stock
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold text-[10px] rounded border border-amber-200">
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold text-[10px] rounded-md border border-amber-200">
                         Low Stock ({item.stock})
                       </span>
                     )}

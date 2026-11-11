@@ -39,8 +39,8 @@ export function PasswordResetModal({
   const isMatch = newPassword.length > 0 && newPassword === confirmPassword;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xs">
-      <div className="bg-white rounded-md border border-zinc-300 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-6 space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+      <div className="bg-white rounded-md border border-zinc-300 w-full max-w-md overflow-hidden p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3 pb-3 border-b border-zinc-100">
           <div className="w-10 h-10 rounded-md bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
@@ -76,7 +76,7 @@ export function PasswordResetModal({
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Password from your onboarding email"
-                className="w-full pl-9 pr-3 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-red-600 outline-none"
+                className="w-full pl-9 pr-3 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-primary-600 outline-none"
               />
             </div>
           </div>
@@ -93,7 +93,7 @@ export function PasswordResetModal({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 8 characters"
-                className="w-full pl-9 pr-10 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-red-600 outline-none"
+                className="w-full pl-9 pr-10 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-primary-600 outline-none"
               />
               <button
                 type="button"
@@ -117,7 +117,7 @@ export function PasswordResetModal({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter new password"
-                className="w-full pl-9 pr-3 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-red-600 outline-none"
+                className="w-full pl-9 pr-3 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-primary-600 outline-none"
               />
             </div>
           </div>
@@ -137,7 +137,7 @@ export function PasswordResetModal({
           <button
             type="submit"
             disabled={!currentPassword || !hasLength || !isMatch || isUpdatingPassword}
-            className="w-full py-2.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-50"
           >
             {isUpdatingPassword ? 'Saving Password...' : 'Save & Enter POS Register'}
           </button>

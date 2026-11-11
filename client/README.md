@@ -24,7 +24,31 @@ The API server must be running for login and billing.
 
 ## Layout
 
-- `src/lib/api.ts` – the only axios instance: bearer token, automatic refresh on 401, `unwrap`, `getErrorMessage`
-- `src/lib/config.ts` – env-driven URLs
-- `src/hooks/` – session, cart/held carts, drawer shift, catalog + customers
-- `src/components/` – views and modals (no router; tabs are local state in `App.tsx`)
+```
+src/
+  app/            App root, router (routes + guards wiring), providers
+    providers/    AuthProvider, PreferencesProvider (theme, UI size, kiosk, POS prefs), PosSessionProvider (cart, catalog, drawer, modals)
+  config/         routes.ts (all paths), navigation.ts (sidebar / flyouts / breadcrumbs / roles)
+  layouts/        AppLayout: top bar + sidebar + page outlet + shared POS modals
+  routes/         guards: RequireAuth, RequireRole, RedirectIfAuthenticated, RequirePasswordChange
+  pages/          one file per route; page-specific pieces in pages/<page>/
+  components/
+    ui/           design-system primitives (Button, Card, Tabs, Toggle, OptionTile, InfoRow, UsageMeter, StatTile, Alert, PageHeader)
+    layout/       Topbar, Sidebar, SidebarNavItem, SidebarFlyout, UserMenu, ShiftStatusChip, BrandMark
+    pos/          PosToolbar, PosModalsHost
+    …             feature components (cart, checkout, customers, orders, suppliers, reports)
+  hooks/          useAuth, usePreferences, usePosSession, useFlyout, useFullscreen, data hooks
+  lib/            api.ts (axios + token refresh), config, permissions, preferences, format, totals, invoice
+  types/          API / domain types
+```
+
+Design rules: no shadows, `rounded-md` everywhere (`rounded-full` only for circles), colours via theme
+tokens in `index.css` (`primary-*` for actions, `shell` for the navy frame, `ink` for solid dark surfaces).
+Dark mode remaps the neutral palette, so screens need no `dark:` classes.
+
+## Sign-up to dashboard flow
+
+1. Landing `/register`: email OTP → verify → complete registration.
+2. Welcome email: username `<shopId>_admin`, temporary password, link `CLIENT_BASE_URL/login?shopId=<shopId>`.
+3. `/login?shopId=…` prefills Shop ID and username → sign in.
+4. First sign-in → `/change-password` (enforced by the server too) → `/dashboard`.

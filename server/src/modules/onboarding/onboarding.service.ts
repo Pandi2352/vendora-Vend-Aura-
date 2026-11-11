@@ -1,9 +1,10 @@
 import { ConfigService } from '@nestjs/config';
-import { 
+import {
   Injectable, 
   BadRequestException, 
   NotFoundException, 
   ConflictException,
+  ServiceUnavailableException,
   Logger 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -27,7 +28,7 @@ import {
   TenantStatus, 
   UserRole 
 } from '../../shared';
-import { CryptoUtil, UuidUtil, DateUtil } from '../../common';
+import { CryptoUtil, UuidUtil, DateUtil, OTP_TTL_MINUTES } from '../../common';
 
 const RESERVED_SHOP_IDS = ['admin', 'api', 'app', 'www', 'mail', 'billing', 'pos', 'vendora', 'root', 'support'];
 
@@ -56,7 +57,7 @@ export class OnboardingService {
     const email = dto.email.toLowerCase().trim();
     const otp = CryptoUtil.generateNumericCode(6);
     const otpHash = await bcrypt.hash(otp, 10);
-    const otpExpiresAt = DateUtil.addMinutes(new Date(), 5); // 5 mins TTL
+    const otpExpiresAt = DateUtil.addMinutes(DateUtil.nowUtc(), OTP_TTL_MINUTES);
     const sessionId = UuidUtil.generatePublicId('reg_');
 
     await this.sessionModel.create({
@@ -69,13 +70,16 @@ export class OnboardingService {
       status: RegistrationStatus.EMAIL_PENDING,
     });
 
-    // Send email via mail service
-    await this.mailService.sendOtpEmail(email, otp);
+    const delivered = await this.mailService.sendOtpEmail(email, otp);
+    if (!delivered) {
+      await this.sessionModel.deleteOne({ sessionId });
+      throw new ServiceUnavailableException('We could not send the verification email right now. Please try again in a minute.');
+    }
 
     return {
       sessionId,
       email,
-      expiresInSeconds: 300,
+      expiresInSeconds: OTP_TTL_MINUTES * 60,
       message: 'Verification OTP has been dispatched to your email.',
     };
   }

@@ -22,7 +22,7 @@ export function CategoryBar({
             onClick={() => onSelectCategory(cat)}
             className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
               isActive
-                ? 'bg-red-600 text-white font-bold'
+                ? 'bg-primary-600 text-white font-bold'
                 : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200'
             }`}
           >

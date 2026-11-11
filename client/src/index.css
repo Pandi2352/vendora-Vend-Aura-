@@ -1,25 +1,103 @@
 @import "tailwindcss";
 
+/* Dark mode is class based: <html class="dark"> (set by PreferencesProvider). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  --color-brand-50: #fef2f2;
-  --color-brand-100: #fee2e2;
-  --color-brand-200: #fecaca;
-  --color-brand-300: #fca5a5;
-  --color-brand-400: #f87171;
-  --color-brand-500: #ef4444;
-  --color-brand-600: #dc2626;
-  --color-brand-700: #b91c1c;
-  --color-brand-800: #991b1b;
-  --color-brand-900: #7f1d1d;
-  --color-brand-950: #450a0a;
+
+  /* Primary brand colour. Change this scale to re-theme every button, tab and accent. */
+  --color-primary-50: #eef5ff;
+  --color-primary-100: #d9e8ff;
+  --color-primary-200: #bcd7ff;
+  --color-primary-300: #8ebdff;
+  --color-primary-400: #5998ff;
+  --color-primary-500: #3374f5;
+  --color-primary-600: #0b5cd5;
+  --color-primary-700: #0a4bb0;
+  --color-primary-800: #0e3f8f;
+  --color-primary-900: #123873;
+
+  /* App shell (sidebar + top bar): same navy in light and dark mode. */
+  --color-shell: #0f1b2d;
+  --color-shell-raised: #16243a;
+  --color-shell-hover: #1c2d47;
+  --color-shell-border: #22344f;
+  --color-shell-text: #e2e8f0;
+  --color-shell-muted: #8a99b3;
+
+  /* Solid dark surfaces used for dark buttons / chips inside pages. */
+  --color-ink: #18181b;
+  --color-ink-soft: #27272a;
+}
+
+/* UI size preference scales every rem-based size. */
+html {
+  font-size: var(--ui-scale, 100%);
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #f4f4f5;
-  color: #09090b;
+  background-color: var(--color-zinc-50);
+  color: var(--color-zinc-900);
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Dark theme: remaps the neutral scale and status tints, so every existing
+ * screen built with zinc / white / status colours follows the theme without
+ * per-component dark: classes.
+ */
+.dark {
+  color-scheme: dark;
+
+  --color-white: #121c2c;
+  --color-zinc-50: #0b1320;
+  --color-zinc-100: #172235;
+  --color-zinc-200: #22314a;
+  --color-zinc-300: #33445f;
+  --color-zinc-400: #6b7c96;
+  --color-zinc-500: #8b9ab0;
+  --color-zinc-600: #a9b5c7;
+  --color-zinc-700: #c4cdda;
+  --color-zinc-800: #dde3ec;
+  --color-zinc-900: #eef2f7;
+  --color-zinc-950: #f8fafc;
+
+  --color-ink: #2a3b57;
+  --color-ink-soft: #34486a;
+
+  --color-primary-50: #10284d;
+  --color-primary-100: #15336175;
+  --color-primary-200: #1d4a8a;
+
+  --color-red-50: #3a1418;
+  --color-red-100: #4a1a20;
+  --color-red-200: #6b2128;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
+
+  --color-emerald-50: #0d2e24;
+  --color-emerald-100: #11392d;
+  --color-emerald-200: #1b5a46;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+
+  --color-amber-50: #33240b;
+  --color-amber-100: #40300f;
+  --color-amber-200: #6b4d14;
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
+
+  --color-blue-50: #10284d;
+  --color-blue-200: #1d4a8a;
+  --color-blue-700: #93c5fd;
+}
+
+/* Thin, theme-aware scrollbars for the sidebar and panels. */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-shell-border) transparent;
 }

@@ -1,3 +1,4 @@
+import { usePreferences } from '../../hooks/usePreferences';
 import { useState, useEffect, useCallback } from 'react';
 import { X, Vault, ArrowsClockwise, WarningCircle } from '@phosphor-icons/react';
 import { api, unwrap, getErrorMessage } from '../../lib/api';
@@ -19,7 +20,8 @@ export function CashDrawerModal({ isOpen, onClose, onShiftChange }: CashDrawerMo
   const [loadError, setLoadError] = useState('');
 
   // Shift Forms State
-  const [openingFloat, setOpeningFloat] = useState<number>(2000);
+  const { defaultOpeningFloat } = usePreferences();
+  const [openingFloat, setOpeningFloat] = useState<number>(defaultOpeningFloat);
   const [openNotes, setOpenNotes] = useState('');
   const [isOpening, setIsOpening] = useState(false);
   const [actualCash, setActualCash] = useState<string>('');
@@ -98,12 +100,12 @@ export function CashDrawerModal({ isOpen, onClose, onShiftChange }: CashDrawerMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white border border-zinc-200 rounded-md max-w-xl w-full flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Vault weight="bold" className="w-5 h-5 text-red-600" />
+            <Vault weight="bold" className="w-5 h-5 text-primary-600" />
             <div>
               <h3 className="font-bold text-sm text-zinc-950">Cash Drawer & Shift Management</h3>
               <p className="text-[11px] text-zinc-500">Track till cash, register movements and end-of-shift reconciliation</p>
@@ -119,7 +121,7 @@ export function CashDrawerModal({ isOpen, onClose, onShiftChange }: CashDrawerMo
           <button
             onClick={() => setActiveTab('current')}
             className={`pb-2 px-3 text-xs font-bold border-b-2 cursor-pointer transition-colors ${
-              activeTab === 'current' ? 'border-red-600 text-red-600' : 'border-transparent text-zinc-500 hover:text-zinc-900'
+              activeTab === 'current' ? 'border-primary-600 text-red-600' : 'border-transparent text-zinc-500 hover:text-zinc-900'
             }`}
           >
             Current Shift
@@ -127,13 +129,13 @@ export function CashDrawerModal({ isOpen, onClose, onShiftChange }: CashDrawerMo
           <button
             onClick={() => setActiveTab('history')}
             className={`pb-2 px-3 text-xs font-bold border-b-2 cursor-pointer transition-colors ${
-              activeTab === 'history' ? 'border-red-600 text-red-600' : 'border-transparent text-zinc-500 hover:text-zinc-900'
+              activeTab === 'history' ? 'border-primary-600 text-red-600' : 'border-transparent text-zinc-500 hover:text-zinc-900'
             }`}
           >
             Shift History
           </button>
           <div className="ml-auto pb-2">
-            <button onClick={fetchCurrentShift} className="text-zinc-400 hover:text-zinc-700 p-1 rounded cursor-pointer" title="Refresh">
+            <button onClick={fetchCurrentShift} className="text-zinc-400 hover:text-zinc-700 p-1 rounded-md cursor-pointer" title="Refresh">
               <ArrowsClockwise className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
           </div>

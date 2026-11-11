@@ -72,7 +72,7 @@ export function OrdersTable({ orders, loading, onReprint }: OrdersTableProps) {
             <td className="py-2.5 px-4 text-center">
               <button
                 onClick={() => onReprint(o)}
-                className="px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-red-600 hover:text-white border border-zinc-200 text-zinc-700 font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1"
+                className="px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-primary-600 hover:text-white border border-zinc-200 text-zinc-700 font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1"
                 title="Reprint 80mm Receipt"
               >
                 <Printer weight="bold" className="w-3.5 h-3.5" />

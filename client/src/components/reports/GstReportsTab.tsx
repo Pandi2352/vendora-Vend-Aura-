@@ -11,7 +11,7 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
   if (isLoading) {
     return (
       <div className="py-20 text-center text-zinc-400 text-xs">
-        <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
         Calculating GST Tax liabilities & ITC...
       </div>
     );
@@ -24,7 +24,7 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
   return (
     <div className="space-y-4">
       {/* 1. GSTR-3B Net Tax Liability Strip */}
-      <div className="p-4 bg-zinc-950 text-white rounded-md border border-zinc-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="p-4 bg-ink text-white rounded-md border border-zinc-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
             <Calculator weight="bold" className="w-5 h-5 text-red-500" />
@@ -36,14 +36,14 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-md">
+          <div className="p-2 bg-ink border border-zinc-800 rounded-md">
             <span className="text-[10px] text-zinc-400 block">Outward Tax (3.1)</span>
             <span className="font-mono font-bold text-zinc-100">₹{gstr3b.outwardTaxableSupplies.totalTax.toLocaleString('en-IN')}</span>
           </div>
 
           <span className="text-zinc-500 font-bold">-</span>
 
-          <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-md">
+          <div className="p-2 bg-ink border border-zinc-800 rounded-md">
             <span className="text-[10px] text-zinc-400 block">Eligible ITC (Table 4)</span>
             <span className="font-mono font-bold text-emerald-400">₹{gstr3b.eligibleItcPurchases.totalItc.toLocaleString('en-IN')}</span>
           </div>
@@ -62,7 +62,7 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
         <div className="p-3.5 bg-white border border-zinc-200 rounded-md space-y-1">
           <div className="flex justify-between items-center text-zinc-500 mb-1">
             <span className="font-bold text-zinc-900">B2B Registered Supplies</span>
-            <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 rounded font-mono font-bold">{gstr1.b2bSupplies.invoiceCount} invoices</span>
+            <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 rounded-md font-mono font-bold">{gstr1.b2bSupplies.invoiceCount} invoices</span>
           </div>
           <div className="flex justify-between text-zinc-600">
             <span>Taxable Supplies Value:</span>
@@ -77,7 +77,7 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
         <div className="p-3.5 bg-white border border-zinc-200 rounded-md space-y-1">
           <div className="flex justify-between items-center text-zinc-500 mb-1">
             <span className="font-bold text-zinc-900">B2C Retail / Walk-in Supplies</span>
-            <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 rounded font-mono font-bold">{gstr1.b2cSupplies.invoiceCount} invoices</span>
+            <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 rounded-md font-mono font-bold">{gstr1.b2cSupplies.invoiceCount} invoices</span>
           </div>
           <div className="flex justify-between text-zinc-600">
             <span>Taxable Supplies Value:</span>
@@ -94,7 +94,7 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
       <div className="bg-white border border-zinc-200 rounded-md overflow-hidden">
         <div className="p-3 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Files weight="bold" className="w-4 h-4 text-red-600" />
+            <Files weight="bold" className="w-4 h-4 text-primary-600" />
             <h4 className="font-bold text-xs text-zinc-950">GSTR-1 Outward Supplies by GST Slab</h4>
           </div>
           <span className="text-[10px] text-zinc-500 font-mono">Government Slabs: 0%, 5%, 12%, 18%, 28%</span>
@@ -113,7 +113,7 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
             {gstr1.taxSlabBreakup.map((row) => (
               <tr key={row.ratePercent} className="hover:bg-zinc-50">
                 <td className="p-2.5 font-bold text-zinc-950 font-mono">
-                  <span className="px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200">
+                  <span className="px-1.5 py-0.5 rounded-md bg-zinc-100 border border-zinc-200">
                     {row.ratePercent}% GST Slab
                   </span>
                 </td>

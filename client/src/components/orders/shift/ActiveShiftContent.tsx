@@ -55,7 +55,7 @@ export function ActiveShiftContent({
               min={0}
               value={openingFloat}
               onChange={(e) => setOpeningFloat(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 text-sm font-mono font-bold rounded-md border border-zinc-300 focus:border-red-600"
+              className="w-full px-3 py-2 text-sm font-mono font-bold rounded-md border border-zinc-300 focus:border-primary-600"
             />
           </div>
 
@@ -68,14 +68,14 @@ export function ActiveShiftContent({
               placeholder="e.g. Morning opening shift, clean till"
               value={openNotes}
               onChange={(e) => setOpenNotes(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-md border border-zinc-300 focus:border-red-600"
+              className="w-full px-3 py-2 text-xs rounded-md border border-zinc-300 focus:border-primary-600"
             />
           </div>
 
           <button
             onClick={onOpenShift}
             disabled={isOpening}
-            className="w-full py-2.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs cursor-pointer transition-colors"
+            className="w-full py-2.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs cursor-pointer transition-colors"
           >
             {isOpening ? 'Opening Shift...' : `Open Shift with ₹${openingFloat} Float`}
           </button>
@@ -89,7 +89,7 @@ export function ActiveShiftContent({
 
   return (
     <div className="space-y-4">
-      <div className="p-3 rounded-md bg-zinc-900 text-white flex justify-between items-center text-xs">
+      <div className="p-3 rounded-md bg-ink text-white flex justify-between items-center text-xs">
         <div>
           <span className="font-mono font-bold text-red-500">{activeShift.shiftNumber}</span>
           <span className="text-zinc-400 ml-2">Cashier: {activeShift.cashierName}</span>
@@ -144,7 +144,7 @@ export function ActiveShiftContent({
               placeholder={`e.g. ${activeShift.expectedCash}`}
               value={actualCash}
               onChange={(e) => setActualCash(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-md border border-zinc-300 focus:border-red-600"
+              className="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-md border border-zinc-300 focus:border-primary-600"
             />
           </div>
           <div>
@@ -182,7 +182,7 @@ export function ActiveShiftContent({
         <button
           onClick={onCloseShift}
           disabled={isClosing || !actualCash}
-          className="w-full py-2.5 rounded-md bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-xs cursor-pointer transition-colors"
+          className="w-full py-2.5 rounded-md bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs cursor-pointer transition-colors"
         >
           {isClosing ? 'Closing Shift...' : 'Reconcile & Close Cash Drawer Shift'}
         </button>

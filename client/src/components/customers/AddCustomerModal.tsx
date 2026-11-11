@@ -55,11 +55,11 @@ export function AddCustomerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-md border border-zinc-200 w-full max-w-md p-5 space-y-4 font-sans">
         <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <h3 className="font-bold text-sm text-zinc-950 flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-red-600" />
+            <UserPlus className="w-4 h-4 text-primary-600" />
             <span>Add Customer Profile</span>
           </h3>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 cursor-pointer">
@@ -82,7 +82,7 @@ export function AddCustomerModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Arun Kumar"
-              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none"
+              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none"
             />
           </div>
 
@@ -94,7 +94,7 @@ export function AddCustomerModal({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="e.g. 9840123456"
-              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono"
+              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono"
             />
           </div>
 
@@ -106,7 +106,7 @@ export function AddCustomerModal({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="arun@gmail.com"
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ export function AddCustomerModal({
                 value={gstin}
                 onChange={(e) => setGstin(e.target.value.toUpperCase())}
                 placeholder="33AAAAA..."
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono uppercase"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono uppercase"
               />
             </div>
           </div>
@@ -131,7 +131,7 @@ export function AddCustomerModal({
               step="500"
               value={creditLimit}
               onChange={(e) => setCreditLimit(Number(e.target.value))}
-              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono"
+              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono"
             />
           </div>
 
@@ -146,7 +146,7 @@ export function AddCustomerModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold cursor-pointer disabled:opacity-50"
+              className="px-4 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-semibold cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save Customer'}
             </button>

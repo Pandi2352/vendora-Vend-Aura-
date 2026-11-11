@@ -24,7 +24,7 @@ export function ProductGrid({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Scan barcode or type product name / SKU (e.g. Atta, Tea, 890103...)"
-          className="w-full pl-9 pr-24 py-2 rounded-md border border-zinc-300 bg-white text-xs sm:text-sm text-zinc-950 focus:border-red-600 outline-none"
+          className="w-full pl-9 pr-24 py-2 rounded-md border border-zinc-300 bg-white text-xs sm:text-sm text-zinc-950 focus:border-primary-600 outline-none"
         />
         <div className="absolute right-3 top-2 flex items-center gap-1 text-[11px] font-mono text-zinc-400">
           <Barcode className="w-3.5 h-3.5" />
@@ -80,7 +80,7 @@ export function ProductGrid({
                     e.stopPropagation();
                     onAddToCart(p);
                   }}
-                  className="w-7 h-7 rounded-md bg-zinc-100 group-hover:bg-red-600 text-zinc-700 group-hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-md bg-zinc-100 group-hover:bg-primary-600 text-zinc-700 group-hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <Plus weight="bold" className="w-3.5 h-3.5" />
                 </button>

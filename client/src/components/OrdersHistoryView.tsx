@@ -60,7 +60,7 @@ export function OrdersHistoryView({ currentUser, onReprintInvoice }: OrdersHisto
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h2 className="text-lg font-black text-zinc-950 flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-red-600" />
+            <Receipt className="w-5 h-5 text-primary-600" />
             <span>Store Invoices & Bills History</span>
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
@@ -102,7 +102,7 @@ export function OrdersHistoryView({ currentUser, onReprintInvoice }: OrdersHisto
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by invoice number (e.g. INV-2026-...) or customer name / mobile"
-            className="w-full pl-9 pr-3 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-900 focus:border-red-600 outline-none"
+            className="w-full pl-9 pr-3 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-900 focus:border-primary-600 outline-none"
           />
         </div>
 
@@ -112,7 +112,7 @@ export function OrdersHistoryView({ currentUser, onReprintInvoice }: OrdersHisto
               key={mode}
               onClick={() => setFilterMode(mode)}
               className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
-                filterMode === mode ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                filterMode === mode ? 'bg-ink text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
               }`}
             >
               {mode}

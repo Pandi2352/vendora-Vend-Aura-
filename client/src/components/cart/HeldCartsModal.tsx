@@ -19,12 +19,12 @@ export function HeldCartsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white border border-zinc-200 rounded-md max-w-lg w-full flex flex-col max-h-[85vh]">
         {/* Modal Header */}
         <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <PauseCircle weight="bold" className="w-5 h-5 text-red-600" />
+            <PauseCircle weight="bold" className="w-5 h-5 text-primary-600" />
             <div>
               <h3 className="font-bold text-sm text-zinc-950">Parked / Held Register Bills</h3>
               <p className="text-[11px] text-zinc-500">
@@ -88,7 +88,7 @@ export function HeldCartsModal({
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => onResumeCart(hc)}
-                    className="px-2.5 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                    className="px-2.5 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <Play weight="fill" className="w-3 h-3" />
                     <span>Resume</span>

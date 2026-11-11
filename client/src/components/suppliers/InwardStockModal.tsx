@@ -106,12 +106,12 @@ export function InwardStockModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-md border border-zinc-200 w-full max-w-2xl p-5 space-y-4 max-h-[90vh] flex flex-col font-sans">
         <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <div>
             <h3 className="font-bold text-sm text-zinc-950 flex items-center gap-2">
-              <Package className="w-4 h-4 text-red-600" />
+              <Package className="w-4 h-4 text-primary-600" />
               <span>Inward Stock Delivery (Goods Receipt Note)</span>
             </h3>
             <p className="text-[11px] text-zinc-500 mt-0.5">Increments active stock and updates cost ledger.</p>
@@ -133,7 +133,7 @@ export function InwardStockModal({
                 required
                 value={selectedSupplierId}
                 onChange={(e) => setSelectedSupplierId(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none bg-white"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none bg-white"
               >
                 <option value="">-- Choose Supplier --</option>
                 {suppliers.map((s) => (
@@ -148,7 +148,7 @@ export function InwardStockModal({
                 value={supplierBillNo}
                 onChange={(e) => setSupplierBillNo(e.target.value)}
                 placeholder="e.g. INV/2026/894"
-                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none font-mono"
+                className="w-full px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none font-mono"
               />
             </div>
           </div>
@@ -159,7 +159,7 @@ export function InwardStockModal({
               <select
                 value={selectedProductToAdd}
                 onChange={(e) => setSelectedProductToAdd(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-md border border-zinc-300 focus:border-red-600 outline-none bg-white text-xs"
+                className="flex-1 px-3 py-1.5 rounded-md border border-zinc-300 focus:border-primary-600 outline-none bg-white text-xs"
               >
                 <option value="">-- Select Product from Catalog --</option>
                 {products.map((p) => (
@@ -170,7 +170,7 @@ export function InwardStockModal({
                 type="button"
                 onClick={handleAddItem}
                 disabled={!selectedProductToAdd}
-                className="px-3 py-1.5 rounded-md bg-zinc-900 text-white font-semibold cursor-pointer disabled:opacity-40"
+                className="px-3 py-1.5 rounded-md bg-ink text-white font-semibold cursor-pointer disabled:opacity-40"
               >
                 Add Line
               </button>
@@ -193,7 +193,7 @@ export function InwardStockModal({
                     type="button"
                     onClick={() => setPaymentStatus(s)}
                     className={`px-3 py-1 rounded-md text-xs font-bold border cursor-pointer ${
-                      paymentStatus === s ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                      paymentStatus === s ? 'bg-ink text-white border-zinc-900' : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                     }`}
                   >
                     {s}
@@ -229,7 +229,7 @@ export function InwardStockModal({
             <button
               type="submit"
               disabled={loading || inwardItems.length === 0}
-              className="px-4 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold cursor-pointer disabled:opacity-50"
+              className="px-4 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-semibold cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Finalizing GRN...' : 'Confirm Inward & Add Stock'}
             </button>
