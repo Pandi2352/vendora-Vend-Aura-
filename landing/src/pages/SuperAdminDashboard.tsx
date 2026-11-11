@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  Users, 
-  Sparkles, 
-  ArrowUpRight, 
-  Search, 
-  Filter, 
-  ExternalLink, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  ShieldCheck, 
-  Store, 
-  RefreshCw,
+import {
+  Buildings,
+  Users,
+  Sparkle,
+  ArrowUpRight,
+  MagnifyingGlass,
+  Funnel,
+  ArrowSquareOut,
+  Phone,
+  EnvelopeSimple,
+  MapPin,
+  ShieldCheck,
+  ArrowsClockwise,
   X
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { BusinessType, BUSINESS_TYPE_LABELS, SubscriptionPlanCode } from '../shared';
@@ -55,7 +54,6 @@ export function SuperAdminDashboard() {
   const [filterType, setFilterType] = useState<string>('ALL');
   const [selectedTenant, setSelectedTenant] = useState<TenantItem | null>(null);
 
-  // Initial seed demo tenants for immediate live visualization
   const initialDemoTenants: TenantItem[] = [
     {
       id: '1',
@@ -78,74 +76,72 @@ export function SuperAdminDashboard() {
       gstin: '33AAAAA0000A1Z5',
       users: [
         { username: 'srimurugan_admin', role: 'OWNER', email: 'pandi@srimurugan.in' },
-        { username: 'cashier_01', role: 'CASHIER', email: 'counter1@srimurugan.in' },
-        { username: 'manager_vel', role: 'STORE_MANAGER', email: 'vel@srimurugan.in' },
+        { username: 'cashier_ramesh', role: 'CASHIER', email: 'ramesh@srimurugan.in' },
       ],
     },
     {
       id: '2',
-      shopId: 'annaimedicals',
-      businessName: 'Annai Pharmacy & Healthcare',
-      ownerName: 'K. Rajasekaran',
-      email: 'raja@annaimedicals.com',
-      phone: '+91 94433 11223',
-      businessType: BusinessType.PHARMACY,
+      shopId: 'chennaisilks',
+      businessName: 'Chennai Silks & Garments',
+      ownerName: 'Venkatesh Rao',
+      email: 'venkat@chennaisilks.com',
+      phone: '+91 98401 23456',
+      businessType: BusinessType.TEXTILE_GARMENTS,
       plan: SubscriptionPlanCode.BUSINESS,
       status: 'ACTIVE',
-      billsCount: 14290,
+      billsCount: 14210,
       createdAt: '2026-10-15',
       address: {
-        street: '45 Cross Street, Gandhipuram',
-        city: 'Coimbatore',
+        street: '44 Usman Road, T. Nagar',
+        city: 'Chennai',
         state: 'Tamil Nadu',
-        pincode: '641012',
+        pincode: '600017',
       },
-      gstin: '33AABCR1234F1Z8',
+      gstin: '33BBBBB1111B2Z6',
       users: [
-        { username: 'annai_admin', role: 'OWNER', email: 'raja@annaimedicals.com' },
-        { username: 'pharmacist_kumar', role: 'MANAGER', email: 'kumar@annaimedicals.com' },
+        { username: 'chennai_admin', role: 'OWNER', email: 'venkat@chennaisilks.com' },
+        { username: 'mgr_anand', role: 'STORE_MANAGER', email: 'anand@chennaisilks.com' },
       ],
     },
     {
       id: '3',
-      shopId: 'royalfashions',
-      businessName: 'Royal Textile & Garments',
-      ownerName: 'M. Senthil Nathan',
-      email: 'senthil@royalfashions.in',
-      phone: '+91 97890 55443',
-      businessType: BusinessType.TEXTILE_GARMENTS,
+      shopId: 'annabakery',
+      businessName: 'Anna Nagar Hot Bakery',
+      ownerName: 'Suresh Kumar',
+      email: 'suresh@annabakery.in',
+      phone: '+91 94440 98765',
+      businessType: BusinessType.BAKERY_SWEETS,
       plan: SubscriptionPlanCode.STARTER,
-      status: 'TRIAL',
-      billsCount: 340,
-      createdAt: '2026-11-09',
+      status: 'ACTIVE',
+      billsCount: 3150,
+      createdAt: '2026-11-05',
       address: {
-        street: '88 Car Street, Madurai Town',
-        city: 'Madurai',
+        street: '2nd Avenue, Anna Nagar',
+        city: 'Chennai',
         state: 'Tamil Nadu',
-        pincode: '625001',
+        pincode: '600040',
       },
-      gstin: '33AABCS9876E1Z2',
       users: [
-        { username: 'royal_admin', role: 'OWNER', email: 'senthil@royalfashions.in' },
+        { username: 'bakery_admin', role: 'OWNER', email: 'suresh@annabakery.in' },
       ],
     },
     {
       id: '4',
       shopId: 'greenbasket',
-      businessName: 'Green Basket Fresh Produce',
-      ownerName: 'Deepa V.',
+      businessName: 'Green Basket Organic Groceries',
+      ownerName: 'Deepa Natarajan',
       email: 'deepa@greenbasket.co.in',
-      phone: '+91 99401 22334',
-      businessType: BusinessType.FRUITS_VEGETABLES,
+      phone: '+91 97910 11223',
+      businessType: BusinessType.GROCERY,
       plan: SubscriptionPlanCode.FREE_TRIAL,
       status: 'TRIAL',
-      billsCount: 180,
-      createdAt: '2026-11-10',
+      billsCount: 245,
+      createdAt: '2026-11-08',
       address: {
-        street: '15 Anna Nagar 2nd Avenue',
+        street: '7th Main Road, Velachery',
         city: 'Chennai',
         state: 'Tamil Nadu',
-        pincode: '600040',
+        pincode: '600042',
       },
       users: [
         { username: 'green_admin', role: 'OWNER', email: 'deepa@greenbasket.co.in' },
@@ -153,7 +149,6 @@ export function SuperAdminDashboard() {
     },
   ];
 
-  // Fetch registered tenants from backend or fallback to state
   const fetchTenants = async () => {
     setLoading(true);
     try {
@@ -163,7 +158,7 @@ export function SuperAdminDashboard() {
       } else {
         setTenants(initialDemoTenants);
       }
-    } catch (err) {
+    } catch {
       setTenants(initialDemoTenants);
     } finally {
       setLoading(false);
@@ -174,7 +169,6 @@ export function SuperAdminDashboard() {
     fetchTenants();
   }, []);
 
-  // Filtered tenants
   const filteredTenants = tenants.filter((t) => {
     const matchesSearch =
       t.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -190,18 +184,20 @@ export function SuperAdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-zinc-100 text-zinc-950 flex flex-col font-sans w-full">
       {/* Top Super Admin Navbar */}
-      <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="bg-zinc-950 text-white border-b border-zinc-800 sticky top-0 z-40">
+        <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold">
-                <Store className="w-4 h-4" />
-              </div>
+              <img
+                src="/assets/vendora_logo.png"
+                alt="Vendora Logo"
+                className="h-8 w-auto object-contain"
+              />
               <span className="font-bold text-lg text-white">Vendora</span>
             </Link>
-            <span className="text-xs bg-brand-500/20 text-brand-300 border border-brand-400/30 px-2 py-0.5 rounded-md font-semibold">
+            <span className="text-xs bg-red-950 text-red-400 border border-red-800 px-2 py-0.5 rounded-md font-semibold">
               Super Admin Console
             </span>
           </div>
@@ -211,25 +207,25 @@ export function SuperAdminDashboard() {
               href="http://localhost:5000/docs"
               target="_blank"
               rel="noreferrer"
-              className="text-slate-300 hover:text-white flex items-center gap-1 font-medium"
+              className="text-zinc-400 hover:text-white flex items-center gap-1 font-medium"
             >
               <span>Swagger API Docs</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight weight="bold" className="w-3.5 h-3.5" />
             </a>
 
             <a
               href="http://localhost:4001"
               target="_blank"
               rel="noreferrer"
-              className="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold transition-all flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold transition-all flex items-center gap-1.5"
             >
               <span>Open Store POS (Port 4001)</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ArrowSquareOut weight="bold" className="w-3.5 h-3.5" />
             </a>
 
             <Link
               to="/"
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-zinc-400 hover:text-white transition-colors"
             >
               ← Back to Landing
             </Link>
@@ -238,79 +234,79 @@ export function SuperAdminDashboard() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
+      <main className="w-full max-w-[1680px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16 py-8 flex-1">
         {/* KPI Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-md border border-zinc-200 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Total Registered Tenants</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{tenants.length}</p>
-              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Across 14 retail sectors</p>
+              <p className="text-xs font-semibold text-zinc-500">Total Registered Tenants</p>
+              <p className="text-2xl font-black text-zinc-950 mt-1">{tenants.length}</p>
+              <p className="text-[11px] text-zinc-600 font-medium mt-0.5">Across 14 retail sectors</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Building2 className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-md bg-zinc-100 text-zinc-800 flex items-center justify-center border border-zinc-200">
+              <Buildings weight="duotone" className="w-5 h-5 text-red-600" />
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div className="bg-white p-5 rounded-md border border-zinc-200 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Active Paid Stores</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">
+              <p className="text-xs font-semibold text-zinc-500">Active Paid Stores</p>
+              <p className="text-2xl font-black text-zinc-950 mt-1">
                 {tenants.filter((t) => t.status === 'ACTIVE').length}
               </p>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">Starter, Growth & Business</p>
+              <p className="text-[11px] text-zinc-500 font-medium mt-0.5">Starter, Growth & Business</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <ShieldCheck className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-md bg-zinc-100 text-zinc-800 flex items-center justify-center border border-zinc-200">
+              <ShieldCheck weight="duotone" className="w-5 h-5 text-red-600" />
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div className="bg-white p-5 rounded-md border border-zinc-200 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">30-Day Free Trials</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">
+              <p className="text-xs font-semibold text-zinc-500">30-Day Free Trials</p>
+              <p className="text-2xl font-black text-zinc-950 mt-1">
                 {tenants.filter((t) => t.status === 'TRIAL').length}
               </p>
-              <p className="text-[11px] text-blue-600 font-medium mt-0.5">Under evaluation</p>
+              <p className="text-[11px] text-zinc-600 font-medium mt-0.5">Under evaluation</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Users className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-md bg-zinc-100 text-zinc-800 flex items-center justify-center border border-zinc-200">
+              <Users weight="duotone" className="w-5 h-5 text-red-600" />
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div className="bg-white p-5 rounded-md border border-zinc-200 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Estimated MRR</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">₹5,298</p>
-              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">+24% vs last month</p>
+              <p className="text-xs font-semibold text-zinc-500">Estimated MRR</p>
+              <p className="text-2xl font-black text-zinc-950 mt-1">₹5,298</p>
+              <p className="text-[11px] text-zinc-600 font-medium mt-0.5">+24% vs last month</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Sparkles className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-md bg-zinc-100 text-zinc-800 flex items-center justify-center border border-zinc-200">
+              <Sparkle weight="duotone" className="w-5 h-5 text-red-600" />
             </div>
           </div>
         </div>
 
         {/* Filter and Search Bar */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-white p-4 rounded-md border border-zinc-200 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="relative w-full md:w-96">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <MagnifyingGlass className="w-4 h-4 text-zinc-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by shop ID, name, owner, email, phone..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none"
+              className="w-full pl-9 pr-3 py-1.5 rounded-md border border-zinc-300 text-xs sm:text-sm focus:border-red-600 outline-none"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <Filter className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <Funnel className="w-3.5 h-3.5" />
               <span>Plan:</span>
               <select
                 value={filterPlan}
                 onChange={(e) => setFilterPlan(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 outline-none"
+                className="px-2.5 py-1.5 rounded-md border border-zinc-300 bg-white text-xs font-medium text-zinc-800 outline-none"
               >
                 <option value="ALL">All Plans</option>
                 <option value={SubscriptionPlanCode.FREE_TRIAL}>Free Trial</option>
@@ -320,12 +316,12 @@ export function SuperAdminDashboard() {
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="flex items-center gap-1.5 text-xs text-zinc-600">
               <span>Industry:</span>
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 outline-none"
+                className="px-2.5 py-1.5 rounded-md border border-zinc-300 bg-white text-xs font-medium text-zinc-800 outline-none"
               >
                 <option value="ALL">All Industries</option>
                 {Object.entries(BUSINESS_TYPE_LABELS).map(([code, label]) => (
@@ -338,27 +334,27 @@ export function SuperAdminDashboard() {
 
             <button
               onClick={fetchTenants}
-              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+              className="p-1.5 rounded-md border border-zinc-300 hover:bg-zinc-100 text-zinc-700 transition-colors cursor-pointer"
               title="Refresh Tenants"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <ArrowsClockwise className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
         {/* Tenant Directory Table */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-sm sm:text-base text-slate-900">
+        <div className="bg-white rounded-md border border-zinc-200 overflow-hidden">
+          <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
+            <h3 className="font-bold text-sm sm:text-base text-zinc-950">
               Registered Tenant Shops ({filteredTenants.length})
             </h3>
-            <span className="text-xs text-slate-500 font-mono">Live Sync</span>
+            <span className="text-xs text-zinc-500 font-mono">Live Sync</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 font-bold uppercase tracking-wider">
                   <th className="py-3 px-4">Shop ID & Store Name</th>
                   <th className="py-3 px-4">Owner & Contact</th>
                   <th className="py-3 px-4">Business Sector</th>
@@ -368,80 +364,57 @@ export function SuperAdminDashboard() {
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-zinc-200">
                 {filteredTenants.map((tenant) => (
-                  <tr key={tenant.id} className="hover:bg-slate-50/80 transition-colors">
-                    {/* Shop ID & Name */}
+                  <tr key={tenant.id} className="hover:bg-zinc-50 transition-colors">
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{tenant.businessName}</div>
-                      <div className="font-mono text-[11px] text-brand-600 mt-0.5">
+                      <div className="font-bold text-zinc-950">{tenant.businessName}</div>
+                      <div className="font-mono text-[11px] text-red-600 mt-0.5">
                         {tenant.shopId}.vendora.com
                       </div>
                     </td>
 
-                    {/* Owner & Contact */}
-                    <td className="py-3.5 px-4 text-slate-700">
-                      <div className="font-medium text-slate-900">{tenant.ownerName}</div>
-                      <div className="text-[11px] text-slate-500">{tenant.phone}</div>
-                      <div className="text-[11px] text-slate-400">{tenant.email}</div>
+                    <td className="py-3.5 px-4 text-zinc-700">
+                      <div className="font-medium text-zinc-950">{tenant.ownerName}</div>
+                      <div className="text-[11px] text-zinc-500">{tenant.phone}</div>
+                      <div className="text-[11px] text-zinc-400">{tenant.email}</div>
                     </td>
 
-                    {/* Business Sector */}
                     <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 text-[11px] font-medium">
+                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[11px] font-medium border border-zinc-200">
                         {BUSINESS_TYPE_LABELS[tenant.businessType] || tenant.businessType}
                       </span>
                     </td>
 
-                    {/* Plan & Status */}
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800">{tenant.plan}</div>
+                      <div className="font-semibold text-zinc-900">{tenant.plan}</div>
                       <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold mt-0.5 ${
-                          tenant.status === 'ACTIVE'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold mt-0.5 ${tenant.status === 'ACTIVE'
+                            ? 'bg-zinc-950 text-white'
                             : tenant.status === 'TRIAL'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
-                        }`}
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : 'bg-zinc-200 text-zinc-700'
+                          }`}
                       >
                         {tenant.status}
                       </span>
                     </td>
 
-                    {/* Bills Processed */}
-                    <td className="py-3.5 px-4 font-mono text-slate-800">
-                      {tenant.billsCount.toLocaleString('en-IN')} bills
+                    <td className="py-3.5 px-4 font-mono font-medium text-zinc-800">
+                      {tenant.billsCount.toLocaleString('en-IN')}
                     </td>
 
-                    {/* Created Date */}
-                    <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+                    <td className="py-3.5 px-4 text-zinc-500 font-mono text-[11px]">
                       {tenant.createdAt}
                     </td>
 
-                    {/* Actions */}
                     <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Open Contact Modal */}
-                        <button
-                          onClick={() => setSelectedTenant(tenant)}
-                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-medium cursor-pointer"
-                        >
-                          View Details
-                        </button>
-
-                        {/* Direct link to POS terminal on client port 4001 */}
-                        <a
-                          href={`http://localhost:4001`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-2.5 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold flex items-center gap-1 shadow-xs"
-                          title="Open Store Terminal"
-                        >
-                          <span>Launch POS</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
+                      <button
+                        onClick={() => setSelectedTenant(tenant)}
+                        className="px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-zinc-950 hover:text-white border border-zinc-200 font-semibold text-[11px] text-zinc-800 transition-colors cursor-pointer"
+                      >
+                        Inspect
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -451,94 +424,116 @@ export function SuperAdminDashboard() {
         </div>
       </main>
 
-      {/* Tenant Details & Contact Info Drawer Modal */}
+      {/* Selected Tenant Drawer Modal */}
       {selectedTenant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-md border border-zinc-300 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
               <div>
-                <h4 className="font-bold text-base text-slate-900">{selectedTenant.businessName}</h4>
-                <p className="text-xs text-brand-600 font-mono mt-0.5">https://{selectedTenant.shopId}.vendora.com</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200 uppercase">
+                  Tenant Profile
+                </span>
+                <h3 className="text-lg font-bold text-zinc-950 mt-1">{selectedTenant.businessName}</h3>
+                <p className="text-xs text-red-600 font-mono">{selectedTenant.shopId}.vendora.com</p>
               </div>
               <button
                 onClick={() => setSelectedTenant(null)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+                className="w-7 h-7 rounded-md bg-zinc-200 hover:bg-zinc-300 text-zinc-700 flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="py-4 space-y-4 text-xs">
-              {/* Contact Information */}
-              <div>
-                <p className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2">Owner & Contact Details</p>
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Users className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Proprietor: <strong>{selectedTenant.ownerName}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Phone: {selectedTenant.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Mail className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Email: {selectedTenant.email}</span>
-                  </div>
+            <div className="p-5 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-md bg-zinc-50 border border-zinc-200">
+                <div>
+                  <span className="text-zinc-500 block">Subscription Tier</span>
+                  <span className="font-bold text-zinc-900">{selectedTenant.plan}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block">Status</span>
+                  <span className="font-bold text-red-600">{selectedTenant.status}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block">Sector</span>
+                  <span className="font-bold text-zinc-900">{BUSINESS_TYPE_LABELS[selectedTenant.businessType]}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block">Bills Counter</span>
+                  <span className="font-bold text-zinc-900">{selectedTenant.billsCount} bills</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-bold text-zinc-900 uppercase text-[10px] tracking-wider">Contact & Address</h4>
+                <div className="space-y-1.5 text-zinc-700">
+                  <p className="flex items-center gap-2">
+                    <Users weight="bold" className="w-3.5 h-3.5 text-zinc-500" />
+                    <span className="font-medium">{selectedTenant.ownerName}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <EnvelopeSimple weight="bold" className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>{selectedTenant.email}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Phone weight="bold" className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>{selectedTenant.phone}</span>
+                  </p>
                   {selectedTenant.address && (
-                    <div className="flex items-start gap-2 text-slate-700">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                    <p className="flex items-start gap-2">
+                      <MapPin weight="bold" className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
                       <span>
                         {selectedTenant.address.street}, {selectedTenant.address.city}, {selectedTenant.address.state} - {selectedTenant.address.pincode}
                       </span>
-                    </div>
+                    </p>
                   )}
                   {selectedTenant.gstin && (
-                    <div className="flex items-center gap-2 text-slate-700">
-                      <span className="font-bold text-[10px] bg-slate-200 px-1.5 py-0.5 rounded">GSTIN</span>
-                      <span className="font-mono">{selectedTenant.gstin}</span>
-                    </div>
+                    <p className="text-[11px] font-mono text-zinc-500">
+                      GSTIN: <span className="font-bold text-zinc-900">{selectedTenant.gstin}</span>
+                    </p>
                   )}
                 </div>
               </div>
 
-              {/* Staff Users Scoped to this Tenant */}
-              {selectedTenant.users && selectedTenant.users.length > 0 && (
-                <div>
-                  <p className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2">Staff Users & Credentials</p>
-                  <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
-                    {selectedTenant.users.map((u, i) => (
-                      <div key={i} className="p-2.5 flex items-center justify-between bg-white text-xs">
-                        <div>
-                          <p className="font-mono font-bold text-slate-800">{u.username}</p>
-                          <p className="text-[10px] text-slate-400">{u.email}</p>
-                        </div>
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">
-                          {u.role}
-                        </span>
+              <div>
+                <h4 className="font-bold text-zinc-900 uppercase text-[10px] tracking-wider mb-2">
+                  Staff & Cashier Accounts
+                </h4>
+                <div className="space-y-1.5">
+                  {selectedTenant.users?.map((user, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2 rounded-md bg-zinc-50 border border-zinc-200 flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-mono font-bold text-zinc-950">{user.username}</span>
+                        <span className="text-zinc-500 ml-2">({user.email})</span>
                       </div>
-                    ))}
-                  </div>
+                      <span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-800 text-[10px] font-bold">
+                        {user.role}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
 
-            <div className="pt-2 flex justify-end gap-2">
+            <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-end gap-2">
+              <a
+                href={`http://localhost:4001/login?shopId=${selectedTenant.shopId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-xs flex items-center gap-1.5"
+              >
+                <span>Launch POS Terminal</span>
+                <ArrowSquareOut weight="bold" className="w-3 h-3" />
+              </a>
               <button
                 onClick={() => setSelectedTenant(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                className="px-3 py-1.5 rounded-md bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-semibold"
               >
                 Close
               </button>
-              <a
-                href={`http://localhost:4001`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>Launch Counter (Port 4001)</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
             </div>
           </div>
         </div>

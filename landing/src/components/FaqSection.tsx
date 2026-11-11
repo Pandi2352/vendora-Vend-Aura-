@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { CaretDown } from '@phosphor-icons/react';
 
 export function FaqSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
@@ -40,38 +40,39 @@ export function FaqSection() {
   ];
 
   return (
-    <section id="faq" className="py-20 bg-white border-t border-slate-200">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+    <section id="faq" className="py-20 bg-white border-b border-zinc-200 w-full">
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 lg:px-14">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 tracking-tight">
             Frequently Asked Questions
           </h2>
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-zinc-600">
             Everything you need to know about getting started with Vendora Cloud POS.
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {faqs.map((faq, idx) => {
             const isOpen = openIdx === idx;
             return (
               <div
                 key={idx}
-                className="border border-slate-200 rounded-2xl overflow-hidden transition-all bg-slate-50/50 hover:border-slate-300"
+                className="border border-zinc-200 rounded-md overflow-hidden transition-all bg-zinc-50 hover:border-zinc-300"
               >
                 <button
                   onClick={() => setOpenIdx(isOpen ? null : idx)}
-                  className="w-full py-4 px-6 text-left font-bold text-sm sm:text-base text-slate-900 flex items-center justify-between gap-4 cursor-pointer"
+                  className="w-full py-4 px-5 text-left flex items-center justify-between gap-4 font-semibold text-sm sm:text-base text-zinc-950 cursor-pointer"
                 >
                   <span>{faq.q}</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ${
-                      isOpen ? 'rotate-180 text-brand-600' : ''
+                  <CaretDown
+                    weight="bold"
+                    className={`w-4 h-4 text-zinc-500 transition-transform duration-200 shrink-0 ${
+                      isOpen ? 'rotate-180 text-red-600' : ''
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-6 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 bg-white">
+                  <div className="px-5 pb-4 text-xs sm:text-sm text-zinc-600 leading-relaxed border-t border-zinc-200/60 pt-3 bg-white">
                     {faq.a}
                   </div>
                 )}
@@ -83,4 +84,3 @@ export function FaqSection() {
     </section>
   );
 }
-

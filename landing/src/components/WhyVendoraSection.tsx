@@ -1,155 +1,254 @@
-import { CheckCircle2, XCircle, Zap, Globe, Shield, RefreshCw } from 'lucide-react';
+import { 
+  DuotoneRocket, 
+  DuotoneBrowser, 
+  DuotoneLink, 
+  DuotoneShield,
+  DuotoneCloud,
+  DuotoneWifiSlash,
+  DuotoneReceipt,
+  DuotonePrinter,
+  DuotoneBook,
+  DuotoneKey,
+  DuotoneGift
+} from './DuotoneIcons';
+import { CheckCircle, X, Cloud } from '@phosphor-icons/react';
 
 export function WhyVendoraSection() {
   const pillars = [
     {
       title: 'Start billing on day one',
       description: 'Choose your business type at sign-up, and your account comes ready with categories, brands, units and sample items, so you can make your first bill right away.',
-      icon: Zap,
+      icon: DuotoneRocket,
     },
     {
       title: 'Nothing to install',
-      description: 'Open it in Chrome or any browser on your PC, laptop, tablet or POS terminal. Updates happen automatically in the background.',
-      icon: RefreshCw,
+      description: 'Open it in Chrome or any browser on your PC, laptop, tablet or POS terminal. Updates happen automatically.',
+      icon: DuotoneBrowser,
     },
     {
       title: 'Your own login address',
-      description: 'Every shop gets its own secure web address, like yourshop.vendora.com. Your cashiers and managers sign in with their unique credentials.',
-      icon: Globe,
+      description: 'Every shop gets its own secure web address, like yourshop.vendora.com. Your team signs in with just a username and password.',
+      icon: DuotoneLink,
     },
     {
       title: 'Safe in the cloud',
-      description: 'Your stock, customer ledgers, and transactions are stored securely online, protected with HTTPS, and accessible from anywhere.',
-      icon: Shield,
+      description: 'Your data is stored securely online, protected with HTTPS, and available from anywhere.',
+      icon: DuotoneShield,
     },
   ];
 
   const comparisonRows = [
     {
       feature: 'Getting started',
-      vendora: 'Pick your business type and start with preloaded categories, brands and items, ready to bill on day one',
-      others: 'Usually starts completely empty, so every item has to be added manually before the first bill',
+      icon: DuotoneRocket,
+      vendora: 'Pick your business type and start with categories, brands and sample items, ready to bill on day one',
+      others: 'Usually starts empty, so every item has to be added before the first bill',
     },
     {
       feature: 'Installation',
-      vendora: 'Nothing to install. Open it in Chrome or any modern browser on any terminal',
-      others: 'Often needs heavy proprietary software installed on every billing PC',
+      icon: DuotoneBrowser,
+      vendora: 'Nothing to install. Open it in Chrome or any browser',
+      others: 'Often needs software installed on every billing PC',
     },
     {
       feature: 'Updates',
-      vendora: 'Updates happen automatically without downtime or extra fees',
-      others: 'Updates are often manual, complicated, or charged as paid upgrades',
+      icon: DuotoneCloud,
+      vendora: 'Updates happen automatically',
+      others: 'Updates are often manual or paid',
     },
     {
       feature: 'Internet goes down',
-      vendora: 'Billing carries on seamlessly offline; queued bills sync automatically when connection returns',
-      others: 'Many cloud POS tools completely halt counter checkout when offline',
+      icon: DuotoneWifiSlash,
+      vendora: 'Billing carries on even if the connection drops',
+      others: 'Many cloud POS tools stop billing when offline',
     },
     {
       feature: 'GST billing',
-      vendora: 'Automatic CGST, SGST, IGST calculations, HSN codes, and instant GSTR summaries',
-      others: 'GST setup is often an expensive add-on or requires manual calculations',
+      icon: DuotoneReceipt,
+      vendora: 'Automatic CGST/SGST/IGST calculation and clean printed or digital bills',
+      others: 'GST setup is often an add-on or complex configuration',
     },
     {
       feature: 'Receipt printing',
-      vendora: 'Prints straight to your 58mm/80mm thermal printer with zero browser print pop-up delays',
-      others: 'Browser print dialog pop-ups interrupt and slow down counter queues',
+      icon: DuotonePrinter,
+      vendora: 'Direct thermal receipt printing to USB and network printers without print dialogs',
+      others: 'Driver issues, Windows printer dialog pops up on every bill',
     },
     {
-      feature: 'Accounts & Finance',
-      vendora: 'Built-in day book, cash book, P&L, balance sheet and customer credit ledger (Khata)',
-      others: 'Usually requires separate expensive third-party accounting software like Tally',
+      feature: 'Accounts',
+      icon: DuotoneBook,
+      vendora: 'Day book, cash book, P&L, balance sheet and trial balance included',
+      others: 'Need separate accounting software with manual entry',
     },
     {
-      feature: 'Login Security',
-      vendora: 'Your own dedicated shop address (e.g., yourshop.vendora.com)',
-      others: 'A generic shared login page where multiple shop credentials mix',
+      feature: 'Login',
+      icon: DuotoneKey,
+      vendora: "Sign in from any device with your store's secure URL",
+      others: 'Tied to specific hardware or Windows dongles',
     },
     {
       feature: 'Free Trial',
-      vendora: '30-day free trial. No installation. No credit card required.',
-      others: 'Requires a sales call, upfront card details, or setup deposit before you can try',
+      icon: DuotoneGift,
+      vendora: '30 days free trial with all features enabled. No installation. No credit card required.',
+      others: 'Limited trial or requires credit card upfront',
     },
   ];
 
   return (
-    <section id="comparison" className="py-20 bg-slate-50 border-t border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Why Vendora Grid */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Why Vendora is Different
+    <section id="comparison" className="py-20 bg-slate-50/70 border-b border-zinc-200 w-full scroll-mt-20">
+      <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16">
+        
+        {/* Top Section: Why Vendora RetailPOS */}
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950">
+            Why <span className="text-red-600">Vendora RetailPOS</span>
           </h2>
-          <p className="mt-4 text-base text-slate-600">
-            Engineered specifically to remove retail bottlenecks and counter friction.
+          <p className="mt-3 text-sm sm:text-base text-zinc-600 font-medium">
+            Start billing on day one with zero software installation and preloaded catalog templates.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+        {/* 4 Cards Grid - rounded-md, no shadows */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8 mb-24">
           {pillars.map((item, idx) => {
             const Icon = item.icon;
             return (
               <div
                 key={idx}
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-300 hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-white p-7 rounded-md border border-zinc-200 hover:border-zinc-400 transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-600 mb-4">
-                    <Icon className="w-5 h-5" />
+                  <div className="mb-5">
+                    <Icon className="w-8 h-8" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                  <h3 className="text-lg font-bold text-zinc-950 mb-2 leading-snug">{item.title}</h3>
+                  <p className="text-xs sm:text-[13px] text-zinc-600 leading-relaxed font-normal">
+                    {item.description}
+                  </p>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Comparison Table */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-6 sm:p-8 border-b border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-2xl font-bold tracking-tight">Vendora vs Traditional POS Systems</h3>
-              <p className="text-xs text-slate-300 mt-1">See how modern cloud architecture outperforms legacy counter software.</p>
-            </div>
-            <span className="px-3 py-1 rounded-full bg-brand-500/20 border border-brand-400/40 text-brand-300 text-xs font-semibold">
-              Feature Comparison
-            </span>
-          </div>
+        {/* Elevated Centerpiece Comparison Section */}
+        <div className="text-center max-w-4xl mx-auto mb-12">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950">
+            Vendora RetailPOS vs <span className="text-red-600">other retail POS systems</span>
+          </h2>
+        </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        {/* Comparison Table Container */}
+        <div className="bg-white rounded-md border border-zinc-200 overflow-hidden">
+          
+          {/* Desktop & Tablet Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse table-fixed">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 px-6 w-1/4">Aspect</th>
-                  <th className="py-4 px-6 w-3/8 text-brand-700 bg-brand-50/50">Vendora Cloud POS</th>
-                  <th className="py-4 px-6 w-3/8 text-slate-600">Other Retail POS Systems</th>
+                <tr>
+                  {/* Aspect Header */}
+                  <th className="w-1/4 p-5 text-sm font-bold text-zinc-500 uppercase tracking-wider border-b border-zinc-200 bg-white">
+                    Feature
+                  </th>
+
+                  {/* Vendora RetailPOS Elevated Dark Header */}
+                  <th className="w-4/9 p-5 bg-[#09122e] text-white border-x border-[#09122e]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-md bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center shrink-0">
+                        <Cloud weight="fill" className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-base sm:text-lg font-bold tracking-tight text-white">
+                        Vendora RetailPOS
+                      </span>
+                    </div>
+                  </th>
+
+                  {/* Other POS Header */}
+                  <th className="w-1/3 p-5 text-base sm:text-lg font-bold text-zinc-900 border-b border-zinc-200 bg-white">
+                    Other retail POS systems
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
-                {comparisonRows.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-4 px-6 font-semibold text-slate-900">{row.feature}</td>
-                    <td className="py-4 px-6 font-medium text-slate-800 bg-brand-50/30">
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>{row.vendora}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-slate-500">
-                      <div className="flex items-start gap-2">
-                        <XCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                        <span>{row.others}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                {comparisonRows.map((row, idx) => {
+                  const Icon = row.icon;
+                  const isLast = idx === comparisonRows.length - 1;
+                  return (
+                    <tr key={idx} className="transition-colors">
+                      {/* Left Column: Icon + Feature Name */}
+                      <td className={`p-5 align-top border-b border-zinc-200 bg-white ${isLast ? 'border-b-0' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="shrink-0">
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <span className="text-sm font-bold text-zinc-950">
+                            {row.feature}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Center Column: Vendora RetailPOS (Dark Navy Elevated Column) */}
+                      <td className={`p-5 align-top bg-[#09122e] text-white border-x border-[#09122e] border-b border-white/10 ${isLast ? 'border-b-0 rounded-b-md' : ''}`}>
+                        <div className="flex items-start gap-3">
+                          <CheckCircle weight="fill" className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="text-xs sm:text-sm font-medium leading-relaxed text-zinc-100">
+                            {row.vendora}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Right Column: Other retail POS systems */}
+                      <td className={`p-5 align-top border-b border-zinc-200 bg-white ${isLast ? 'border-b-0' : ''}`}>
+                        <div className="flex items-start gap-3">
+                          <X weight="bold" className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                          <span className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                            {row.others}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Stacked Card View */}
+          <div className="md:hidden divide-y divide-zinc-200">
+            {comparisonRows.map((row, idx) => {
+              const Icon = row.icon;
+              return (
+                <div key={idx} className="p-5 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <h4 className="font-bold text-zinc-950 text-sm">{row.feature}</h4>
+                  </div>
+
+                  {/* Vendora Dark Box */}
+                  <div className="p-4 rounded-md bg-[#09122e] text-white flex items-start gap-2.5">
+                    <CheckCircle weight="fill" className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[11px] font-bold text-sky-400 uppercase tracking-wider mb-0.5">Vendora RetailPOS</p>
+                      <p className="text-xs text-zinc-200 leading-relaxed font-medium">{row.vendora}</p>
+                    </div>
+                  </div>
+
+                  {/* Other POS Box */}
+                  <div className="p-4 rounded-md bg-zinc-50 border border-zinc-200 flex items-start gap-2.5">
+                    <X weight="bold" className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Other POS Systems</p>
+                      <p className="text-xs text-zinc-600 leading-relaxed">{row.others}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
         </div>
+
       </div>
     </section>
   );
 }
-

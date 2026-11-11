@@ -1,74 +1,56 @@
-import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
-import { IndustryMarquee } from './components/IndustryMarquee';
+import { WhyVendoraSection } from './components/WhyVendoraSection';
 import { FeatureShowcase } from './components/FeatureShowcase';
 import { FeatureGrid } from './components/FeatureGrid';
 import { HowItWorks } from './components/HowItWorks';
 import { AlsoBuiltInSection } from './components/AlsoBuiltInSection';
-import { WhyVendoraSection } from './components/WhyVendoraSection';
 import { PricingSection } from './components/PricingSection';
 import { FaqSection } from './components/FaqSection';
 import { Footer } from './components/Footer';
-import { OnboardingModal } from './components/OnboardingModal';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
-import { SubscriptionPlanCode } from './shared';
+import { RegisterPage } from './pages/RegisterPage';
 
 function PublicLandingPage() {
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanCode>(SubscriptionPlanCode.GROWTH);
-
-  const handleOpenOnboarding = (planCode?: any) => {
-    if (planCode && Object.values(SubscriptionPlanCode).includes(planCode)) {
-      setSelectedPlan(planCode);
-    } else {
-      setSelectedPlan(SubscriptionPlanCode.FREE_TRIAL);
+  const handleScrollToPlans = () => {
+    const el = document.getElementById('plans');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
     }
-    setIsOnboardingOpen(true);
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans">
-      {/* Top Navigation */}
-      <Navbar onOpenOnboarding={handleOpenOnboarding} />
+    <div className="min-h-screen bg-white text-zinc-950 flex flex-col font-sans w-full overflow-x-hidden pt-18">
+      {/* Top Fixed Navigation Bar with RetailPOS Powered by Vendora Logo (Shop Sign In removed) */}
+      <Navbar onScrollToPlans={handleScrollToPlans} />
 
-      {/* Hero Section */}
-      <HeroSection onOpenOnboarding={handleOpenOnboarding} />
+      {/* Hero Section with Open Laptop Mockup & Live Ticker */}
+      <HeroSection onScrollToPlans={handleScrollToPlans} />
 
-      {/* 14 Retail Industries Marquee */}
-      <IndustryMarquee />
-
-      {/* Feature Showcase with Realistic Receipt Mockup (Screenshot #4) */}
-      <FeatureShowcase />
-
-      {/* Feature Grid (Screenshot #5) */}
-      <FeatureGrid />
-
-      {/* How it Works with Sign-in Preview (Screenshot #3) */}
-      <HowItWorks />
-
-      {/* Also Built In 10 Cards (Screenshot #2) */}
-      <AlsoBuiltInSection />
-
-      {/* Why Vendora & Full Comparison Matrix */}
+      {/* Why Vendora RetailPOS & Elevated Centerpiece Comparison Table */}
       <WhyVendoraSection />
 
-      {/* Simple Plans for Every Retail Business (Screenshot #1) */}
-      <PricingSection onOpenOnboarding={handleOpenOnboarding} />
+      {/* Feature Showcase with Realistic Thermal Receipt Mockup */}
+      <FeatureShowcase />
+
+      {/* Feature Grid: 5 Core Modules */}
+      <FeatureGrid />
+
+      {/* How it Works with Store Sign-in Preview */}
+      <HowItWorks />
+
+      {/* Also Built In 10 Cards */}
+      <AlsoBuiltInSection />
+
+      {/* Simple Plans for Every Retail Business (Action Buttons open /register in new tab) */}
+      <PricingSection />
 
       {/* Frequently Asked Questions */}
       <FaqSection />
 
-      {/* Footer with Unipro Tech Solutions Details */}
+      {/* Footer */}
       <Footer />
-
-      {/* Self-Service Onboarding Modal */}
-      <OnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        initialPlan={selectedPlan}
-      />
     </div>
   );
 }
@@ -78,9 +60,9 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<PublicLandingPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin" element={<SuperAdminDashboard />} />
       </Routes>
     </Router>
   );
 }
-

@@ -23,7 +23,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlanDe
   [SubscriptionPlanCode.FREE_TRIAL]: {
     code: SubscriptionPlanCode.FREE_TRIAL,
     name: 'Free Trial',
-    tagline: 'Try RetailPOS Nova before you subscribe.',
+    tagline: 'Try Vendora before you subscribe.',
     monthlyPrice: 0,
     annualPrice: 0,
     durationDays: 30,

@@ -19,22 +19,22 @@ export function IndustryMarquee() {
   ];
 
   return (
-    <section className="py-8 bg-slate-900 border-y border-slate-800 text-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 mb-4 text-center">
-        <p className="text-xs font-semibold text-brand-300 uppercase tracking-widest">
+    <section className="py-6 bg-zinc-950 border-y border-zinc-800 text-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 mb-3 text-center">
+        <p className="text-xs font-semibold text-red-500 uppercase tracking-widest">
           Ready-Made Setup for 14+ Retail Business Types
         </p>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none px-4 max-w-7xl mx-auto justify-start lg:justify-center flex-nowrap">
+      <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none px-4 max-w-7xl mx-auto justify-start lg:justify-center flex-nowrap">
         {industries.map((item, idx) => {
           const Icon = item.icon;
           return (
             <div
               key={idx}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-200 shrink-0 hover:border-brand-400 hover:text-white transition-all cursor-default"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-xs font-medium text-zinc-300 shrink-0 hover:border-red-600 hover:text-white transition-all cursor-default"
             >
-              <Icon className="w-3.5 h-3.5 text-brand-400 shrink-0" />
+              <Icon className="w-3.5 h-3.5 text-red-500 shrink-0" />
               <span>{item.label}</span>
             </div>
           );
@@ -43,4 +43,3 @@ export function IndustryMarquee() {
     </section>
   );
 }
-

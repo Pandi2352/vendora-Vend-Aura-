@@ -10,6 +10,7 @@ import { UserModule } from './modules/user/user.module';
 import { OutletModule } from './modules/outlet/outlet.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { MailModule } from './modules/mail/mail.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MailModule } from './modules/mail/mail.module';
     MailModule,
     OnboardingModule,
     SaasAdminModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

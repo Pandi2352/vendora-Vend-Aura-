@@ -1,101 +1,180 @@
-import { Sparkles, ArrowRight, Laptop, CheckCircle2, Zap } from 'lucide-react';
+import { 
+  Gift, 
+  ArrowRight, 
+  Laptop, 
+  Receipt, 
+  Package, 
+  ChartBar, 
+  Cloud, 
+  Lightning 
+} from '@phosphor-icons/react';
+import { IndustryTicker } from './IndustryTicker';
 
 interface HeroSectionProps {
-  onOpenOnboarding: (planCode?: string) => void;
+  onScrollToPlans?: () => void;
 }
 
-export function HeroSection({ onOpenOnboarding }: HeroSectionProps) {
-  const highlights = [
-    'Easy Billing',
-    'Stock Management',
-    'Reports & Analytics',
-    'Cloud Based POS',
-    'Quick Setup',
+export function HeroSection({ onScrollToPlans }: HeroSectionProps) {
+  const pills = [
+    { label: 'Easy Billing', icon: Receipt, iconBg: 'bg-emerald-500 text-white' },
+    { label: 'Stock Management', icon: Package, iconBg: 'bg-blue-500 text-white' },
+    { label: 'Reports & Analytics', icon: ChartBar, iconBg: 'bg-purple-500 text-white' },
+    { label: 'Cloud Based POS', icon: Cloud, iconBg: 'bg-amber-500 text-white' },
+    { label: 'Quick Setup', icon: Lightning, iconBg: 'bg-red-500 text-white' },
   ];
 
+  const handleBookDemoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onScrollToPlans) {
+      onScrollToPlans();
+    } else {
+      const el = document.getElementById('how-it-works');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
-    <section className="relative overflow-hidden pt-12 pb-16 lg:pt-20 lg:pb-24 bg-gradient-to-b from-slate-50 via-white to-slate-50">
-      {/* Decorative background glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-tr from-brand-200/40 via-indigo-100/30 to-purple-100/30 blur-3xl -z-10 rounded-full pointer-events-none" />
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#070c1e] via-[#09122e] to-[#040817] text-white pt-12 lg:pt-16 font-sans w-full">
+      {/* Decorative dot matrix accent spanning full screen */}
+      <div 
+        className="absolute inset-0 opacity-15 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)',
+          backgroundSize: '24px 24px',
+        }}
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Banner Pill */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold mb-6 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-brand-600 animate-pulse" />
-          <span>RetailPOS Nova • Cloud POS for Modern Retail</span>
-        </div>
+      <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16 relative z-10 pb-14 lg:pb-18">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-center">
+          {/* Left Column: Headlines & Actions */}
+          <div className="lg:col-span-6 flex flex-col justify-center text-left">
+            {/* Top Pill Badge matching screenshot */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-xs font-semibold mb-6 w-fit">
+              <Gift weight="fill" className="w-3.5 h-3.5 text-red-400" />
+              <span>FREE TRIAL • REGISTER FREE</span>
+            </div>
 
-        {/* Headline */}
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 max-w-4xl mx-auto leading-[1.15]">
-          Cloud POS system for your retail store:{' '}
-          <span className="bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            billing, stock and reports, ready in minutes.
-          </span>
-        </h1>
+            {/* Main Headline */}
+            <h1 className="text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight text-white leading-[1.12] max-w-2xl xl:max-w-3xl">
+              Cloud POS system for your retail store:{' '}
+              <span className="text-red-500 block sm:inline">
+                billing, stock and reports, ready in minutes.
+              </span>
+            </h1>
 
-        {/* Subhead */}
-        <p className="mt-6 text-base sm:text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
-          Vendora is cloud-based point of sale system software that runs in your browser. Sign up, pick your business type, and start billing the same day, with items, prices, and stock already set up for you.
-        </p>
+            {/* Subtitle */}
+            <p className="mt-5 text-sm sm:text-base lg:text-lg text-zinc-300 leading-relaxed max-w-xl xl:max-w-2xl font-normal">
+              Vendora is cloud based point of sale system software that runs in your browser.
+              Sign up, pick your business type, and start billing the same day, with items, prices
+              and stock already set up for you.
+            </p>
 
-        {/* Feature Pills */}
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5 max-w-2xl mx-auto">
-          {highlights.map((item, idx) => (
-            <span
-              key={idx}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-slate-200 text-xs font-medium text-slate-700 shadow-xs"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              {item}
-            </span>
-          ))}
-        </div>
+            {/* Action Buttons */}
+            <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
+              <a
+                href="/register"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Create Free Account</span>
+                <ArrowRight weight="bold" className="w-4 h-4" />
+              </a>
 
-        {/* CTA Buttons & Price Anchor */}
-        <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button
-            onClick={() => onOpenOnboarding('FREE_TRIAL')}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm sm:text-base shadow-lg shadow-brand-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <span>Create Free Account</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <a
-            href="#plans"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm sm:text-base border border-slate-300 shadow-xs transition-all flex items-center justify-center gap-2"
-          >
-            <Laptop className="w-4 h-4 text-slate-600" />
-            <span>Book a Demo</span>
-          </a>
-        </div>
+              <button
+                onClick={handleBookDemoClick}
+                className="w-full sm:w-auto px-7 py-3.5 rounded-md bg-white/5 hover:bg-white/10 text-white font-semibold text-sm sm:text-base border border-white/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Laptop weight="bold" className="w-4 h-4 text-zinc-300" />
+                <span>Book a Demo</span>
+              </button>
+            </div>
 
-        {/* Trust Guarantees & Pricing Callout */}
-        <div className="mt-10 p-5 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-around gap-4 text-center sm:text-left">
-          <div>
-            <span className="text-xs text-slate-500 block font-medium">Starting at</span>
-            <span className="text-2xl font-black text-slate-900 tracking-tight">₹999</span>
-            <span className="text-xs text-slate-500 ml-1">/month</span>
+            {/* Feature Pills Strip below buttons */}
+            <div className="mt-8 flex flex-wrap items-center gap-2.5 max-w-2xl">
+              {pills.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 border border-white/15 text-xs sm:text-sm font-semibold text-white backdrop-blur-xs"
+                  >
+                    <span className={`w-4 h-4 rounded-md flex items-center justify-center text-[10px] ${item.iconBg}`}>
+                      <Icon weight="bold" className="w-2.5 h-2.5" />
+                    </span>
+                    <span>{item.label}</span>
+                  </span>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="hidden sm:block h-10 w-[1px] bg-slate-200" />
+          {/* Right Column: Realistic Open Laptop Mockup with Overlapping Pricing Card */}
+          <div className="lg:col-span-6 flex flex-col items-center justify-center relative mt-6 lg:mt-0 w-full">
+            {/* Laptop Mockup Wrapper - Scaled Up to eliminate empty space */}
+            <div className="w-full max-w-[760px] xl:max-w-[820px] relative">
+              {/* Laptop Screen Body */}
+              <div className="rounded-t-md bg-[#18181b] p-2.5 sm:p-3 border border-zinc-700/80">
+                {/* Screen Top Bar / Browser Notch */}
+                <div className="bg-[#09090b] px-3.5 py-2 rounded-t-md flex items-center justify-between border-b border-zinc-800">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  </div>
+                  <div className="bg-[#18181b] px-5 py-0.5 rounded-md text-xs font-mono text-zinc-400 border border-zinc-700 flex items-center gap-1.5">
+                    <span className="text-red-500">🔒</span>
+                    <span>yourshop.vendora.com/pos</span>
+                  </div>
+                  <span className="text-[11px] text-zinc-500 font-mono">Vendora v1.0</span>
+                </div>
 
-          <div>
-            <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold mb-0.5">
-              30 Days
-            </span>
-            <span className="text-sm font-bold text-slate-900 block">Free Trial Included</span>
-          </div>
+                {/* Screen Display containing the POS billing screenshot */}
+                <div className="relative rounded-b-md overflow-hidden bg-zinc-950 aspect-[16/10]">
+                  <img
+                    src="/assets/vendora_hero_pos.jpg"
+                    alt="Vendora Cloud POS Billing Counter Software on Laptop"
+                    className="w-full h-full object-cover block"
+                  />
+                </div>
+              </div>
 
-          <div className="hidden sm:block h-10 w-[1px] bg-slate-200" />
+              {/* Laptop Keyboard Base */}
+              <div className="h-5 sm:h-6 bg-gradient-to-b from-[#27272a] via-[#3f3f46] to-[#18181b] rounded-b-md border-x border-b border-zinc-700 relative">
+                <div className="w-32 sm:w-40 h-1.5 bg-zinc-600 rounded-b mx-auto" />
+              </div>
 
-          <div className="text-xs text-slate-500 font-medium">
-            <span className="flex items-center justify-center sm:justify-start gap-1 text-slate-700 font-semibold">
-              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> No installation
-            </span>
-            <span>No credit card required.</span>
+              {/* Floating Pricing Card Overlapping Laptop */}
+              <div className="mt-4 sm:mt-0 sm:absolute sm:-bottom-5 sm:-left-6 bg-white text-zinc-950 p-4 rounded-md border border-zinc-300 flex items-center gap-5 max-w-md">
+                <div>
+                  <span className="text-[11px] text-zinc-500 block font-semibold leading-tight">Starting at</span>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <span className="text-2xl sm:text-3xl font-black text-zinc-950">₹999</span>
+                    <span className="text-xs text-zinc-500">/month</span>
+                  </div>
+                </div>
+
+                <div className="h-10 w-[1px] bg-zinc-200" />
+
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Gift weight="fill" className="w-4 h-4 text-red-600" />
+                    <span className="text-sm sm:text-base font-bold text-zinc-950">30 Days Free Trial</span>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-0.5 font-medium">
+                    No installation. No credit card required.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Moving Ticker Ribbon Component below hero */}
+      <IndustryTicker />
     </section>
   );
 }
