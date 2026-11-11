@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
@@ -9,7 +10,10 @@ import { AlsoBuiltInSection } from './components/AlsoBuiltInSection';
 import { PricingSection } from './components/PricingSection';
 import { FaqSection } from './components/FaqSection';
 import { Footer } from './components/Footer';
-import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
+// The admin console (with charts) loads only when /admin is opened.
+const SuperAdminDashboard = lazy(() =>
+  import('./pages/SuperAdminDashboard').then((m) => ({ default: m.SuperAdminDashboard })),
+);
 import { RegisterPage } from './pages/RegisterPage';
 
 function PublicLandingPage() {
@@ -61,7 +65,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<PublicLandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/admin" element={<SuperAdminDashboard />} />
+        <Route
+          path="/admin"
+          element={
+            <Suspense fallback={<div className="p-8 text-sm text-zinc-400">Loading admin console…</div>}>
+              <SuperAdminDashboard />
+            </Suspense>
+          }
+        />
       </Routes>
     </Router>
   );

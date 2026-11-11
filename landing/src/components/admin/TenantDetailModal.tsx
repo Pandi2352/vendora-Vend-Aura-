@@ -30,7 +30,7 @@ export function TenantDetailModal({ tenantId, fallback, onClose }: TenantDetailM
 
   if (!tenant) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70">
         <div className="bg-white rounded-md border border-zinc-300 w-full max-w-md p-5 space-y-4 text-xs">
           {loading ? (
             <p className="flex items-center gap-2 text-zinc-700 font-medium">
@@ -57,8 +57,8 @@ export function TenantDetailModal({ tenantId, fallback, onClose }: TenantDetailM
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs">
-      <div className="bg-white rounded-md border border-zinc-300 w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70">
+      <div className="bg-white rounded-md border border-zinc-300 w-full max-w-xl overflow-hidden">
         {/* Modal Header */}
         <div className="p-5 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
           <div className="flex items-center gap-3">

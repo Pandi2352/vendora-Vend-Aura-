@@ -1,10 +1,10 @@
 import { TenantStatus } from '../../shared';
 
-const STATUS_CLASSES: Record<TenantStatus, string> = {
-  [TenantStatus.ACTIVE]: 'bg-zinc-950 text-white',
-  [TenantStatus.TRIAL]: 'bg-red-50 text-red-700 border border-red-200',
-  [TenantStatus.SUSPENDED]: 'bg-zinc-200 text-zinc-700',
-  [TenantStatus.EXPIRED]: 'bg-amber-50 text-amber-800 border border-amber-200',
+const STATUS_STYLES: Record<TenantStatus, { className: string; label: string }> = {
+  [TenantStatus.ACTIVE]: { className: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Active' },
+  [TenantStatus.TRIAL]: { className: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Trial' },
+  [TenantStatus.SUSPENDED]: { className: 'bg-red-50 text-red-700 border-red-200', label: 'Suspended' },
+  [TenantStatus.EXPIRED]: { className: 'bg-amber-50 text-amber-800 border-amber-200', label: 'Expired' },
 };
 
 interface TenantStatusBadgeProps {
@@ -12,14 +12,15 @@ interface TenantStatusBadgeProps {
   className?: string;
 }
 
+/** Tinted status pill with a dot, so state never relies on colour alone. */
 export function TenantStatusBadge({ status, className = '' }: TenantStatusBadgeProps) {
+  const style = STATUS_STYLES[status] ?? { className: 'bg-zinc-50 text-zinc-700 border-zinc-200', label: status };
   return (
     <span
-      className={`inline-block px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-        STATUS_CLASSES[status] ?? 'bg-zinc-200 text-zinc-700'
-      } ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold ${style.className} ${className}`}
     >
-      {status}
+      <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden />
+      {style.label}
     </span>
   );
 }

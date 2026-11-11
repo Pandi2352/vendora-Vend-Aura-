@@ -11,6 +11,7 @@ import {
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { API_DOCS_URL, POS_URL } from '../../lib/config';
+import { VendoraMark } from '../VendoraMark';
 
 export type AdminTab = 'overview' | 'tenants' | 'contacts' | 'reports';
 
@@ -48,11 +49,7 @@ export function AdminNavbar({
           {/* Left: Brand Identity */}
           <div className="flex items-center gap-3 shrink-0">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <img
-                src="/assets/vendora_logo.png"
-                alt="Vendora Logo"
-                className="h-8 w-auto object-contain"
-              />
+              <VendoraMark size={28} tone="dark" />
               <div className="hidden sm:block">
                 <div className="flex items-center gap-1.5">
                   <span className="font-extrabold text-base tracking-tight text-white leading-none">

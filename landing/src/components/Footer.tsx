@@ -1,5 +1,6 @@
 import { Phone, EnvelopeSimple, MapPin } from '@phosphor-icons/react';
 import { posLoginUrl } from '../lib/config';
+import { VendoraMark } from './VendoraMark';
 
 export function Footer() {
   return (
@@ -9,11 +10,7 @@ export function Footer() {
           {/* Brand Info with Two-Color Logo */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <img
-                src="/assets/vendora_logo.png"
-                alt="Vendora Logo"
-                className="h-9 w-auto object-contain"
-              />
+              <VendoraMark size={34} tone="dark" />
               <span className="text-xl font-black text-white tracking-tight">Vendora</span>
             </div>
             <p className="text-zinc-400 text-xs leading-relaxed max-w-sm">

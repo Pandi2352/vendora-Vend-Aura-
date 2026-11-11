@@ -33,11 +33,11 @@ export function AdminHeader({ activeTab, tenantsCount }: AdminHeaderProps) {
   const current = TAB_TITLES[activeTab];
 
   return (
-    <div className="bg-white border-b border-zinc-200 px-4 sm:px-8 py-5">
+    <div className="relative overflow-hidden bg-gradient-to-r from-rose-50 via-white to-sky-50 border-b border-zinc-200 px-4 sm:px-8 py-6">
       <div className="w-full max-w-[1720px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 border border-zinc-200 uppercase tracking-wider">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white text-red-700 border border-red-200 uppercase tracking-wider">
               {current.tag}
             </span>
             <span className="text-zinc-300">•</span>
@@ -52,7 +52,7 @@ export function AdminHeader({ activeTab, tenantsCount }: AdminHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-50 border border-zinc-200 text-xs text-zinc-700">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
             <ShieldCheck weight="bold" className="w-4 h-4 text-emerald-600" />
             <span className="font-semibold">Super Admin Authenticated</span>
           </div>

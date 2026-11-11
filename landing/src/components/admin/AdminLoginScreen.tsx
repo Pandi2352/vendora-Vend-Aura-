@@ -12,6 +12,7 @@ import {
 import { Link } from 'react-router-dom';
 import { adminApi, saveAdminSession } from '../../lib/adminApi';
 import { getApiErrorMessage } from '../../lib/apiError';
+import { VendoraMark } from '../VendoraMark';
 
 interface AdminLoginScreenProps {
   onLoginSuccess: () => void;
@@ -63,11 +64,7 @@ export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2.5">
-            <img
-              src="/assets/vendora_logo.png"
-              alt="Vendora Logo"
-              className="h-8 w-auto object-contain"
-            />
+            <VendoraMark size={32} tone="dark" />
             <span className="font-black text-2xl tracking-tight text-white">Vendora</span>
           </Link>
           <div className="flex items-center justify-center gap-1.5">

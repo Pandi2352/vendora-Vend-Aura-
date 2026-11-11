@@ -11,5 +11,10 @@ export default defineConfig({
   server: {
     port: 4000,
   },
+  optimizeDeps: {
+    // Recharts is only imported by the lazily loaded /admin page, so Vite's
+    // startup scan misses it and re-optimizes mid-session ("504 Outdated
+    // Optimize Dep"). Pre-bundling it at startup avoids that.
+    include: ['recharts'],
+  },
 });
-

@@ -131,7 +131,7 @@ export function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-950 flex flex-col font-sans w-full">
+    <div className="min-h-screen bg-slate-50 text-zinc-950 flex flex-col font-sans w-full">
       {/* 1. Modern Top Command Bar (No Vertical Sidebar!) */}
       <AdminNavbar
         activeTab={activeTab}
@@ -172,6 +172,7 @@ export function SuperAdminDashboard() {
         {activeTab === 'overview' && (
           <OverviewTab
             stats={overviewStats}
+            tenants={tenants}
             onInspectTenant={setSelectedTenantId}
             onNavigateToTenants={() => setActiveTab('tenants')}
           />

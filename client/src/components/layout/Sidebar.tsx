@@ -38,7 +38,7 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
-        <nav className="flex-1 overflow-y-auto scrollbar-thin px-2.5 py-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto scrollbar-shell px-2.5 py-3 space-y-1">
           {items.map((item) => (
             <SidebarNavItem key={item.label} item={item} collapsed={showCollapsed} onNavigate={onCloseMobile} />
           ))}
