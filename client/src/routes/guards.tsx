@@ -34,9 +34,9 @@ export function RequirePasswordChange({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Role-restricted page: other roles are sent to the dashboard. */
+/** Role-restricted page: other roles see the 403 page. */
 export function RequireRole({ roles, children }: { roles: UserRole[]; children: ReactNode }) {
   const { user } = useAuth();
-  if (!hasRole(user?.role, roles)) return <Navigate to={ROUTES.DASHBOARD} replace />;
+  if (!hasRole(user?.role, roles)) return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   return <>{children}</>;
 }

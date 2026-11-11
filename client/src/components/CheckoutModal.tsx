@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Button } from '@/components/ui';
+import { round2 } from '@/lib/totals';
+import { formatInr } from '@/utils';
 import {
   X,
   Money,
@@ -43,16 +46,29 @@ export function CheckoutModal({
 }: CheckoutModalProps) {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('CASH');
   const [cashTendered, setCashTendered] = useState<number>(grandTotal);
+  const [cashTouched, setCashTouched] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const cashInputRef = useRef<HTMLInputElement>(null);
 
   const isCreditExceeded =
     paymentMode === 'CREDIT' &&
     !!selectedCustomer &&
     selectedCustomer.currentCreditBalance + grandTotal > selectedCustomer.creditLimit;
 
-  const canSubmit =
-    !isSubmitting &&
-    !(paymentMode === 'CASH' && cashTendered < grandTotal) &&
-    !(paymentMode === 'CREDIT' && (!selectedCustomer || isCreditExceeded));
+  const cashInvalid = paymentMode === 'CASH' && round2(cashTendered) < round2(grandTotal);
+  const cashError =
+    cashInvalid && (cashTouched || submitAttempted) ? `Cash tendered must be at least ${formatInr(grandTotal)}` : undefined;
+
+  const canSubmit = !isSubmitting && !(paymentMode === 'CREDIT' && (!selectedCustomer || isCreditExceeded));
+
+  const handleComplete = () => {
+    if (cashInvalid) {
+      setSubmitAttempted(true);
+      cashInputRef.current?.focus();
+      return;
+    }
+    onFinalize(paymentMode, paymentMode === 'CASH' ? cashTendered : grandTotal, selectedCustomer);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 font-sans">
@@ -83,7 +99,7 @@ export function CheckoutModal({
           {/* Amount Due Banner */}
           <div className="p-3.5 rounded-md bg-ink text-white text-center">
             <span className="text-[11px] text-zinc-400 uppercase tracking-wider block">Total Amount Due</span>
-            <span className="font-mono font-black text-2xl text-red-500 mt-0.5 block">
+            <span className="font-mono font-black text-2xl text-white mt-0.5 block">
               ₹{grandTotal.toLocaleString('en-IN')}
             </span>
           </div>
@@ -99,7 +115,7 @@ export function CheckoutModal({
                   onClick={() => setPaymentMode(tab.id)}
                   className={`p-2.5 rounded-md border flex flex-col items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
                     isActive
-                      ? 'border-red-600 bg-red-50 text-red-700'
+                      ? 'border-primary-600 bg-primary-50 text-primary-700'
                       : 'border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100'
                   }`}
                 >
@@ -119,6 +135,9 @@ export function CheckoutModal({
             onCashTenderedChange={setCashTendered}
             onAddCash={(amount) => setCashTendered((prev) => prev + amount)}
             onSetExact={() => setCashTendered(grandTotal)}
+            cashError={cashError}
+            onCashBlur={() => setCashTouched(true)}
+            cashInputRef={cashInputRef}
           />
 
           {error && (
@@ -131,26 +150,17 @@ export function CheckoutModal({
 
         {/* Footer */}
         <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-end gap-2 shrink-0">
-          <button
-            onClick={onClose}
-            className="px-3 py-2 rounded-md bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-semibold cursor-pointer"
-          >
+          <Button variant="secondary" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={() =>
-              onFinalize(
-                paymentMode,
-                paymentMode === 'CASH' ? cashTendered : grandTotal,
-                selectedCustomer
-              )
-            }
+          </Button>
+          <Button
+            onClick={handleComplete}
             disabled={!canSubmit}
-            className="px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
+            loading={isSubmitting}
+            icon={<CheckCircle weight="bold" className="w-4 h-4" />}
           >
-            <CheckCircle weight="bold" className="w-4 h-4" />
-            <span>{isSubmitting ? 'Saving Bill...' : 'Complete & Print Bill'}</span>
-          </button>
+            {isSubmitting ? 'Saving bill…' : 'Complete & print bill'}
+          </Button>
         </div>
       </div>
     </div>

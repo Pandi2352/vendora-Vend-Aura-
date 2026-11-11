@@ -12,4 +12,5 @@ export const ROUTES = {
   REPORTS_GST: '/reports/gst',
   REPORTS_INVENTORY: '/reports/inventory',
   SETTINGS: '/settings',
+  UNAUTHORIZED: '/unauthorized',
 } as const;

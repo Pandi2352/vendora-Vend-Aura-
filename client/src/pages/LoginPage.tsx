@@ -1,9 +1,8 @@
-import { useState, type FormEvent } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { LoginScreen } from '../components/LoginScreen';
-import { useAuth } from '../hooks/useAuth';
-import { getErrorMessage } from '../lib/api';
-import { ROUTES } from '../config/routes';
+import { LoginScreen } from '@/components/LoginScreen';
+import { useAuth } from '@/hooks/useAuth';
+import { ROUTES } from '@/config/routes';
+import { normalizeShopId, type LoginValues } from '@/validations/auth';
 
 /**
  * /login?shopId=abc (link from the welcome email) prefills the Shop ID and the
@@ -14,49 +13,18 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const linkedShop = (params.get('shopId') || '').toLowerCase().trim();
+  const linkedShop = normalizeShopId(params.get('shopId') || '');
 
-  const [shopId, setShopId] = useState(linkedShop);
-  const [username, setUsername] = useState(linkedShop ? `${linkedShop}_admin` : '');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  const handleLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!shopId.trim() || !username.trim() || !password) {
-      setError('Please enter Shop ID, Username, and Password');
-      return;
-    }
-
-    setIsLoggingIn(true);
-    try {
-      const status = await login(shopId, username, password);
-      if (status === 'password-change') {
-        navigate(ROUTES.CHANGE_PASSWORD, { replace: true });
-      } else {
-        const from = (location.state as { from?: string } | null)?.from;
-        navigate(from && from !== ROUTES.LOGIN ? from : ROUTES.DASHBOARD, { replace: true });
-      }
-    } catch (err) {
-      setError(getErrorMessage(err, 'Login failed. Please verify your Shop ID and credentials.'));
-    } finally {
-      setIsLoggingIn(false);
+  // Errors thrown here are shown on the form by <Form>.
+  const handleLogin = async ({ shopId, username, password }: LoginValues) => {
+    const status = await login(shopId, username, password);
+    if (status === 'password-change') {
+      navigate(ROUTES.CHANGE_PASSWORD, { replace: true });
+    } else {
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from && from !== ROUTES.LOGIN ? from : ROUTES.DASHBOARD, { replace: true });
     }
   };
 
-  return (
-    <LoginScreen
-      shopId={shopId}
-      setShopId={setShopId}
-      username={username}
-      setUsername={setUsername}
-      password={password}
-      setPassword={setPassword}
-      loginError={error}
-      isLoggingIn={isLoggingIn}
-      onLogin={handleLogin}
-    />
-  );
+  return <LoginScreen initialShopId={linkedShop} onLogin={handleLogin} />;
 }

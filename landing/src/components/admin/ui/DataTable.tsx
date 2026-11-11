@@ -1,6 +1,7 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useId, useMemo, useState, type ReactNode } from 'react';
 import { MagnifyingGlass } from '@phosphor-icons/react';
 import { Pagination } from './Pagination';
+import { Dropdown, type DropdownOption } from '../../ui/dropdown';
 
 export interface Column<T> {
   key: string;
@@ -49,6 +50,11 @@ export function DataTable<T>({
   const [query, setQuery] = useState('');
   const [pageSize, setPageSize] = useState(pageSizeOptions[0]);
   const [page, setPage] = useState(1);
+  const pageSizeLabelId = useId();
+  const pageSizeItems = useMemo<DropdownOption<number>[]>(
+    () => pageSizeOptions.map((n) => ({ value: n, label: String(n) })),
+    [pageSizeOptions],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -68,24 +74,23 @@ export function DataTable<T>({
       {!compact && (
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
           <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-600">
-            <label className="flex items-center gap-2">
-              <span>Show</span>
-              <select
+            <div className="flex items-center gap-2">
+              <span id={pageSizeLabelId}>Show</span>
+              <Dropdown
+                aria-labelledby={pageSizeLabelId}
+                options={pageSizeItems}
                 value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
+                onChange={(v) => {
+                  if (v === null) return;
+                  setPageSize(v);
                   setPage(1);
                 }}
-                className="h-9 px-2.5 rounded-md border border-zinc-200 bg-white text-sm font-semibold text-zinc-800 outline-none focus:border-red-600 cursor-pointer"
-              >
-                {pageSizeOptions.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
+                searchable={false}
+                wrapperClassName="w-20"
+                className="font-semibold"
+              />
               <span>entries</span>
-            </label>
+            </div>
             <span className="text-xs text-zinc-400">
               {filtered.length} {filtered.length === 1 ? 'record' : 'records'}
             </span>
@@ -104,7 +109,7 @@ export function DataTable<T>({
                 }}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
-                className="w-full h-9 pl-9 pr-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm outline-none focus:border-red-600 focus:bg-white"
+                className="w-full h-10 pl-9 pr-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm outline-none focus:border-red-600 focus:bg-white"
               />
             </div>
           )}

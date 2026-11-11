@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
+import { PageLoader } from '../components/ui/Spinner';
 import { ROLE_GROUPS } from '../lib/permissions';
 import { AppLayout } from '../layouts/AppLayout';
 import { RedirectIfAuthenticated, RequireAuth, RequirePasswordChange, RequireRole } from '../routes/guards';
@@ -9,6 +10,7 @@ import { ChangePasswordPage } from '../pages/ChangePasswordPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { PosPage } from '../pages/PosPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { RouteErrorPage, UnauthorizedPage } from '../pages/StatusPages';
 
 // Back-office pages load on demand to keep the till's first load small.
 const OrdersPage = lazy(() => import('../pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
@@ -17,7 +19,7 @@ const SuppliersPage = lazy(() => import('../pages/SuppliersPage').then((m) => ({
 const ReportsPage = lazy(() => import('../pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
-const PageFallback = () => <div className="p-6 text-sm text-zinc-400">Loading…</div>;
+const PageFallback = () => <PageLoader />;
 const lazyPage = (page: ReactNode) => <Suspense fallback={<PageFallback />}>{page}</Suspense>;
 
 /**
@@ -26,6 +28,7 @@ const lazyPage = (page: ReactNode) => <Suspense fallback={<PageFallback />}>{pag
 export const router = createBrowserRouter([
   {
     path: ROUTES.LOGIN,
+    errorElement: <RouteErrorPage />,
     element: (
       <RedirectIfAuthenticated>
         <LoginPage />
@@ -34,6 +37,7 @@ export const router = createBrowserRouter([
   },
   {
     path: ROUTES.CHANGE_PASSWORD,
+    errorElement: <RouteErrorPage />,
     element: (
       <RequirePasswordChange>
         <ChangePasswordPage />
@@ -45,6 +49,7 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppLayout />,
+        errorElement: <RouteErrorPage />,
         children: [
           { index: true, element: <Navigate to={ROUTES.DASHBOARD} replace /> },
           { path: ROUTES.DASHBOARD, element: <DashboardPage /> },
@@ -61,6 +66,7 @@ export const router = createBrowserRouter([
             element: <RequireRole roles={ROLE_GROUPS.FINANCE}>{lazyPage(<ReportsPage />)}</RequireRole>,
           },
           { path: ROUTES.SETTINGS, element: lazyPage(<SettingsPage />) },
+          { path: ROUTES.UNAUTHORIZED, element: <UnauthorizedPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

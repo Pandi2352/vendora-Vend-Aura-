@@ -1,4 +1,7 @@
+import type { Ref } from 'react';
 import { QrCode, WarningCircle } from '@phosphor-icons/react';
+import { FormField, useFieldIds } from '@/components/forms';
+import { Input } from '@/components/ui';
 import type { CustomerItem, PaymentMode } from '../../types/pos.types';
 
 interface PaymentModePanelsProps {
@@ -9,6 +12,10 @@ interface PaymentModePanelsProps {
   onCashTenderedChange: (val: number) => void;
   onAddCash: (amount: number) => void;
   onSetExact: () => void;
+  /** Validation message shown under the cash field (CASH mode). */
+  cashError?: string;
+  onCashBlur?: () => void;
+  cashInputRef?: Ref<HTMLInputElement>;
 }
 
 export function PaymentModePanels({
@@ -19,7 +26,11 @@ export function PaymentModePanels({
   onCashTenderedChange,
   onAddCash,
   onSetExact,
+  cashError,
+  onCashBlur,
+  cashInputRef,
 }: PaymentModePanelsProps) {
+  const cashIds = useFieldIds('cashTendered');
   const changeDue = Math.max(0, cashTendered - grandTotal);
   const availableCredit = selectedCustomer
     ? Math.max(0, selectedCustomer.creditLimit - selectedCustomer.currentCreditBalance)
@@ -31,16 +42,24 @@ export function PaymentModePanels({
   if (paymentMode === 'CASH') {
     return (
       <div className="space-y-3 pt-1 font-sans">
-        <div>
-          <label className="block text-xs font-bold text-zinc-700 mb-1">Cash Tendered (₹)</label>
-          <input
+        <FormField label="Cash tendered" required error={cashError} ids={cashIds}>
+          <Input
+            id={cashIds.id}
+            ref={cashInputRef}
             type="number"
+            inputMode="decimal"
             min={0}
+            step="0.01"
+            leftAddon="₹"
             value={cashTendered || ''}
             onChange={(e) => onCashTenderedChange(Number(e.target.value))}
-            className="w-full px-3 py-2 rounded-md border border-zinc-300 font-mono font-bold text-base text-zinc-950 focus:border-primary-600 outline-none"
+            onBlur={onCashBlur}
+            invalid={!!cashError}
+            aria-required
+            aria-describedby={cashIds.describedBy}
+            className="font-mono font-bold text-base tabular-nums"
           />
-        </div>
+        </FormField>
 
         <div className="flex items-center gap-1.5 flex-wrap">
           <button

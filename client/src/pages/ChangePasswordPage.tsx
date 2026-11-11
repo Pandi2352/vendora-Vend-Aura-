@@ -1,57 +1,26 @@
-import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PasswordResetModal } from '../components/PasswordResetModal';
-import { useAuth } from '../hooks/useAuth';
-import { getErrorMessage } from '../lib/api';
-import { ROUTES } from '../config/routes';
-
-const MIN_PASSWORD_LENGTH = 8;
+import { PasswordResetModal } from '@/components/PasswordResetModal';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
+import { ROUTES } from '@/config/routes';
+import type { ChangePasswordValues } from '@/validations/auth';
 
 /** Forced first-login password change; continues to the dashboard. */
 export function ChangePasswordPage() {
   const { temporaryPassword, changePassword, logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
 
-  const [currentPassword, setCurrentPassword] = useState(temporaryPassword);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!currentPassword) return setError('Please enter your current (temporary) password');
-    if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      return setError(`New password must be at least ${MIN_PASSWORD_LENGTH} characters long`);
-    }
-    if (newPassword !== confirmPassword) return setError('Passwords do not match');
-
-    setIsSaving(true);
-    try {
-      await changePassword(currentPassword, newPassword);
-      navigate(ROUTES.DASHBOARD, { replace: true });
-    } catch (err) {
-      setError(getErrorMessage(err, 'Failed to update password. Please try again.'));
-    } finally {
-      setIsSaving(false);
-    }
+  // Errors thrown here are shown on the form by <Form>.
+  const handleSubmit = async ({ currentPassword, newPassword }: ChangePasswordValues) => {
+    await changePassword(currentPassword, newPassword);
+    toast.success('Password updated', 'Use your new password next time you sign in.');
+    navigate(ROUTES.DASHBOARD, { replace: true });
   };
 
   return (
     <div className="h-screen bg-zinc-100">
-      <PasswordResetModal
-        currentPassword={currentPassword}
-        setCurrentPassword={setCurrentPassword}
-        newPassword={newPassword}
-        setNewPassword={setNewPassword}
-        confirmPassword={confirmPassword}
-        setConfirmPassword={setConfirmPassword}
-        passwordError={error}
-        isUpdatingPassword={isSaving}
-        onSubmit={handleSubmit}
-        onSignOut={logout}
-      />
+      <PasswordResetModal initialCurrentPassword={temporaryPassword} onSubmit={handleSubmit} onSignOut={logout} />
     </div>
   );
 }

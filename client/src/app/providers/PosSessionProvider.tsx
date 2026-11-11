@@ -4,6 +4,7 @@ import { useCart } from '../../hooks/useCart';
 import { useDrawerShift } from '../../hooks/useDrawerShift';
 import { useCatalogCustomers } from '../../hooks/useCatalogCustomers';
 import { usePosCheckout } from '../../hooks/usePosCheckout';
+import { useConfirm } from '../../hooks/useConfirm';
 import type { CustomerItem } from '../../types/pos.types';
 import type { HeldCart } from '../../types/shift-return.types';
 
@@ -21,6 +22,7 @@ function usePosSessionState() {
   const cartState = useCart(user?.tenantId, user?.id);
   const shift = useDrawerShift(enabled);
   const catalog = useCatalogCustomers(enabled);
+  const confirm = useConfirm();
 
   const [openModal, setOpenModal] = useState<PosModal>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
@@ -49,16 +51,19 @@ function usePosSessionState() {
 
   const isShiftOpen = shift.activeShift?.status === 'OPEN';
 
-  const startCheckout = useCallback(() => {
+  const startCheckout = useCallback(async () => {
     if (!isShiftOpen) {
-      if (window.confirm('No cash drawer shift is open. Billing requires an open shift.\n\nOpen the cash drawer now?')) {
-        setOpenModal('drawer');
-      }
+      const openDrawer = await confirm({
+        title: 'No cash drawer shift is open',
+        message: 'Billing requires an open shift. Open the cash drawer now?',
+        confirmLabel: 'Open cash drawer',
+      });
+      if (openDrawer) setOpenModal('drawer');
       return;
     }
     checkout.clearError();
     setOpenModal('checkout');
-  }, [isShiftOpen, checkout]);
+  }, [isShiftOpen, checkout, confirm]);
 
   const holdCart = useCallback(() => {
     cartState.holdCurrentCart(selectedCustomer);
@@ -66,10 +71,14 @@ function usePosSessionState() {
   }, [cartState, selectedCustomer]);
 
   const resumeHeldCart = useCallback(
-    (held: HeldCart) => {
+    async (held: HeldCart) => {
       if (
         cartState.cart.length > 0 &&
-        !window.confirm('The register already has items. Park the current bill and resume the selected one?')
+        !(await confirm({
+          title: 'Resume held bill?',
+          message: 'The register already has items. The current bill will be parked and the selected one resumed.',
+          confirmLabel: 'Park & resume',
+        }))
       ) {
         return;
       }
@@ -79,7 +88,7 @@ function usePosSessionState() {
       );
       setOpenModal(null);
     },
-    [cartState, selectedCustomer, catalog.customers],
+    [cartState, selectedCustomer, catalog.customers, confirm],
   );
 
   return {

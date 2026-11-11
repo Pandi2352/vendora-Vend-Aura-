@@ -1,6 +1,6 @@
 import { Vault } from '@phosphor-icons/react';
 import { usePosSession } from '../../hooks/usePosSession';
-import { formatInr } from '../../lib/format';
+import { formatInr } from '@/utils';
 import { cn } from '../ui/cn';
 
 /** Cash drawer status in the top bar; opens the drawer dialog. */

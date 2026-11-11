@@ -4,7 +4,7 @@ import { Gear, SignOut } from '@phosphor-icons/react';
 import { useAuth } from '../../hooks/useAuth';
 import { ROUTES } from '../../config/routes';
 import { ROLE_LABELS } from '../../lib/permissions';
-import { initialOf } from '../../lib/format';
+import { initialOf } from '@/utils';
 
 /** Avatar button with account dropdown (who is signed in, settings, sign out). */
 export function UserMenu() {

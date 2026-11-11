@@ -1,6 +1,6 @@
 import { Medal } from '@phosphor-icons/react';
 import { Card, CardHeader, UsageMeter } from '../../components/ui';
-import { formatDate } from '../../lib/format';
+import { formatDate } from '@/utils';
 import type { AccountOverview } from '../../types/account.types';
 
 export function PlanUsageCard({ data }: { data: AccountOverview }) {

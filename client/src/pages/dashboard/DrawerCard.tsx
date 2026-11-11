@@ -1,7 +1,7 @@
 import { Vault } from '@phosphor-icons/react';
 import { Button, Card, CardHeader, InfoRow } from '../../components/ui';
 import { usePosSession } from '../../hooks/usePosSession';
-import { formatDateTime, formatInr } from '../../lib/format';
+import { formatDateTime, formatInr } from '@/utils';
 
 /** Cash drawer status with open / close action. */
 export function DrawerCard() {

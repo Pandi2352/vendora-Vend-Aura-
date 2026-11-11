@@ -1,6 +1,6 @@
 import { CurrencyInr, Receipt, ChartBar, Percent, Money, QrCode, CreditCard } from '@phosphor-icons/react';
 import { StatTile } from '../../components/ui';
-import { formatInr } from '../../lib/format';
+import { formatInr } from '@/utils';
 import type { ExecutiveOverviewData } from '../../types/reports.types';
 import type { ShiftSummary } from '../../types/shift-return.types';
 

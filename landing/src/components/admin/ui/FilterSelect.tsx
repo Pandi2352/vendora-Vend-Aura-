@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { Dropdown, type DropdownOption } from '../../ui/dropdown';
+
 interface FilterSelectProps {
   label: string;
   value: string;
@@ -9,21 +12,16 @@ interface FilterSelectProps {
 
 /** Compact dropdown filter for table toolbars. `label` is the accessible name. */
 export function FilterSelect({ label, value, onChange, options, allLabel }: FilterSelectProps) {
+  const items = useMemo<DropdownOption[]>(() => [{ value: 'ALL', label: allLabel }, ...options], [options, allLabel]);
   return (
-    <select
+    <Dropdown
       aria-label={label}
+      options={items}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`h-9 px-2.5 rounded-md border bg-white text-sm font-semibold outline-none cursor-pointer max-w-[190px] focus:border-red-600 ${
-        value === 'ALL' ? 'border-zinc-200 text-zinc-700' : 'border-red-300 text-red-700 bg-red-50'
-      }`}
-    >
-      <option value="ALL">{allLabel}</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      onChange={(v) => onChange(v ?? 'ALL')}
+      highlighted={value !== 'ALL'}
+      wrapperClassName="w-44"
+      className="font-semibold"
+    />
   );
 }

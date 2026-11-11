@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Receipt } from '@phosphor-icons/react';
 import { Card, CardHeader } from '../../components/ui';
 import { ROUTES } from '../../config/routes';
-import { formatDateTime, formatInr } from '../../lib/format';
+import { formatDateTime, formatInr } from '@/utils';
 import type { OrderItemRecord } from '../../types/pos.types';
 
 export function RecentBillsCard({ orders, isLoading }: { orders: OrderItemRecord[]; isLoading: boolean }) {
