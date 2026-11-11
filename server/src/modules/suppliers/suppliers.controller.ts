@@ -120,3 +120,4 @@ export class SuppliersController {
     return { success: true, data };
   }
 }
+

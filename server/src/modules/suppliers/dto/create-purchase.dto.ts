@@ -109,3 +109,4 @@ export class CreatePurchaseDto {
   @IsOptional()
   notes?: string;
 }
+

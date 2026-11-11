@@ -17,3 +17,4 @@ import { CustomerLedger, CustomerLedgerSchema } from './schemas/customer-ledger.
   exports: [CustomersService],
 })
 export class CustomersModule {}
+

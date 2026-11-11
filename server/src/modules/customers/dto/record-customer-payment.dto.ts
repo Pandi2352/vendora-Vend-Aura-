@@ -21,3 +21,4 @@ export class RecordCustomerPaymentDto {
   @IsOptional()
   remarks?: string;
 }
+

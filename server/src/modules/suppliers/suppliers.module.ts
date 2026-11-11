@@ -25,3 +25,4 @@ import { Tenant, TenantSchema } from '../tenant/schemas/tenant.schema';
   exports: [SuppliersService],
 })
 export class SuppliersModule {}
+

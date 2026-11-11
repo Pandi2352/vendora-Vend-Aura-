@@ -62,3 +62,4 @@ export const CustomerSchema = SchemaFactory.createForClass(Customer);
 CustomerSchema.index({ tenantId: 1, phone: 1 }, { unique: true });
 CustomerSchema.index({ tenantId: 1, name: 1 });
 CustomerSchema.index({ tenantId: 1, currentCreditBalance: -1 });
+

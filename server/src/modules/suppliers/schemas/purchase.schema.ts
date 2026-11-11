@@ -80,3 +80,4 @@ export class Purchase {
 export const PurchaseSchema = SchemaFactory.createForClass(Purchase);
 PurchaseSchema.index({ tenantId: 1, grnNumber: 1 }, { unique: true });
 PurchaseSchema.index({ tenantId: 1, receivedDate: -1 });
+

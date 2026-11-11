@@ -21,3 +21,4 @@ export class RecordSupplierPaymentDto {
   @IsOptional()
   notes?: string;
 }
+

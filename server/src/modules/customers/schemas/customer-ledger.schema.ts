@@ -41,3 +41,4 @@ export class CustomerLedger {
 
 export const CustomerLedgerSchema = SchemaFactory.createForClass(CustomerLedger);
 CustomerLedgerSchema.index({ tenantId: 1, customerId: 1, createdAt: -1 });
+
