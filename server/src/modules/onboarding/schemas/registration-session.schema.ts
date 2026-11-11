@@ -63,6 +63,9 @@ export class RegistrationSession {
     };
     gstin?: string;
   };
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const RegistrationSessionSchema = SchemaFactory.createForClass(RegistrationSession);

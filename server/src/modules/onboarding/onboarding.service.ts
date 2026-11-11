@@ -15,6 +15,7 @@ import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { Subscription, SubscriptionDocument } from '../subscription/schemas/subscription.schema';
 import { RegistrationSession, RegistrationSessionDocument } from './schemas/registration-session.schema';
 import { MailService } from '../mail/mail.service';
+import { CatalogService } from '../catalog/catalog.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
@@ -37,6 +38,7 @@ export class OnboardingService {
     @InjectModel(Subscription.name) private readonly subscriptionModel: Model<SubscriptionDocument>,
     @InjectModel(RegistrationSession.name) private readonly sessionModel: Model<RegistrationSessionDocument>,
     private readonly mailService: MailService,
+    private readonly catalogService: CatalogService,
   ) {}
 
   // 1. Get SaaS Pricing Plans
@@ -220,6 +222,13 @@ export class OnboardingService {
         },
       },
     );
+
+    // Seed initial starter catalog tailored to business sector
+    try {
+      await this.catalogService.seedTenantCatalog(tenant._id, tenant.businessType);
+    } catch (err: any) {
+      this.logger.warn(`Could not seed catalog for tenant ${shopId}: ${err.message}`);
+    }
 
     // Send Welcome Credentials Email
     const loginUrl = `http://localhost:4001/login?shopId=${shopId}`;
