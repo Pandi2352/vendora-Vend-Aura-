@@ -4,12 +4,14 @@ import { OnboardingService } from './onboarding.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
+import { Public } from '../../common';
 
 @ApiTags('Onboarding & Tenant Provisioning')
 @Controller('onboarding')
 export class OnboardingController {
   constructor(private readonly onboardingService: OnboardingService) {}
 
+  @Public()
   @Get('plans')
   @ApiOperation({ summary: 'Get available SaaS subscription pricing plans' })
   getPlans() {
@@ -19,6 +21,7 @@ export class OnboardingController {
     };
   }
 
+  @Public()
   @Post('request-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request 6-digit email OTP for tenant registration' })
@@ -32,6 +35,7 @@ export class OnboardingController {
     };
   }
 
+  @Public()
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify email ownership using 6-digit OTP' })
@@ -45,6 +49,7 @@ export class OnboardingController {
     };
   }
 
+  @Public()
   @Get('check-subdomain')
   @ApiOperation({ summary: 'Check if a preferred shop ID / subdomain is available' })
   @ApiQuery({ name: 'shopId', required: true, example: 'srimurugan' })
@@ -56,6 +61,7 @@ export class OnboardingController {
     };
   }
 
+  @Public()
   @Post('complete-registration')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Submit store profile and auto-provision tenant workspace' })
@@ -69,4 +75,3 @@ export class OnboardingController {
     };
   }
 }
-

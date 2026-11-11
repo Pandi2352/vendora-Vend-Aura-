@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { Category, CategoryDocument } from './schemas/category.schema';
 import { BusinessType } from '../../shared';
+import { StringUtil, NumberUtil } from '../../common';
 
 @Injectable()
 export class CatalogService {
@@ -62,7 +63,7 @@ export class CatalogService {
       await this.categoryModel.create({
         tenantId: tId,
         name: catName,
-        slug: catName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        slug: StringUtil.slugify(catName),
         displayOrder: i + 1,
         isActive: true,
       });
@@ -77,7 +78,7 @@ export class CatalogService {
         barcode: prod.barcode,
         unitPrice: prod.unitPrice,
         mrp: prod.mrp,
-        costPrice: Math.round(prod.unitPrice * 0.75),
+        costPrice: NumberUtil.round(prod.unitPrice * 0.75),
         taxRatePercent: prod.taxRatePercent,
         stock: prod.stock || 50,
         unit: prod.unit || 'pcs',

@@ -6,13 +6,13 @@ import {
   Body,
   Param,
   Query,
-  Req,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { RecordCustomerPaymentDto } from './dto/record-customer-payment.dto';
+import { CurrentUser } from '../../common';
 
 @ApiTags('Customers & Khata Ledger')
 @Controller('customers')
@@ -21,8 +21,11 @@ export class CustomersController {
 
   @Post()
   @ApiOperation({ summary: 'Register a new customer profile' })
-  async createCustomer(@Body() dto: CreateCustomerDto, @Req() req: any) {
-    const tenantId = dto.tenantId || req.user?.tenantId;
+  async createCustomer(
+    @Body() dto: CreateCustomerDto,
+    @CurrentUser('tenantId') authTenantId?: string,
+  ) {
+    const tenantId = dto.tenantId || authTenantId;
     if (!tenantId) {
       throw new BadRequestException('tenantId is required');
     }
@@ -33,11 +36,11 @@ export class CustomersController {
   @Get()
   @ApiOperation({ summary: 'Search and list customers for a tenant' })
   async getCustomers(
-    @Query('tenantId') tenantId: string,
-    @Query('search') search: string,
-    @Req() req: any,
+    @Query('tenantId') queryTenantId?: string,
+    @CurrentUser('tenantId') authTenantId?: string,
+    @Query('search') search?: string,
   ) {
-    const resolvedTenantId = tenantId || req.user?.tenantId;
+    const resolvedTenantId = queryTenantId || authTenantId;
     if (!resolvedTenantId) {
       throw new BadRequestException('tenantId query parameter is required');
     }
@@ -49,10 +52,10 @@ export class CustomersController {
   @ApiOperation({ summary: 'Get single customer profile' })
   async getCustomerById(
     @Param('id') id: string,
-    @Query('tenantId') tenantId: string,
-    @Req() req: any,
+    @Query('tenantId') queryTenantId?: string,
+    @CurrentUser('tenantId') authTenantId?: string,
   ) {
-    const resolvedTenantId = tenantId || req.user?.tenantId;
+    const resolvedTenantId = queryTenantId || authTenantId;
     if (!resolvedTenantId) {
       throw new BadRequestException('tenantId query parameter is required');
     }
@@ -64,11 +67,11 @@ export class CustomersController {
   @ApiOperation({ summary: 'Update customer profile' })
   async updateCustomer(
     @Param('id') id: string,
-    @Query('tenantId') tenantId: string,
     @Body() dto: Partial<CreateCustomerDto>,
-    @Req() req: any,
+    @Query('tenantId') queryTenantId?: string,
+    @CurrentUser('tenantId') authTenantId?: string,
   ) {
-    const resolvedTenantId = dto.tenantId || tenantId || req.user?.tenantId;
+    const resolvedTenantId = dto.tenantId || queryTenantId || authTenantId;
     if (!resolvedTenantId) {
       throw new BadRequestException('tenantId is required');
     }
@@ -80,11 +83,11 @@ export class CustomersController {
   @ApiOperation({ summary: 'Record Khata / Udhar repayment from customer' })
   async recordPayment(
     @Param('id') id: string,
-    @Query('tenantId') tenantId: string,
     @Body() dto: RecordCustomerPaymentDto,
-    @Req() req: any,
+    @Query('tenantId') queryTenantId?: string,
+    @CurrentUser('tenantId') authTenantId?: string,
   ) {
-    const resolvedTenantId = tenantId || req.user?.tenantId;
+    const resolvedTenantId = queryTenantId || authTenantId;
     if (!resolvedTenantId) {
       throw new BadRequestException('tenantId is required');
     }
@@ -96,10 +99,10 @@ export class CustomersController {
   @ApiOperation({ summary: 'Get customer double-entry Khata statement ledger' })
   async getCustomerLedger(
     @Param('id') id: string,
-    @Query('tenantId') tenantId: string,
-    @Req() req: any,
+    @Query('tenantId') queryTenantId?: string,
+    @CurrentUser('tenantId') authTenantId?: string,
   ) {
-    const resolvedTenantId = tenantId || req.user?.tenantId;
+    const resolvedTenantId = queryTenantId || authTenantId;
     if (!resolvedTenantId) {
       throw new BadRequestException('tenantId query parameter is required');
     }
@@ -107,4 +110,3 @@ export class CustomersController {
     return { success: true, count: data.length, data };
   }
 }
-

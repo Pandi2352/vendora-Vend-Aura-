@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SaasAdminController } from './saas-admin.controller';
 import { SaasAdminService } from './saas-admin.service';
+import { SaasAdminAnalyticsService } from './saas-admin-analytics.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from '../user/user.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
@@ -30,7 +31,7 @@ import { RegistrationSession, RegistrationSessionSchema } from '../onboarding/sc
     OutletModule,
   ],
   controllers: [SaasAdminController],
-  providers: [SaasAdminService],
-  exports: [SaasAdminService],
+  providers: [SaasAdminService, SaasAdminAnalyticsService],
+  exports: [SaasAdminService, SaasAdminAnalyticsService],
 })
 export class SaasAdminModule {}

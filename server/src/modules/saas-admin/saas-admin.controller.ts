@@ -1,14 +1,20 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SaasAdminService } from './saas-admin.service';
+import { SaasAdminAnalyticsService } from './saas-admin-analytics.service';
 import { TenantStatus, SubscriptionPlanCode } from '../../shared';
 import { PlatformAdminLoginDto } from './dto/platform-admin-login.dto';
+import { Public } from '../../common';
 
 @ApiTags('SaaS Super Admin Platform Operations')
 @Controller('saas-admin')
 export class SaasAdminController {
-  constructor(private readonly saasAdminService: SaasAdminService) {}
+  constructor(
+    private readonly saasAdminService: SaasAdminService,
+    private readonly saasAdminAnalyticsService: SaasAdminAnalyticsService,
+  ) {}
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Platform Super Admin Authentication (from .env)' })
@@ -26,7 +32,7 @@ export class SaasAdminController {
   @Get('overview')
   @ApiOperation({ summary: 'Get SaaS Platform Overview KPIs, plan distributions & recent stores' })
   async getOverview() {
-    const data = await this.saasAdminService.getOverviewStats();
+    const data = await this.saasAdminAnalyticsService.getOverviewStats();
     return {
       success: true,
       data,
@@ -91,7 +97,7 @@ export class SaasAdminController {
   @Get('contacts')
   @ApiOperation({ summary: 'Get all tenant contacts, leads, and onboarding requests' })
   async getContacts() {
-    const data = await this.saasAdminService.getAllContacts();
+    const data = await this.saasAdminAnalyticsService.getAllContacts();
     return {
       success: true,
       data,
@@ -101,7 +107,7 @@ export class SaasAdminController {
   @Get('reports')
   @ApiOperation({ summary: 'Get aggregate platform reports, sector metrics, and revenue estimates' })
   async getReports() {
-    const data = await this.saasAdminService.getReportsData();
+    const data = await this.saasAdminAnalyticsService.getReportsData();
     return {
       success: true,
       data,

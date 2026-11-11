@@ -11,6 +11,7 @@ import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { CustomerLedger, CustomerLedgerDocument } from './schemas/customer-ledger.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { RecordCustomerPaymentDto } from './dto/record-customer-payment.dto';
+import { StringUtil, UuidUtil, NumberUtil } from '../../common';
 
 @Injectable()
 export class CustomersService {
@@ -21,16 +22,13 @@ export class CustomersService {
     @InjectModel(CustomerLedger.name) private readonly ledgerModel: Model<CustomerLedgerDocument>,
   ) {}
 
-  /**
-   * 1. Register a new Customer Profile
-   */
   async createCustomer(tenantId: string, dto: CreateCustomerDto) {
     if (!Types.ObjectId.isValid(tenantId)) {
       throw new BadRequestException('Invalid Tenant ID');
     }
 
     const tenantObjectId = new Types.ObjectId(tenantId);
-    const cleanPhone = dto.phone.replace(/[^0-9]/g, '').slice(-10);
+    const cleanPhone = StringUtil.sanitizeAlphanumeric(dto.phone).slice(-10);
 
     const existing = await this.customerModel.findOne({
       tenantId: tenantObjectId,
@@ -60,9 +58,6 @@ export class CustomersService {
     return customer;
   }
 
-  /**
-   * 2. List Customers with Search (by Name or Phone)
-   */
   async getCustomers(tenantId: string, search?: string) {
     if (!Types.ObjectId.isValid(tenantId)) {
       throw new BadRequestException('Invalid Tenant ID');
@@ -72,11 +67,7 @@ export class CustomersService {
 
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i');
-      filter.$or = [
-        { name: regex },
-        { phone: regex },
-        { gstin: regex },
-      ];
+      filter.$or = [{ name: regex }, { phone: regex }, { gstin: regex }];
     }
 
     const customers = await this.customerModel
@@ -101,9 +92,6 @@ export class CustomersService {
     }));
   }
 
-  /**
-   * 3. Single Customer Profile
-   */
   async getCustomerById(tenantId: string, id: string) {
     if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(tenantId)) {
       throw new BadRequestException('Invalid ID');
@@ -123,9 +111,6 @@ export class CustomersService {
     return customer;
   }
 
-  /**
-   * 4. Update Customer Profile
-   */
   async updateCustomer(tenantId: string, id: string, dto: Partial<CreateCustomerDto>) {
     if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(tenantId)) {
       throw new BadRequestException('Invalid ID');
@@ -133,7 +118,7 @@ export class CustomersService {
 
     const updateData: any = { ...dto };
     if (dto.phone) {
-      updateData.phone = dto.phone.replace(/[^0-9]/g, '').slice(-10);
+      updateData.phone = StringUtil.sanitizeAlphanumeric(dto.phone).slice(-10);
     }
 
     const updated = await this.customerModel.findOneAndUpdate(
@@ -149,25 +134,18 @@ export class CustomersService {
     return updated;
   }
 
-  /**
-   * 5. Record a Credit Sale (Khata / Udhar bill)
-   */
   async recordCreditSale(
     tenantId: Types.ObjectId,
     customerId: Types.ObjectId,
     amount: number,
     invoiceNumber: string,
   ) {
-    const customer = await this.customerModel.findOne({
-      _id: customerId,
-      tenantId,
-    });
-
+    const customer = await this.customerModel.findOne({ _id: customerId, tenantId });
     if (!customer) {
       throw new NotFoundException(`Customer not found.`);
     }
 
-    const newBalance = customer.currentCreditBalance + amount;
+    const newBalance = NumberUtil.round(customer.currentCreditBalance + amount, 2);
 
     await this.customerModel.updateOne(
       { _id: customer._id },
@@ -180,7 +158,6 @@ export class CustomersService {
       },
     );
 
-    // Append double-entry CustomerLedger debit sale record
     await this.ledgerModel.create({
       tenantId,
       customerId: customer._id,
@@ -195,14 +172,7 @@ export class CustomersService {
     return { customerId: customer._id, newBalance };
   }
 
-  /**
-   * 6. Record Cash / Card / UPI Sale on Customer (updates spending telemetry)
-   */
-  async recordCashSale(
-    tenantId: Types.ObjectId,
-    customerId: Types.ObjectId,
-    amount: number,
-  ) {
+  async recordCashSale(tenantId: Types.ObjectId, customerId: Types.ObjectId, amount: number) {
     await this.customerModel.updateOne(
       { _id: customerId, tenantId },
       {
@@ -214,14 +184,7 @@ export class CustomersService {
     );
   }
 
-  /**
-   * 7. Record Customer Repayment / Settlement of Khata Balance
-   */
-  async recordPayment(
-    tenantId: string,
-    customerId: string,
-    dto: RecordCustomerPaymentDto,
-  ) {
+  async recordPayment(tenantId: string, customerId: string, dto: RecordCustomerPaymentDto) {
     if (!Types.ObjectId.isValid(customerId) || !Types.ObjectId.isValid(tenantId)) {
       throw new BadRequestException('Invalid ID');
     }
@@ -238,16 +201,15 @@ export class CustomersService {
       throw new NotFoundException(`Customer not found.`);
     }
 
-    const newBalance = Math.max(0, customer.currentCreditBalance - dto.amount);
+    const newBalance = Math.max(0, NumberUtil.round(customer.currentCreditBalance - dto.amount, 2));
 
     await this.customerModel.updateOne(
       { _id: customer._id },
       { $set: { currentCreditBalance: newBalance } },
     );
 
-    const refId = dto.referenceNumber || `RCP-${Date.now().toString().slice(-6)}`;
+    const refId = dto.referenceNumber || UuidUtil.generatePublicId('RCP-');
 
-    // Append double-entry CustomerLedger credit payment record
     const ledgerEntry = await this.ledgerModel.create({
       tenantId: tenantObjectId,
       customerId: customer._id,
@@ -273,9 +235,6 @@ export class CustomersService {
     };
   }
 
-  /**
-   * 8. Retrieve Customer Khata Account Statement / Ledger History
-   */
   async getCustomerLedger(tenantId: string, customerId: string, limit: number = 50) {
     if (!Types.ObjectId.isValid(customerId) || !Types.ObjectId.isValid(tenantId)) {
       throw new BadRequestException('Invalid ID');
@@ -303,4 +262,3 @@ export class CustomersService {
     }));
   }
 }
-

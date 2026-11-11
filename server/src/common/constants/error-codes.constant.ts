@@ -1,0 +1,20 @@
+export const ERROR_CODES = {
+  VALIDATION_ERROR: 'ERR_VALIDATION_FAILED',
+  UNAUTHORIZED: 'ERR_UNAUTHORIZED',
+  FORBIDDEN: 'ERR_FORBIDDEN',
+  NOT_FOUND: 'ERR_RESOURCE_NOT_FOUND',
+  DUPLICATE_KEY: 'ERR_DUPLICATE_ENTRY',
+  INTERNAL_ERROR: 'ERR_INTERNAL_SERVER_ERROR',
+  BAD_REQUEST: 'ERR_BAD_REQUEST',
+  TENANT_NOT_FOUND: 'ERR_TENANT_NOT_FOUND',
+  SUBSCRIPTION_EXPIRED: 'ERR_SUBSCRIPTION_EXPIRED',
+} as const;
+
+export const DEFAULT_MESSAGES = {
+  SUCCESS: 'Operation completed successfully',
+  CREATED: 'Resource created successfully',
+  UPDATED: 'Resource updated successfully',
+  DELETED: 'Resource deleted successfully',
+  FETCHED: 'Data fetched successfully',
+} as const;
+

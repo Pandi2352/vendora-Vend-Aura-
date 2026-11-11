@@ -1,66 +1,66 @@
-import {
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-  ValidateNested,
-} from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, ValidateNested, IsNumber, Min, IsOptional, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class ReturnItemDto {
-  @ApiProperty({ description: 'Product ObjectId' })
-  @IsString()
+  @ApiProperty({ description: 'Product Mongo ID', example: '60d0fe4f5311236168a109ca' })
   @IsNotEmpty()
+  @IsString()
   productId: string;
 
-  @ApiProperty({ example: 'Ponni Boiled Rice 5kg' })
-  @IsString()
+  @ApiProperty({ description: 'Product name', example: 'Cotton Casual Shirt' })
   @IsNotEmpty()
+  @IsString()
   name: string;
 
-  @ApiProperty({ example: '890103000001' })
-  @IsString()
+  @ApiProperty({ description: 'Barcode', example: '890103000001' })
   @IsNotEmpty()
+  @IsString()
   barcode: string;
 
-  @ApiProperty({ example: 1, description: 'Quantity returned' })
+  @ApiProperty({ description: 'Quantity being returned', example: 1 })
   @IsNumber()
   @Min(1)
   quantityReturned: number;
 
-  @ApiProperty({ example: 320, description: 'Unit selling price on original invoice' })
+  @ApiProperty({ description: 'Unit selling price', example: 799 })
   @IsNumber()
   @Min(0)
   unitPrice: number;
 
-  @ApiPropertyOptional({ example: 5, description: 'GST rate percent' })
-  @IsNumber()
+  @ApiProperty({ description: 'GST rate percent', example: 5, required: false })
   @IsOptional()
+  @IsNumber()
   taxRatePercent?: number;
 
-  @ApiProperty({ example: 336, description: 'Refund amount for this line' })
+  @ApiProperty({ description: 'Refund amount for this line', example: 799 })
   @IsNumber()
   @Min(0)
   refundAmount: number;
 
-  @ApiProperty({ example: 'CUSTOMER_REQUEST', enum: ['DEFECTIVE', 'EXCHANGE', 'WRONG_ITEM', 'CUSTOMER_REQUEST'] })
-  @IsEnum(['DEFECTIVE', 'EXCHANGE', 'WRONG_ITEM', 'CUSTOMER_REQUEST'])
+  @ApiProperty({
+    description: 'Return reason',
+    enum: ['DEFECTIVE', 'EXCHANGE', 'WRONG_ITEM', 'CUSTOMER_REQUEST'],
+    example: 'CUSTOMER_REQUEST',
+  })
+  @IsIn(['DEFECTIVE', 'EXCHANGE', 'WRONG_ITEM', 'CUSTOMER_REQUEST'])
   reason: 'DEFECTIVE' | 'EXCHANGE' | 'WRONG_ITEM' | 'CUSTOMER_REQUEST';
 }
 
-export class CreateOrderReturnDto {
-  @ApiPropertyOptional({ description: 'Tenant ObjectId' })
-  @IsString()
+export class CreateReturnDto {
+  @ApiProperty({ description: 'Tenant Mongo ID', required: false })
   @IsOptional()
+  @IsString()
   tenantId?: string;
 
-  @ApiProperty({ example: 'INV-2026-00001', description: 'Original Invoice Number' })
+  @ApiProperty({ description: 'Outlet Mongo ID', required: false })
+  @IsOptional()
   @IsString()
+  outletId?: string;
+
+  @ApiProperty({ description: 'Original sales invoice number', example: 'INV-2026-00001' })
   @IsNotEmpty()
+  @IsString()
   originalInvoiceNumber: string;
 
   @ApiProperty({ type: [ReturnItemDto], description: 'Items being returned' })
@@ -69,38 +69,41 @@ export class CreateOrderReturnDto {
   @Type(() => ReturnItemDto)
   items: ReturnItemDto[];
 
-  @ApiProperty({ example: 336, description: 'Total refund payout amount' })
+  @ApiProperty({ description: 'Total refund amount', example: 799 })
   @IsNumber()
   @Min(0)
   totalRefundAmount: number;
 
-  @ApiProperty({ example: 'CASH', enum: ['CASH', 'UPI', 'CREDIT_NOTE', 'CUSTOMER_KHATA'] })
-  @IsEnum(['CASH', 'UPI', 'CREDIT_NOTE', 'CUSTOMER_KHATA'])
+  @ApiProperty({
+    description: 'Refund tender mode',
+    enum: ['CASH', 'UPI', 'CREDIT_NOTE', 'CUSTOMER_KHATA'],
+    default: 'CASH',
+  })
+  @IsIn(['CASH', 'UPI', 'CREDIT_NOTE', 'CUSTOMER_KHATA'])
   refundMode: 'CASH' | 'UPI' | 'CREDIT_NOTE' | 'CUSTOMER_KHATA';
 
-  @ApiPropertyOptional({ description: 'Customer ObjectId if Khata adjustment' })
-  @IsString()
+  @ApiProperty({ description: 'Customer Mongo ID', required: false })
   @IsOptional()
+  @IsString()
   customerId?: string;
 
-  @ApiPropertyOptional({ example: 'Arun Kumar' })
-  @IsString()
+  @ApiProperty({ description: 'Customer name', required: false })
   @IsOptional()
+  @IsString()
   customerName?: string;
 
-  @ApiPropertyOptional({ example: '9840123456' })
-  @IsString()
+  @ApiProperty({ description: 'Customer mobile phone', required: false })
   @IsOptional()
+  @IsString()
   customerPhone?: string;
 
-  @ApiPropertyOptional({ example: 'Customer exchanged for smaller size' })
-  @IsString()
+  @ApiProperty({ description: 'Cashier name', required: false })
   @IsOptional()
-  remarks?: string;
-
-  @ApiPropertyOptional({ example: 'Cashier' })
   @IsString()
-  @IsOptional()
   cashierName?: string;
-}
 
+  @ApiProperty({ description: 'Return remarks / notes', required: false })
+  @IsOptional()
+  @IsString()
+  remarks?: string;
+}

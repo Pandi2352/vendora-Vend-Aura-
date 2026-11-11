@@ -1,4 +1,4 @@
-import { ShoppingCart, Plus, Minus, Trash, ArrowRight } from '@phosphor-icons/react';
+import { ShoppingCart, Plus, Minus, Trash, ArrowRight, PauseCircle, ClockCounterClockwise } from '@phosphor-icons/react';
 import type { CartItem } from '../types/pos.types';
 
 interface CartPanelProps {
@@ -7,6 +7,9 @@ interface CartPanelProps {
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
   onProceedCheckout: () => void;
+  onHoldCart?: () => void;
+  heldCartsCount?: number;
+  onOpenHeldCarts?: () => void;
 }
 
 export function CartPanel({
@@ -15,6 +18,9 @@ export function CartPanel({
   onRemoveItem,
   onClearCart,
   onProceedCheckout,
+  onHoldCart,
+  heldCartsCount = 0,
+  onOpenHeldCarts,
 }: CartPanelProps) {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subTotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -36,14 +42,26 @@ export function CartPanel({
           </span>
         </div>
 
-        {cart.length > 0 && (
-          <button
-            onClick={onClearCart}
-            className="text-[11px] text-zinc-400 hover:text-red-600 font-semibold cursor-pointer transition-colors"
-          >
-            Clear Bill
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {heldCartsCount > 0 && onOpenHeldCarts && (
+            <button
+              onClick={onOpenHeldCarts}
+              className="text-[11px] text-red-600 hover:text-red-700 font-bold cursor-pointer flex items-center gap-1"
+            >
+              <ClockCounterClockwise className="w-3.5 h-3.5" />
+              <span>Held ({heldCartsCount})</span>
+            </button>
+          )}
+
+          {cart.length > 0 && (
+            <button
+              onClick={onClearCart}
+              className="text-[11px] text-zinc-400 hover:text-red-600 font-semibold cursor-pointer transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Cart Items List */}
@@ -131,17 +149,29 @@ export function CartPanel({
           </div>
         </div>
 
-        {/* Checkout Button */}
-        <button
-          onClick={onProceedCheckout}
-          disabled={cart.length === 0}
-          className="w-full mt-2 py-3 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <span>Tender & Complete Bill</span>
-          <ArrowRight weight="bold" className="w-4 h-4" />
-        </button>
+        {/* Action Buttons: Hold Cart + Checkout */}
+        <div className="flex gap-2 pt-1">
+          {onHoldCart && cart.length > 0 && (
+            <button
+              onClick={onHoldCart}
+              className="py-2.5 px-3 rounded-md border border-zinc-300 bg-white hover:bg-zinc-100 text-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+              title="Park cart to serve next customer"
+            >
+              <PauseCircle weight="bold" className="w-4 h-4 text-amber-600" />
+              <span>Hold</span>
+            </button>
+          )}
+
+          <button
+            onClick={onProceedCheckout}
+            disabled={cart.length === 0}
+            className="flex-1 py-2.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span>Tender & Complete Bill</span>
+            <ArrowRight weight="bold" className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </aside>
   );
 }
-

@@ -26,6 +26,7 @@ import {
   TenantStatus, 
   UserRole 
 } from '../../shared';
+import { UuidUtil, DateUtil } from '../../common';
 
 @Injectable()
 export class OnboardingService {
@@ -49,10 +50,10 @@ export class OnboardingService {
   // 2. Request Email Verification OTP
   async requestOtp(dto: RequestOtpDto) {
     const email = dto.email.toLowerCase().trim();
-    const otp = crypto.randomInt(100000, 999999).toString();
+    const otp = UuidUtil.generateNumericOtp(6);
     const otpHash = await bcrypt.hash(otp, 10);
-    const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins TTL
-    const sessionId = 'reg_' + crypto.randomBytes(8).toString('hex');
+    const otpExpiresAt = DateUtil.addMinutes(new Date(), 5); // 5 mins TTL
+    const sessionId = UuidUtil.generatePublicId('reg_');
 
     await this.sessionModel.create({
       sessionId,
@@ -82,7 +83,7 @@ export class OnboardingService {
       throw new NotFoundException('Registration session expired or invalid.');
     }
 
-    if (session.otpExpiresAt && session.otpExpiresAt < new Date()) {
+    if (session.otpExpiresAt && DateUtil.isExpired(session.otpExpiresAt)) {
       throw new BadRequestException('Verification code has expired. Please request a new one.');
     }
 
@@ -212,8 +213,8 @@ export class OnboardingService {
       isActive: true,
     });
 
-    // Generate Secure Temporary Password (e.g. "Vx7#kM9q")
-    const tempPassword = 'Vn' + crypto.randomBytes(3).toString('hex') + '!';
+    // Generate Secure Temporary Password (e.g. "Vn7#kM9q!")
+    const tempPassword = `Vn${UuidUtil.generateToken(4)}!`;
     const passwordHash = await bcrypt.hash(tempPassword, 10);
     const username = `${shopId}_admin`;
 
@@ -236,8 +237,8 @@ export class OnboardingService {
       tenantId: tenant._id,
       planCode: session.selectedPlanCode,
       status: 'TRIAL',
-      startsAt: new Date(),
-      expiresAt: new Date(Date.now() + (planDetails.durationDays || 30) * 24 * 60 * 60 * 1000),
+      startsAt: DateUtil.nowUtc(),
+      expiresAt: DateUtil.addDays(DateUtil.nowUtc(), planDetails.durationDays || 30),
       maxOutlets: planDetails.maxOutlets,
       maxUsers: planDetails.maxUsers,
       maxBillsPerMonth: planDetails.maxBillsPerMonth,

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SuppliersController } from './suppliers.controller';
 import { SuppliersService } from './suppliers.service';
+import { PurchaseInwardService } from './purchase-inward.service';
 import { Supplier, SupplierSchema } from './schemas/supplier.schema';
 import { Purchase, PurchaseSchema } from './schemas/purchase.schema';
 import { Product, ProductSchema } from '../catalog/schemas/product.schema';
@@ -21,8 +22,7 @@ import { Tenant, TenantSchema } from '../tenant/schemas/tenant.schema';
     ]),
   ],
   controllers: [SuppliersController],
-  providers: [SuppliersService],
-  exports: [SuppliersService],
+  providers: [SuppliersService, PurchaseInwardService],
+  exports: [SuppliersService, PurchaseInwardService],
 })
 export class SuppliersModule {}
-

@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../user/schemas/user.schema';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { TenantStatus } from '../../shared';
+import { DateUtil } from '../../common';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -77,7 +78,7 @@ export class AuthService {
 
     // 5. Store Hashed Refresh Token & Last Login
     user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
-    user.lastLoginAt = new Date();
+    user.lastLoginAt = DateUtil.nowUtc();
     await user.save();
 
     return {

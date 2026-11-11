@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { RequestIdMiddleware } from './common';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { SaasAdminModule } from './modules/saas-admin/saas-admin.module';
 import { TenantModule } from './modules/tenant/tenant.module';
@@ -15,6 +16,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -41,8 +43,13 @@ import { CustomersModule } from './modules/customers/customers.module';
     OrdersModule,
     SuppliersModule,
     CustomersModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

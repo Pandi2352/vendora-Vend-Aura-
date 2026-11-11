@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
+import { OrderReturnsService } from './order-returns.service';
+import { CashDrawerService } from './cash-drawer.service';
 import { Order, OrderSchema } from './schemas/order.schema';
 import { StockLedger, StockLedgerSchema } from './schemas/stock-ledger.schema';
 import { OrderReturn, OrderReturnSchema } from './schemas/order-return.schema';
@@ -29,8 +31,7 @@ import { CustomerLedger, CustomerLedgerSchema } from '../customers/schemas/custo
     ]),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService],
-  exports: [OrdersService],
+  providers: [OrdersService, OrderReturnsService, CashDrawerService],
+  exports: [OrdersService, OrderReturnsService, CashDrawerService],
 })
 export class OrdersModule {}
-

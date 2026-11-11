@@ -8,8 +8,12 @@ import {
   Receipt,
   UsersThree,
   Truck,
+  Vault,
+  ArrowUDownLeft,
+  PauseCircle,
 } from '@phosphor-icons/react';
 import type { AuthUser } from '../types/pos.types';
+import type { ShiftSummary } from '../types/shift-return.types';
 
 export type PosActiveTab = 'pos' | 'orders' | 'customers' | 'suppliers';
 
@@ -18,6 +22,11 @@ interface PosHeaderProps {
   activeTab: PosActiveTab;
   onTabChange: (tab: PosActiveTab) => void;
   onSignOut: () => void;
+  activeShift?: ShiftSummary | null;
+  onOpenDrawer?: () => void;
+  onOpenReturns?: () => void;
+  heldCartsCount?: number;
+  onOpenHeldCarts?: () => void;
 }
 
 export function PosHeader({
@@ -25,6 +34,11 @@ export function PosHeader({
   activeTab,
   onTabChange,
   onSignOut,
+  activeShift,
+  onOpenDrawer,
+  onOpenReturns,
+  heldCartsCount = 0,
+  onOpenHeldCarts,
 }: PosHeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString('en-IN'));
 
@@ -112,10 +126,53 @@ export function PosHeader({
         </button>
       </nav>
 
-      {/* Terminal & Cashier Info & Sign Out */}
-      <div className="flex items-center gap-3 sm:gap-4 text-xs">
+      {/* Terminal & Quick Actions & Cashier Info & Sign Out */}
+      <div className="flex items-center gap-2 sm:gap-3 text-xs">
+        {/* Quick Shift Button */}
+        {onOpenDrawer && (
+          <button
+            onClick={onOpenDrawer}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold cursor-pointer transition-colors ${
+              activeShift
+                ? 'bg-zinc-900 border-emerald-900/60 text-emerald-400 hover:border-emerald-700'
+                : 'bg-zinc-900 border-amber-900/60 text-amber-400 hover:border-amber-700'
+            }`}
+            title="Cash Drawer Shift Status"
+          >
+            <Vault className="w-3.5 h-3.5" />
+            <span className="w-2 h-2 rounded-full inline-block bg-current" />
+            <span className="hidden lg:inline">
+              {activeShift ? `Shift Active (₹${activeShift.expectedCash || activeShift.openingFloat})` : 'Open Shift'}
+            </span>
+          </button>
+        )}
+
+        {/* Quick Returns Button */}
+        {onOpenReturns && (
+          <button
+            onClick={onOpenReturns}
+            className="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-semibold cursor-pointer transition-colors"
+            title="Return or Exchange Bill"
+          >
+            <ArrowUDownLeft className="w-3.5 h-3.5 text-red-500" />
+            <span className="hidden xl:inline">Return</span>
+          </button>
+        )}
+
+        {/* Held Carts Badge Button */}
+        {heldCartsCount > 0 && onOpenHeldCarts && (
+          <button
+            onClick={onOpenHeldCarts}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 font-bold cursor-pointer transition-colors"
+            title="Recall Paused Bills"
+          >
+            <PauseCircle className="w-3.5 h-3.5" />
+            <span>Held ({heldCartsCount})</span>
+          </button>
+        )}
+
         {/* Live Clock */}
-        <div className="hidden xl:flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]">
+        <div className="hidden 2xl:flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]">
           <Clock className="w-3.5 h-3.5 text-zinc-500" />
           <span>{currentTime}</span>
         </div>

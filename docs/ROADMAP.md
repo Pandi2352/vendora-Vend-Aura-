@@ -287,6 +287,33 @@ MILESTONE 1: FROM REGISTRATION TO FIRST BILL (MVP 01 - MVP 06)
 
 ---
 
+### 🔹 MVP 09 – Advanced Sales Operations & Counter Management
+**Status**: ✅ **COMPLETED**  
+**Primary Goal**: Advanced cashier operations, multi-cart holding and instant recall, invoice returns with stock ledger restitution, and cash drawer shift reconciliation.
+
+#### Included Modules (11 Modules):
+114. **Multi-Cart Parking (Hold & Recall)**: Cashier can park incomplete cart with customer tag and timestamp to immediately serve the next queue customer.
+115. **Parked Carts Manager**: Modal ([`HeldCartsModal.tsx`](file:///d:/mern/vendora/client/src/components/cart/HeldCartsModal.tsx)) with one-click "Resume to Register" or "Discard" actions.
+116. **Sales Return & Exchange Engine**: Return processed against original invoice barcode with partial line-item selection and quantity validations.
+117. **Return Reason Classification**: Categorize returns (`CUSTOMER_REQUEST`, `DEFECTIVE`, `EXCHANGE`, `WRONG_ITEM`) for retail shrinkage auditing.
+118. **Stock Ledger Restitution**: Inward return movement (`INWARD_RETURN`) restoring product stock atomically in MongoDB.
+119. **Refund Tender Modes**: Cash refund, UPI reimbursement, Credit Note voucher, or direct credit to Customer Khata ledger.
+120. **Return Voucher Generation**: Unique sequential voucher code (`RET-YYYY-XXXXX`).
+121. **Cash Drawer Shift Tracking**: Track opening physical cash float (`openingFloat`) and cashier identity.
+122. **Live Counter Rebalancing**: Real-time sales aggregation (Cash, UPI, Card, Khata, Cash Refunds) and computed Expected Cash.
+123. **End-of-Shift Reconciliation**: Count physical till cash and display live variance indicators (*Balanced*, *Overage*, *Shortage*).
+124. **Shift History Log**: Audit log of past closed shifts with variance and notes.
+
+#### Deliverables & Acceptance Criteria:
+- [x] Backend [`OrderReturnsService`](file:///d:/mern/vendora/server/src/modules/orders/order-returns.service.ts) and [`CashDrawerService`](file:///d:/mern/vendora/server/src/modules/orders/cash-drawer.service.ts) with full Mongo persistence.
+- [x] Frontend Parked Cart functionality in [`CartPanel.tsx`](file:///d:/mern/vendora/client/src/components/CartPanel.tsx) and [`HeldCartsModal.tsx`](file:///d:/mern/vendora/client/src/components/cart/HeldCartsModal.tsx).
+- [x] Sales Return Modal ([`SalesReturnModal.tsx`](file:///d:/mern/vendora/client/src/components/orders/SalesReturnModal.tsx)) with live invoice search and stock restitution.
+- [x] Cash Drawer Management ([`CashDrawerModal.tsx`](file:///d:/mern/vendora/client/src/components/orders/CashDrawerModal.tsx)) with float setup, live stats, and variance reconciliation.
+- [x] POS Header indicator showing real-time shift status pill and quick action triggers.
+- [x] Strict `< 200–300 lines per file` limit enforced across all client and server files.
+
+---
+
 ### 🔹 MVP 14 – SaaS Platform Administration & Commercial Launch
 **Status**: ✅ **COMPLETED**  
 **Primary Goal**: Transform Vendora from an internal ERP into a commercially scalable SaaS with automated billing, plan limits, and super-admin monitoring.
@@ -329,8 +356,8 @@ gantt
     section Milestone 2: Store Operations
     MVP 07 Purchase & Supplier Flow        :done,    m2_1, 2026-11-11, 2d
     MVP 08 Customer & Credit (Khata)       :done,    m2_2, 2026-11-11, 2d
-    MVP 09 Advanced Sales Operations       :active,  m2_3, 2026-11-12, 4d
-    MVP 10 Reports & Analytics             :         m2_4, after m2_3, 5d
+    MVP 09 Advanced Sales Operations       :done,    m2_3, 2026-11-12, 4d
+    MVP 10 Reports & Analytics             :active,  m2_4, after m2_3, 5d
     section Milestone 3: ERP & Scale
     MVP 11 Accounts & Finance              :         m3_1, after m2_4, 7d
     MVP 12 Multi-Outlet Branch Mgmt        :         m3_2, after m3_1, 5d
@@ -343,23 +370,20 @@ gantt
 
 ## 🎯 What Next We Need To Do (Immediate Next Sprint)
 
-With **Milestone 1 (MVP 01 to MVP 06), MVP 14, MVP 07, and MVP 08** 100% complete, fully tested, and passing all builds with exit code 0, our immediate technical next steps are:
+With **Milestone 1 (MVP 01 to MVP 06), Milestone 2 (MVP 07, MVP 08, MVP 09), and MVP 14** 100% complete, fully tested, and passing all builds with exit code 0, our immediate technical next steps are:
 
-### Phase 1: MVP 09 – Advanced Sales Operations & Counter Management (Immediate Priority)
-1. **Hold & Recall Carts (Multi-Cart Parking)**:
-   - Ability for cashier to park active shopping cart with a temporary tag (e.g. `CART #2 - Arun`) when a customer steps away to pick another item.
-   - Instantly serve the next waiting customer and recall parked carts with one click.
-2. **Sales Returns & Replacement Bills**:
-   - Return items by invoice barcode scan (`INV-2026-XXXXX`).
-   - Reverse inventory with double-entry stock ledger credit (`movementType: 'RETURN'`).
-   - Issue Credit Note or Cash Refund with audit logging.
-3. **Day-End Cash Drawer Reconciliation (Day Close / Cash Book)**:
-   - Cashier shift opening float, physical cash collected, cash drops, and automatic variance check at shift close.
-
-### Phase 2: MVP 10 – Reports & Business Analytics
-1. **Merchant Executive Dashboard**:
-   - Today's sales summary, gross margin, hourly sales heat-map, top-selling items.
-2. **GST Filing Reports**:
+### Phase 1: MVP 10 – Reports & Business Analytics (Immediate Priority)
+1. **Merchant Executive Dashboard & Daily Summary**:
+   - Today's live sales volume, gross profit margin, hourly sales heat-map, top-selling products by quantity and revenue.
+2. **GST Filing Reports & Statutory Compliance**:
    - GSTR-1 outward supplies export (B2B invoice breakdown + B2C summary) and GSTR-3B monthly tax computation.
+3. **Inventory Valuation & Fast/Slow Moving Matrix**:
+   - Total stock valuation at purchase cost vs selling price, dead stock alerts, and reorder point warnings.
+
+### Phase 2: MVP 11 – Accounts, Ledger & Financial Accounting
+1. **Double-Entry General Ledger**:
+   - Cash account, Bank account, Accounts Receivable (Customer Khata), Accounts Payable (Supplier Dues), and Sales Revenue.
+2. **Profit & Loss Statement (P&L)**:
+   - Gross Revenue, Cost of Goods Sold (COGS), Operating Expenses, and Net Profit.
 3. **Inventory Valuation & Fast/Slow Moving Matrix**:
    - Total stock valuation at purchase cost (FIFO / AVCO) vs selling price.
