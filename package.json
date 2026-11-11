@@ -1,0 +1,15 @@
+{
+  "name": "vendora",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vendora - Cloud-Based Multi-Tenant Retail POS & ERP SaaS",
+  "scripts": {
+    "dev:landing": "npm run dev --prefix landing",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run start:dev --prefix server",
+    "build:landing": "npm run build --prefix landing",
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm run build --prefix server",
+    "build": "npm run build:server && npm run build:client && npm run build:landing"
+  }
+}
