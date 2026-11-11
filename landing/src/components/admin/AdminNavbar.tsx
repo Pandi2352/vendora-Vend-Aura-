@@ -10,6 +10,7 @@ import {
   HouseLine,
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
+import { API_DOCS_URL, POS_URL } from '../../lib/config';
 
 export type AdminTab = 'overview' | 'tenants' | 'contacts' | 'reports';
 
@@ -119,11 +120,11 @@ export function AdminNavbar({
 
             {/* Launch POS Terminal */}
             <a
-              href="http://localhost:4001"
+              href={POS_URL}
               target="_blank"
               rel="noreferrer"
               className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-semibold transition-colors"
-              title="Open Merchant POS Terminal (Port 4001)"
+              title="Open Merchant POS Terminal"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>POS Terminal</span>
@@ -132,7 +133,7 @@ export function AdminNavbar({
 
             {/* Swagger REST Docs */}
             <a
-              href="http://localhost:5000/docs"
+              href={API_DOCS_URL}
               target="_blank"
               rel="noreferrer"
               className="hidden 2xl:flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition-colors"

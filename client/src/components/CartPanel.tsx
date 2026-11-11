@@ -3,6 +3,11 @@ import type { CartItem } from '../types/pos.types';
 
 interface CartPanelProps {
   cart: CartItem[];
+  subTotal: number;
+  taxTotal: number;
+  roundOff: number;
+  grandTotal: number;
+  isShiftOpen: boolean;
   onUpdateQuantity: (id: string, delta: number) => void;
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
@@ -14,6 +19,11 @@ interface CartPanelProps {
 
 export function CartPanel({
   cart,
+  subTotal,
+  taxTotal,
+  roundOff,
+  grandTotal,
+  isShiftOpen,
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -23,12 +33,6 @@ export function CartPanel({
   onOpenHeldCarts,
 }: CartPanelProps) {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const subTotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const taxTotal = cart.reduce(
-    (sum, item) => sum + (item.unitPrice * item.quantity * item.taxRatePercent) / 100,
-    0
-  );
-  const grandTotal = Math.round(subTotal + taxTotal);
 
   return (
     <aside className="w-full lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-zinc-200 flex flex-col shrink-0">
@@ -107,7 +111,7 @@ export function CartPanel({
                 {/* Line Total & Delete */}
                 <div className="text-right shrink-0 min-w-[50px]">
                   <span className="font-mono font-bold text-xs text-zinc-950 block">
-                    ₹{lineTotal}
+                    ₹{lineTotal.toFixed(2)}
                   </span>
                   <button
                     onClick={() => onRemoveItem(item.id)}
@@ -141,6 +145,14 @@ export function CartPanel({
             <span>GST Tax (CGST + SGST):</span>
             <span className="font-mono font-medium text-emerald-600">+₹{taxTotal.toFixed(2)}</span>
           </div>
+          {roundOff !== 0 && (
+            <div className="flex justify-between text-zinc-500">
+              <span>Round Off:</span>
+              <span className="font-mono font-medium">
+                {roundOff > 0 ? '+' : '-'}₹{Math.abs(roundOff).toFixed(2)}
+              </span>
+            </div>
+          )}
           <div className="pt-2 border-t border-zinc-200 flex justify-between items-baseline">
             <span className="font-bold text-sm text-zinc-950">Grand Total:</span>
             <span className="font-mono font-black text-xl text-red-600">
@@ -148,6 +160,12 @@ export function CartPanel({
             </span>
           </div>
         </div>
+
+        {!isShiftOpen && cart.length > 0 && (
+          <div className="p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold">
+            Cash drawer is closed. Open a shift from the header before completing this bill.
+          </div>
+        )}
 
         {/* Action Buttons: Hold Cart + Checkout */}
         <div className="flex gap-2 pt-1">

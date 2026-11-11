@@ -1,22 +1,38 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { OrderReturn, OrderReturnDocument } from './schemas/order-return.schema';
 import { Order, OrderDocument } from './schemas/order.schema';
-import { Product, ProductDocument } from '../catalog/schemas/product.schema';
 import { StockLedger, StockLedgerDocument } from './schemas/stock-ledger.schema';
+import { Product, ProductDocument } from '../catalog/schemas/product.schema';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomerLedger, CustomerLedgerDocument } from '../customers/schemas/customer-ledger.schema';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
-import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { CreateReturnDto } from './dto/create-return.dto';
-import { DateUtil, NumberUtil } from '../../common';
+import { SequenceService } from '../sequence/sequence.service';
+import { AuthenticatedUser, NumberUtil, runInTransaction, toDocumentView } from '../../common';
+
+const round2 = (value: number) => NumberUtil.round(value, 2);
+
+export interface ReturnableItem {
+  productId: string;
+  name: string;
+  barcode: string;
+  soldQty: number;
+  returnedQty: number;
+  returnableQty: number;
+  unitPrice: number;
+  taxRatePercent: number;
+  /** Refund per unit including the GST that was charged. */
+  unitRefund: number;
+}
 
 @Injectable()
 export class OrderReturnsService {
   private readonly logger = new Logger(OrderReturnsService.name);
 
   constructor(
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(OrderReturn.name) private readonly returnModel: Model<OrderReturnDocument>,
     @InjectModel(Order.name) private readonly orderModel: Model<OrderDocument>,
     @InjectModel(Product.name) private readonly productModel: Model<ProductDocument>,
@@ -24,152 +40,225 @@ export class OrderReturnsService {
     @InjectModel(Customer.name) private readonly customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerLedger.name) private readonly customerLedgerModel: Model<CustomerLedgerDocument>,
     @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
-    @InjectModel(Outlet.name) private readonly outletModel: Model<OutletDocument>,
+    private readonly sequenceService: SequenceService,
   ) {}
 
-  async createReturn(
-    dto: CreateReturnDto,
-    authUser?: { userId?: string; tenantId?: string; outletIds?: string[]; fullName?: string; username?: string },
-  ) {
-    const rawTenantId = dto.tenantId || authUser?.tenantId;
-    if (!rawTenantId || !Types.ObjectId.isValid(rawTenantId)) {
-      throw new BadRequestException('Valid tenant ID is required.');
-    }
-    const tenantId = new Types.ObjectId(rawTenantId);
-
-    // Verify invoice exists
-    const order = await this.orderModel.findOne({
-      tenantId,
-      invoiceNumber: dto.originalInvoiceNumber,
-    });
+  /** Invoice, its previous returns, and what can still be returned per line. */
+  async getInvoiceReturnInfo(tenantIdStr: string, invoiceNumber: string) {
+    const tenantId = new Types.ObjectId(tenantIdStr);
+    const order = await this.orderModel.findOne({ tenantId, invoiceNumber: invoiceNumber.trim() }).lean();
     if (!order) {
-      throw new NotFoundException(`Invoice ${dto.originalInvoiceNumber} not found.`);
+      throw new NotFoundException(`Invoice ${invoiceNumber} not found.`);
     }
+    const returns = await this.returnModel
+      .find({ tenantId, originalInvoiceNumber: order.invoiceNumber })
+      .sort({ createdAt: -1 })
+      .lean();
 
-    // Resolve outlet
-    let outletId = order.outletId;
-    if (!outletId) {
-      const tenant = await this.tenantModel.findById(tenantId);
-      outletId = tenant?.primaryOutletId as Types.ObjectId;
-      if (!outletId) {
-        const anyOutlet = await this.outletModel.findOne({ tenantId });
-        outletId = anyOutlet ? anyOutlet._id : new Types.ObjectId();
-      }
-    }
+    return {
+      order: toDocumentView(order),
+      returns: returns.map(toDocumentView),
+      returnableItems: this.computeReturnable(order, returns),
+    };
+  }
 
-    // Generate sequential Return number: RET-YYYY-XXXXX
-    const currentYear = DateUtil.nowUtc().getFullYear();
-    const returnCount = await this.returnModel.countDocuments({ tenantId });
-    const returnSeq = String(returnCount + 1).padStart(5, '0');
-    const returnNumber = `RET-${currentYear}-${returnSeq}`;
+  async createReturn(tenantIdStr: string, dto: CreateReturnDto, user: AuthenticatedUser) {
+    const tenantId = new Types.ObjectId(tenantIdStr);
+    const { order, returnableItems } = await this.getInvoiceReturnInfo(tenantIdStr, dto.originalInvoiceNumber);
+    const returnableById = new Map(returnableItems.map((r) => [r.productId, r]));
 
-    const cashierName = dto.cashierName || authUser?.fullName || authUser?.username || 'Cashier';
-
-    // 1. Restore Inventory Stock and Append StockLedger records
+    const requested = new Map<string, { qty: number; reason: CreateReturnDto['items'][number]['reason'] }>();
     for (const item of dto.items) {
-      if (Types.ObjectId.isValid(item.productId)) {
-        const prodId = new Types.ObjectId(item.productId);
-        const product = await this.productModel.findOne({ _id: prodId, tenantId });
-        if (product) {
-          const balanceAfter = product.stock + item.quantityReturned;
-          await this.productModel.updateOne(
-            { _id: prodId },
-            { $inc: { stock: item.quantityReturned } },
-          );
+      const prev = requested.get(item.productId);
+      requested.set(item.productId, { qty: (prev?.qty ?? 0) + item.quantityReturned, reason: item.reason });
+    }
 
-          await this.stockLedgerModel.create({
+    const lines = [...requested.entries()].map(([productId, { qty, reason }]) => {
+      const info = returnableById.get(productId);
+      if (!info) {
+        throw new BadRequestException(`Product ${productId} is not on invoice ${order.invoiceNumber}.`);
+      }
+      if (qty > info.returnableQty) {
+        throw new BadRequestException(
+          `Only ${info.returnableQty} of ${info.name} can still be returned (sold ${info.soldQty}, already returned ${info.returnedQty}).`,
+        );
+      }
+      return {
+        productId: new Types.ObjectId(productId),
+        name: info.name,
+        barcode: info.barcode,
+        quantityReturned: qty,
+        unitPrice: info.unitPrice,
+        taxRatePercent: info.taxRatePercent,
+        refundAmount: round2(info.unitRefund * qty),
+        reason,
+      };
+    });
+    const totalRefundAmount = round2(lines.reduce((sum, l) => sum + l.refundAmount, 0));
+
+    if (dto.refundMode === 'CUSTOMER_KHATA' && !order.customerId) {
+      throw new BadRequestException('Khata refund needs an invoice billed to a registered customer.');
+    }
+
+    const tenant = await this.tenantModel.findById(tenantId).select('settings').lean();
+    const cashierName = user.fullName || user.username || 'Cashier';
+
+    const orderReturn = await runInTransaction(this.connection, async (session) => {
+      const returnNumber = await this.sequenceService.next({
+        tenantId,
+        prefix: 'RET',
+        timezone: tenant?.settings?.timezone,
+        session,
+        findExistingMax: (prefix) => this.findMaxReturnSeq(tenantId, prefix, session),
+      });
+
+      for (const line of lines) {
+        await this.restock(tenantId, order.outletId as Types.ObjectId, line, returnNumber, order.invoiceNumber, session);
+      }
+
+      if (dto.refundMode === 'CUSTOMER_KHATA') {
+        await this.creditKhata(tenantId, order.customerId as Types.ObjectId, totalRefundAmount, returnNumber, session);
+      }
+
+      const [created] = await this.returnModel.create(
+        [
+          {
             tenantId,
-            outletId,
-            productId: prodId,
-            movementType: 'INWARD_RETURN',
-            quantityDebit: 0,
-            quantityCredit: item.quantityReturned,
-            balanceAfter,
-            referenceType: 'ORDER',
-            referenceId: returnNumber,
-            remarks: `Sales Return [${item.reason}]: ${item.name} (${item.quantityReturned} qty) from ${order.invoiceNumber}`,
-          });
-        }
+            outletId: order.outletId,
+            orderId: order._id,
+            originalInvoiceNumber: order.invoiceNumber,
+            returnNumber,
+            items: lines,
+            totalRefundAmount,
+            refundMode: dto.refundMode,
+            customerId: order.customerId,
+            customerName: order.customerName,
+            customerPhone: order.customerPhone,
+            cashierName,
+            remarks: dto.remarks,
+          },
+        ],
+        { session },
+      );
+      return created;
+    });
+
+    this.logger.log(`Sales return ${orderReturn.returnNumber} processed for ₹${totalRefundAmount} [${order.invoiceNumber}]`);
+    return toDocumentView(orderReturn.toObject());
+  }
+
+  async getReturns(tenantId: string, limit = 50) {
+    const returns = await this.returnModel
+      .find({ tenantId: new Types.ObjectId(tenantId) })
+      .sort({ createdAt: -1 })
+      .limit(Math.min(Math.max(limit, 1), 500))
+      .lean();
+    return returns.map(toDocumentView);
+  }
+
+  private computeReturnable(
+    order: { items: Order['items'] },
+    returns: Array<{ items: OrderReturn['items'] }>,
+  ): ReturnableItem[] {
+    const returned = new Map<string, number>();
+    for (const r of returns) {
+      for (const item of r.items) {
+        const key = item.productId.toString();
+        returned.set(key, (returned.get(key) ?? 0) + item.quantityReturned);
       }
     }
 
-    // 2. Customer Khata Credit adjustment if returned to ledger
-    let customerIdObj: Types.ObjectId | undefined = order.customerId;
-    if (dto.customerId && Types.ObjectId.isValid(dto.customerId)) {
-      customerIdObj = new Types.ObjectId(dto.customerId);
+    return order.items.map((item) => {
+      const returnedQty = returned.get(item.productId) ?? 0;
+      return {
+        productId: item.productId,
+        name: item.name,
+        barcode: item.barcode,
+        soldQty: item.quantity,
+        returnedQty,
+        returnableQty: Math.max(0, item.quantity - returnedQty),
+        unitPrice: item.unitPrice,
+        taxRatePercent: item.taxRatePercent || 0,
+        // Proportional share of what the customer actually paid for the line (incl. GST).
+        unitRefund: round2(item.total / item.quantity),
+      };
+    });
+  }
+
+  private async restock(
+    tenantId: Types.ObjectId,
+    outletId: Types.ObjectId,
+    line: { productId: Types.ObjectId; name: string; quantityReturned: number; reason: string },
+    returnNumber: string,
+    invoiceNumber: string,
+    session?: ClientSession,
+  ) {
+    const product = await this.productModel.findOneAndUpdate(
+      { _id: line.productId, tenantId },
+      { $inc: { stock: line.quantityReturned } },
+      { new: true, session },
+    );
+    if (!product) return; // product deleted since the sale: nothing to restock
+
+    await this.stockLedgerModel.create(
+      [
+        {
+          tenantId,
+          outletId,
+          productId: line.productId,
+          movementType: 'INWARD_RETURN',
+          quantityDebit: 0,
+          quantityCredit: line.quantityReturned,
+          balanceAfter: product.stock,
+          referenceType: 'ORDER',
+          referenceId: returnNumber,
+          remarks: `Sales Return [${line.reason}]: ${line.name} (${line.quantityReturned} qty) from ${invoiceNumber}`,
+        },
+      ],
+      { session },
+    );
+  }
+
+  private async creditKhata(
+    tenantId: Types.ObjectId,
+    customerId: Types.ObjectId,
+    amount: number,
+    returnNumber: string,
+    session?: ClientSession,
+  ) {
+    const customer = await this.customerModel.findOneAndUpdate(
+      { _id: customerId, tenantId },
+      { $inc: { currentCreditBalance: -amount } },
+      { new: true, session },
+    );
+    if (!customer) {
+      throw new BadRequestException('Customer on this invoice no longer exists.');
     }
 
-    if (dto.refundMode === 'CUSTOMER_KHATA' && customerIdObj) {
-      const customer = await this.customerModel.findOne({ _id: customerIdObj, tenantId });
-      if (customer) {
-        const newCreditBalance = Math.max(0, customer.currentCreditBalance - dto.totalRefundAmount);
-        await this.customerModel.updateOne(
-          { _id: customerIdObj },
-          { $inc: { currentCreditBalance: -dto.totalRefundAmount } },
-        );
-
-        await this.customerLedgerModel.create({
+    await this.customerLedgerModel.create(
+      [
+        {
           tenantId,
-          customerId: customerIdObj,
-          transactionType: 'CREDIT_PAYMENT',
-          amount: dto.totalRefundAmount,
-          balanceAfter: newCreditBalance,
+          customerId,
+          transactionType: 'ADJUSTMENT',
+          amount,
+          balanceAfter: round2(customer.currentCreditBalance),
           referenceType: 'PAYMENT',
           referenceId: returnNumber,
           remarks: `Refund Khata adjustment for return ${returnNumber}`,
-        });
-      }
-    }
-
-    // 3. Persist OrderReturn Record
-    const orderReturn = await this.returnModel.create({
-      tenantId,
-      outletId,
-      orderId: order._id,
-      originalInvoiceNumber: dto.originalInvoiceNumber,
-      returnNumber,
-      items: dto.items.map((it) => ({
-        productId: new Types.ObjectId(it.productId),
-        name: it.name,
-        barcode: it.barcode,
-        quantityReturned: it.quantityReturned,
-        unitPrice: it.unitPrice,
-        taxRatePercent: it.taxRatePercent || 0,
-        refundAmount: it.refundAmount,
-        reason: it.reason,
-      })),
-      totalRefundAmount: dto.totalRefundAmount,
-      refundMode: dto.refundMode,
-      customerId: customerIdObj,
-      customerName: dto.customerName || order.customerName,
-      customerPhone: dto.customerPhone || order.customerPhone,
-      cashierName,
-      remarks: dto.remarks,
-    });
-
-    this.logger.log(`Sales return ${returnNumber} processed for ₹${dto.totalRefundAmount} [${order.invoiceNumber}]`);
-    return { success: true, return: orderReturn };
+        },
+      ],
+      { session },
+    );
   }
 
-  async getReturns(tenantId: string, limit: number = 50) {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-    return this.returnModel
-      .find({ tenantId: new Types.ObjectId(tenantId) })
-      .sort({ createdAt: -1 })
-      .limit(limit)
+  private async findMaxReturnSeq(tenantId: Types.ObjectId, prefix: string, session?: ClientSession) {
+    const last = await this.returnModel
+      .findOne({ tenantId, returnNumber: { $regex: `^${prefix}` } })
+      .sort({ returnNumber: -1 })
+      .select('returnNumber')
+      .session(session ?? null)
       .lean();
-  }
-
-  async getReturnsByInvoice(tenantId: string, invoiceNumber: string) {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-    return this.returnModel
-      .find({ tenantId: new Types.ObjectId(tenantId), originalInvoiceNumber: invoiceNumber })
-      .sort({ createdAt: -1 })
-      .lean();
+    return SequenceService.parseSequence(last?.returnNumber);
   }
 }
-

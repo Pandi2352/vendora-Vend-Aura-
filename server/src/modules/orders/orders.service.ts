@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { StockLedger, StockLedgerDocument } from './schemas/stock-ledger.schema';
+import { CashDrawerShift, CashDrawerShiftDocument } from './schemas/cash-drawer-shift.schema';
 import { Product, ProductDocument } from '../catalog/schemas/product.schema';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { Subscription, SubscriptionDocument } from '../subscription/schemas/subscription.schema';
@@ -10,204 +11,334 @@ import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomerLedger, CustomerLedgerDocument } from '../customers/schemas/customer-ledger.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { DateUtil, NumberUtil } from '../../common';
+import { SequenceService } from '../sequence/sequence.service';
+import { AuthenticatedUser, NumberUtil, runInTransaction, toDocumentView } from '../../common';
+
+const round2 = (value: number) => NumberUtil.round(value, 2);
+
+interface PricedLine {
+  productId: Types.ObjectId;
+  name: string;
+  barcode: string;
+  quantity: number;
+  unitPrice: number;
+  taxRatePercent: number;
+  taxAmount: number;
+  total: number;
+}
 
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
   constructor(
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(Order.name) private readonly orderModel: Model<OrderDocument>,
     @InjectModel(StockLedger.name) private readonly stockLedgerModel: Model<StockLedgerDocument>,
+    @InjectModel(CashDrawerShift.name) private readonly shiftModel: Model<CashDrawerShiftDocument>,
     @InjectModel(Product.name) private readonly productModel: Model<ProductDocument>,
     @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
     @InjectModel(Subscription.name) private readonly subscriptionModel: Model<SubscriptionDocument>,
     @InjectModel(Outlet.name) private readonly outletModel: Model<OutletDocument>,
     @InjectModel(Customer.name) private readonly customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerLedger.name) private readonly customerLedgerModel: Model<CustomerLedgerDocument>,
+    private readonly sequenceService: SequenceService,
   ) {}
 
-  async createOrder(
-    dto: CreateOrderDto,
-    authUser?: { userId?: string; tenantId?: string; outletIds?: string[]; fullName?: string; username?: string },
-  ) {
-    const rawTenantId = dto.tenantId || authUser?.tenantId;
-    if (!rawTenantId) {
-      throw new BadRequestException('Tenant ID is required to finalize order.');
-    }
-
-    const tenant = await this.tenantModel.findById(rawTenantId);
+  /**
+   * Finalizes a POS bill. Prices, tax and totals come from the catalog, never
+   * from the client. Stock, ledgers, khata and the invoice are written in one
+   * transaction (when the MongoDB deployment supports it).
+   */
+  async createOrder(tenantIdStr: string, dto: CreateOrderDto, user: AuthenticatedUser) {
+    const tenantId = new Types.ObjectId(tenantIdStr);
+    const tenant = await this.tenantModel.findById(tenantId);
     if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${rawTenantId} not found.`);
+      throw new NotFoundException('Shop not found.');
     }
 
-    const tenantId = tenant._id;
-
-    // Resolve outlet
-    let outletId: Types.ObjectId | null = null;
-    const rawOutletId = dto.outletId || authUser?.outletIds?.[0];
-    if (rawOutletId && Types.ObjectId.isValid(rawOutletId)) {
-      outletId = new Types.ObjectId(rawOutletId);
-    } else if (tenant.primaryOutletId) {
-      outletId = tenant.primaryOutletId as Types.ObjectId;
-    } else {
-      const primaryOutlet = await this.outletModel.findOne({ tenantId, isPrimary: true });
-      outletId = primaryOutlet ? primaryOutlet._id : new Types.ObjectId();
+    const openShift = await this.shiftModel.exists({ tenantId, status: 'OPEN' });
+    if (!openShift) {
+      throw new BadRequestException('No open cash drawer shift. Open the drawer before billing.');
     }
 
-    const cashierName = dto.cashierName || authUser?.fullName || authUser?.username || 'Cashier';
+    const lines = await this.priceLines(tenantId, dto);
+    const subTotal = round2(lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0));
+    const taxTotal = round2(lines.reduce((sum, l) => sum + l.taxAmount, 0));
+    const cgst = round2(taxTotal / 2);
+    const sgst = round2(taxTotal - cgst);
+    const grandTotal = Math.round(subTotal + taxTotal);
+    const roundOff = round2(grandTotal - (subTotal + taxTotal));
 
-    // Sequential invoice numbering: INV-YYYY-XXXXX
-    const currentYear = DateUtil.nowUtc().getFullYear();
-    const orderCount = await this.orderModel.countDocuments({ tenantId });
-    const invoiceSeq = String(orderCount + 1).padStart(5, '0');
-    const invoiceNumber = `INV-${currentYear}-${invoiceSeq}`;
-
-    const taxTotal = NumberUtil.round(dto.taxTotal ?? 0, 2);
-    const cgst = NumberUtil.round(dto.cgst ?? taxTotal / 2, 2);
-    const sgst = NumberUtil.round(dto.sgst ?? taxTotal / 2, 2);
-
-    // 1. Process Stock Movement & Ledger
-    for (const item of dto.items) {
-      if (Types.ObjectId.isValid(item.productId)) {
-        const prodId = new Types.ObjectId(item.productId);
-        const product = await this.productModel.findOne({ _id: prodId, tenantId });
-        if (product) {
-          const balanceAfter = Math.max(0, product.stock - item.quantity);
-          await this.productModel.updateOne({ _id: prodId }, { $inc: { stock: -item.quantity } });
-
-          await this.stockLedgerModel.create({
-            tenantId,
-            outletId,
-            productId: prodId,
-            movementType: 'OUTWARD_SALE',
-            quantityDebit: item.quantity,
-            quantityCredit: 0,
-            balanceAfter,
-            referenceType: 'ORDER',
-            referenceId: invoiceNumber,
-            remarks: `POS Sale: ${item.name} (${item.quantity} qty)`,
-          });
-        }
+    let cashTendered = grandTotal;
+    let changeDue = 0;
+    if (dto.paymentMode === 'CASH' && dto.cashTendered !== undefined) {
+      if (dto.cashTendered < grandTotal) {
+        throw new BadRequestException(`Cash tendered ₹${dto.cashTendered} is less than the bill total ₹${grandTotal}.`);
       }
+      cashTendered = round2(dto.cashTendered);
+      changeDue = round2(cashTendered - grandTotal);
     }
 
-    // 2. Customer Khata / Credit tracking
-    let customerIdObj: Types.ObjectId | null = null;
-    let customerName = dto.customerName?.trim();
-    let customerPhone = dto.customerPhone?.trim();
+    const customer = await this.resolveCustomer(tenantId, dto, grandTotal);
+    const outletId = await this.resolveOutletId(tenant, user);
+    const cashierName = user.fullName || user.username || 'Cashier';
 
-    if (dto.customerId && Types.ObjectId.isValid(dto.customerId)) {
-      customerIdObj = new Types.ObjectId(dto.customerId);
-      const customer = await this.customerModel.findOne({ _id: customerIdObj, tenantId });
+    const order = await runInTransaction(this.connection, async (session) => {
+      const invoiceNumber = await this.sequenceService.next({
+        tenantId,
+        prefix: 'INV',
+        timezone: tenant.settings?.timezone,
+        session,
+        findExistingMax: (prefix) => this.findMaxInvoiceSeq(tenantId, prefix, session),
+      });
+
+      await this.deductStock(tenantId, outletId, lines, invoiceNumber, session);
 
       if (customer) {
-        customerName = customer.name;
-        customerPhone = customer.phone;
-
-        if (dto.paymentMode === 'CREDIT') {
-          const newCreditBalance = NumberUtil.round(customer.currentCreditBalance + dto.grandTotal, 2);
-          await this.customerModel.updateOne(
-            { _id: customer._id },
-            {
-              $inc: {
-                currentCreditBalance: dto.grandTotal,
-                totalPurchasesCount: 1,
-                totalSpent: dto.grandTotal,
-              },
-            },
-          );
-
-          await this.customerLedgerModel.create({
-            tenantId,
-            customerId: customer._id,
-            transactionType: 'DEBIT_SALE',
-            amount: dto.grandTotal,
-            balanceAfter: newCreditBalance,
-            referenceType: 'ORDER',
-            referenceId: invoiceNumber,
-            remarks: `Khata / Credit Sale: ${invoiceNumber}`,
-          });
-        } else {
-          await this.customerModel.updateOne(
-            { _id: customer._id },
-            { $inc: { totalPurchasesCount: 1, totalSpent: dto.grandTotal } },
-          );
-        }
+        await this.applyCustomerSale(tenantId, customer._id, dto.paymentMode, grandTotal, invoiceNumber, session);
       }
-    } else if (dto.paymentMode === 'CREDIT') {
-      throw new BadRequestException('A registered customer is required to make a Credit / Khata sale.');
-    }
 
-    // 3. Create Immutable Order
-    const order = await this.orderModel.create({
-      tenantId,
-      outletId,
-      invoiceNumber,
-      customerId: customerIdObj,
-      customerName,
-      customerPhone,
-      items: dto.items,
-      subTotal: dto.subTotal,
-      taxTotal,
-      cgst,
-      sgst,
-      grandTotal: dto.grandTotal,
-      paymentMode: dto.paymentMode,
-      cashTendered: dto.cashTendered ?? dto.grandTotal,
-      changeDue: dto.changeDue ?? 0,
-      cashierName,
-      status: 'COMPLETED',
+      const [created] = await this.orderModel.create(
+        [
+          {
+            tenantId,
+            outletId,
+            invoiceNumber,
+            customerId: customer?._id ?? null,
+            customerName: customer?.name ?? dto.customerName?.trim(),
+            customerPhone: customer?.phone ?? dto.customerPhone?.trim(),
+            items: lines.map((l) => ({ ...l, productId: l.productId.toString() })),
+            subTotal,
+            taxTotal,
+            cgst,
+            sgst,
+            roundOff,
+            grandTotal,
+            paymentMode: dto.paymentMode,
+            cashTendered,
+            changeDue,
+            cashierName,
+            status: 'COMPLETED',
+          },
+        ],
+        { session },
+      );
+
+      if (tenant.subscriptionId) {
+        await this.subscriptionModel.updateOne(
+          { _id: tenant.subscriptionId },
+          { $inc: { billsGeneratedThisMonth: 1 } },
+          { session },
+        );
+      }
+      return created;
     });
 
-    if (tenant.subscriptionId) {
-      await this.subscriptionModel.updateOne(
-        { _id: tenant.subscriptionId },
-        { $inc: { billsGeneratedThisMonth: 1 } },
-      );
-    }
-
-    this.logger.log(`Order finalized: ${invoiceNumber} for Tenant: ${tenant.shopId} (₹${dto.grandTotal})`);
-    return { success: true, order };
+    this.logger.log(`Order finalized: ${order.invoiceNumber} for Tenant: ${tenant.shopId} (₹${grandTotal})`);
+    return toDocumentView(order.toObject());
   }
 
-  async getOrders(tenantId: string, limit: number = 50) {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-
-    return this.orderModel
+  async getOrders(tenantId: string, limit = 50) {
+    const orders = await this.orderModel
       .find({ tenantId: new Types.ObjectId(tenantId) })
       .sort({ createdAt: -1 })
-      .limit(limit)
+      .limit(Math.min(Math.max(limit, 1), 500))
       .lean();
+    return orders.map(toDocumentView);
   }
 
-  async getLedger(tenantId: string, limit: number = 100) {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-
+  async getLedger(tenantId: string, limit = 100) {
     return this.stockLedgerModel
       .find({ tenantId: new Types.ObjectId(tenantId) })
       .sort({ createdAt: -1 })
-      .limit(limit)
+      .limit(Math.min(Math.max(limit, 1), 500))
       .populate('productId', 'name barcode category')
       .lean();
   }
 
   async getOrderById(tenantId: string, orderId: string) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new NotFoundException(`Order ${orderId} not found.`);
+    }
     const order = await this.orderModel
-      .findOne({
-        _id: new Types.ObjectId(orderId),
-        tenantId: new Types.ObjectId(tenantId),
-      })
+      .findOne({ _id: new Types.ObjectId(orderId), tenantId: new Types.ObjectId(tenantId) })
       .lean();
-
     if (!order) {
       throw new NotFoundException(`Order ${orderId} not found.`);
     }
+    return toDocumentView(order);
+  }
 
-    return order;
+  /** Merges duplicate lines and prices them from the catalog. */
+  private async priceLines(tenantId: Types.ObjectId, dto: CreateOrderDto): Promise<PricedLine[]> {
+    const quantities = new Map<string, number>();
+    for (const item of dto.items) {
+      quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
+    }
+
+    const products = await this.productModel
+      .find({ tenantId, _id: { $in: [...quantities.keys()].map((id) => new Types.ObjectId(id)) } })
+      .lean();
+    const byId = new Map(products.map((p) => [p._id.toString(), p]));
+
+    return [...quantities.entries()].map(([productId, quantity]) => {
+      const product = byId.get(productId);
+      if (!product) {
+        throw new BadRequestException(`Product ${productId} is not in this shop's catalog.`);
+      }
+      if (product.stock < quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for ${product.name}: ${product.stock} ${product.unit} available, ${quantity} requested.`,
+        );
+      }
+      const base = product.unitPrice * quantity;
+      const taxAmount = round2((base * (product.taxRatePercent || 0)) / 100);
+      return {
+        productId: product._id as Types.ObjectId,
+        name: product.name,
+        barcode: product.barcode,
+        quantity,
+        unitPrice: product.unitPrice,
+        taxRatePercent: product.taxRatePercent || 0,
+        taxAmount,
+        total: round2(base + taxAmount),
+      };
+    });
+  }
+
+  private async resolveCustomer(tenantId: Types.ObjectId, dto: CreateOrderDto, grandTotal: number) {
+    if (!dto.customerId) {
+      if (dto.paymentMode === 'CREDIT') {
+        throw new BadRequestException('A registered customer is required to make a Credit / Khata sale.');
+      }
+      return null;
+    }
+
+    const customer = await this.customerModel.findOne({ _id: new Types.ObjectId(dto.customerId), tenantId }).lean();
+    if (!customer) {
+      throw new BadRequestException('Selected customer was not found in this shop.');
+    }
+
+    if (dto.paymentMode === 'CREDIT') {
+      const projected = round2(customer.currentCreditBalance + grandTotal);
+      if (projected > customer.creditLimit) {
+        throw new BadRequestException(
+          `Credit limit exceeded for ${customer.name}: outstanding ₹${customer.currentCreditBalance} + bill ₹${grandTotal} > limit ₹${customer.creditLimit}.`,
+        );
+      }
+    }
+    return customer;
+  }
+
+  private async deductStock(
+    tenantId: Types.ObjectId,
+    outletId: Types.ObjectId,
+    lines: PricedLine[],
+    invoiceNumber: string,
+    session?: ClientSession,
+  ) {
+    for (const line of lines) {
+      // Conditional decrement: never lets stock go below zero, even under concurrency.
+      const updated = await this.productModel.findOneAndUpdate(
+        { _id: line.productId, tenantId, stock: { $gte: line.quantity } },
+        { $inc: { stock: -line.quantity } },
+        { new: true, session },
+      );
+      if (!updated) {
+        throw new BadRequestException(`Insufficient stock for ${line.name}. Another bill may have just used it.`);
+      }
+
+      await this.stockLedgerModel.create(
+        [
+          {
+            tenantId,
+            outletId,
+            productId: line.productId,
+            movementType: 'OUTWARD_SALE',
+            quantityDebit: line.quantity,
+            quantityCredit: 0,
+            balanceAfter: updated.stock,
+            referenceType: 'ORDER',
+            referenceId: invoiceNumber,
+            remarks: `POS Sale: ${line.name} (${line.quantity} qty)`,
+          },
+        ],
+        { session },
+      );
+    }
+  }
+
+  private async applyCustomerSale(
+    tenantId: Types.ObjectId,
+    customerId: Types.ObjectId,
+    paymentMode: string,
+    grandTotal: number,
+    invoiceNumber: string,
+    session?: ClientSession,
+  ) {
+    if (paymentMode !== 'CREDIT') {
+      await this.customerModel.updateOne(
+        { _id: customerId, tenantId },
+        { $inc: { totalPurchasesCount: 1, totalSpent: grandTotal } },
+        { session },
+      );
+      return;
+    }
+
+    // Re-check the limit atomically so two concurrent credit bills can't both pass.
+    const updated = await this.customerModel.findOneAndUpdate(
+      {
+        _id: customerId,
+        tenantId,
+        $expr: { $lte: [{ $add: ['$currentCreditBalance', grandTotal] }, '$creditLimit'] },
+      },
+      { $inc: { currentCreditBalance: grandTotal, totalPurchasesCount: 1, totalSpent: grandTotal } },
+      { new: true, session },
+    );
+    if (!updated) {
+      throw new BadRequestException('Credit limit exceeded for this customer.');
+    }
+
+    await this.customerLedgerModel.create(
+      [
+        {
+          tenantId,
+          customerId,
+          transactionType: 'DEBIT_SALE',
+          amount: grandTotal,
+          balanceAfter: round2(updated.currentCreditBalance),
+          referenceType: 'ORDER',
+          referenceId: invoiceNumber,
+          remarks: `Khata / Credit Sale: ${invoiceNumber}`,
+        },
+      ],
+      { session },
+    );
+  }
+
+  private async resolveOutletId(tenant: TenantDocument, user: AuthenticatedUser): Promise<Types.ObjectId> {
+    const userOutlet = user.outletIds?.[0];
+    if (userOutlet && Types.ObjectId.isValid(userOutlet)) {
+      return new Types.ObjectId(userOutlet);
+    }
+    if (tenant.primaryOutletId) {
+      return tenant.primaryOutletId as Types.ObjectId;
+    }
+    const primary = await this.outletModel.findOne({ tenantId: tenant._id, isPrimary: true }).select('_id').lean();
+    if (!primary) {
+      throw new BadRequestException('This shop has no outlet configured.');
+    }
+    return primary._id as Types.ObjectId;
+  }
+
+  private async findMaxInvoiceSeq(tenantId: Types.ObjectId, prefix: string, session?: ClientSession) {
+    const last = await this.orderModel
+      .findOne({ tenantId, invoiceNumber: { $regex: `^${prefix}` } })
+      .sort({ invoiceNumber: -1 })
+      .select('invoiceNumber')
+      .session(session ?? null)
+      .lean();
+    return SequenceService.parseSequence(last?.invoiceNumber);
   }
 }

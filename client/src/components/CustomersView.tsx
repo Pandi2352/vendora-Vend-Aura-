@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { useState } from 'react';
 import { UsersThree, UserPlus, MagnifyingGlass, ArrowClockwise } from '@phosphor-icons/react';
+import { api, unwrap, getErrorMessage } from '../lib/api';
 import type { CustomerItem, CustomerStatementItem } from '../types/pos.types';
 import { CustomersKpiStrip } from './customers/CustomersKpiStrip';
 import { CustomersTable } from './customers/CustomersTable';
@@ -8,18 +8,16 @@ import { AddCustomerModal } from './customers/AddCustomerModal';
 import { RecordRepaymentModal } from './customers/RecordRepaymentModal';
 import { PassbookModal } from './customers/PassbookModal';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
+/** Customer list is owned by App (useCatalogCustomers) so checkout sees the same, fresh data. */
 interface CustomersViewProps {
-  tenantId?: string;
-  authToken: string | null;
+  customers: CustomerItem[];
+  loading: boolean;
+  onRefreshCustomers: () => void;
   shopName: string;
 }
 
-export function CustomersView({ tenantId, authToken, shopName }: CustomersViewProps) {
-  const [customers, setCustomers] = useState<CustomerItem[]>([]);
+export function CustomersView({ customers, loading, onRefreshCustomers, shopName }: CustomersViewProps) {
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -28,40 +26,16 @@ export function CustomersView({ tenantId, authToken, shopName }: CustomersViewPr
   const [statement, setStatement] = useState<CustomerStatementItem[]>([]);
   const [loadingStatement, setLoadingStatement] = useState(false);
 
-  const fetchCustomers = useCallback(async () => {
-    if (!tenantId) return;
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API_BASE}/customers?tenantId=${tenantId}`, {
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-      });
-      if (Array.isArray(res.data?.data)) {
-        setCustomers(res.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch customers:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [tenantId, authToken]);
-
-  useEffect(() => {
-    fetchCustomers();
-  }, [fetchCustomers]);
-
   const openStatementModal = async (customer: CustomerItem) => {
     setSelectedCustomerForStatement(customer);
+    setStatement([]);
     setLoadingStatement(true);
     try {
-      const res = await axios.get(
-        `${API_BASE}/customers/${customer.id}/statement?tenantId=${tenantId}`,
-        { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
-      );
-      if (Array.isArray(res.data?.data)) {
-        setStatement(res.data.data);
-      }
+      const list = unwrap<CustomerStatementItem[]>(await api.get(`/customers/${customer.id}/statement`));
+      setStatement(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Failed to load customer statement:', err);
+      alert(getErrorMessage(err, 'Failed to load customer statement.'));
     } finally {
       setLoadingStatement(false);
     }
@@ -94,7 +68,7 @@ export function CustomersView({ tenantId, authToken, shopName }: CustomersViewPr
 
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchCustomers}
+            onClick={onRefreshCustomers}
             disabled={loading}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-zinc-300 hover:border-zinc-400 text-zinc-700 text-xs font-semibold cursor-pointer disabled:opacity-50"
           >
@@ -147,19 +121,15 @@ export function CustomersView({ tenantId, authToken, shopName }: CustomersViewPr
 
       {/* Modals */}
       <AddCustomerModal
-        tenantId={tenantId}
-        authToken={authToken}
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onCustomerAdded={fetchCustomers}
+        onCustomerAdded={onRefreshCustomers}
       />
 
       <RecordRepaymentModal
-        tenantId={tenantId}
-        authToken={authToken}
         customer={selectedCustomerForPay}
         onClose={() => setSelectedCustomerForPay(null)}
-        onRepaymentSuccess={fetchCustomers}
+        onRepaymentSuccess={onRefreshCustomers}
       />
 
       <PassbookModal

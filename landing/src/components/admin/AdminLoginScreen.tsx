@@ -10,12 +10,12 @@ import {
   HouseLine,
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
+import { adminApi, saveAdminSession } from '../../lib/adminApi';
+import { getApiErrorMessage } from '../../lib/apiError';
 
 interface AdminLoginScreenProps {
-  onLoginSuccess: (token: string, adminUser: any) => void;
+  onLoginSuccess: () => void;
 }
-
-const API_BASE = 'http://localhost:5000/api/v1';
 
 export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
   const [username, setUsername] = useState('');
@@ -36,30 +36,19 @@ export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/saas-admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: username.trim(),
-          password: password.trim(),
-        }),
+      const res = await adminApi.post('/login', {
+        username: username.trim(),
+        password: password.trim(),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Invalid Platform Admin credentials');
+      const accessToken: string | undefined = res.data?.data?.accessToken;
+      if (!accessToken) {
+        setError('Sign-in failed: the server did not return an access token.');
+        return;
       }
-
-      if (data.data?.accessToken) {
-        localStorage.setItem('vendora_platform_admin_token', data.data.accessToken);
-        localStorage.setItem('vendora_platform_admin_user', JSON.stringify(data.data.admin));
-        onLoginSuccess(data.data.accessToken, data.data.admin);
-      } else {
-        throw new Error('No access token returned from server');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please verify credentials configured in .env.');
+      saveAdminSession(accessToken, res.data.data.admin);
+      onLoginSuccess();
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Authentication failed. Please check your credentials and try again.'));
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { api, unwrap, getErrorMessage } from '../lib/api';
 import { Truck, Plus, MagnifyingGlass, ArrowClockwise, Package } from '@phosphor-icons/react';
 import type { SupplierItem, PurchaseItemRecord, ProductItem } from '../types/pos.types';
 import { SuppliersKpiStrip } from './suppliers/SuppliersKpiStrip';
@@ -9,26 +9,18 @@ import { AddSupplierModal } from './suppliers/AddSupplierModal';
 import { InwardStockModal } from './suppliers/InwardStockModal';
 import { SettleDuesModal } from './suppliers/SettleDuesModal';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 interface SuppliersViewProps {
-  tenantId?: string;
-  authToken: string | null;
   products: ProductItem[];
   onInwardStockCompleted: () => void;
 }
 
-export function SuppliersView({
-  tenantId,
-  authToken,
-  products,
-  onInwardStockCompleted,
-}: SuppliersViewProps) {
+export function SuppliersView({ products, onInwardStockCompleted }: SuppliersViewProps) {
   const [suppliers, setSuppliers] = useState<SupplierItem[]>([]);
   const [purchases, setPurchases] = useState<PurchaseItemRecord[]>([]);
   const [subTab, setSubTab] = useState<'suppliers' | 'inwards'>('suppliers');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   // Modals state
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
@@ -36,30 +28,32 @@ export function SuppliersView({
   const [selectedSupForPay, setSelectedSupForPay] = useState<SupplierItem | null>(null);
 
   const fetchAllData = useCallback(async () => {
-    if (!tenantId) return;
     setLoading(true);
-    try {
-      const [supRes, purRes] = await Promise.allSettled([
-        axios.get(`${API_BASE}/suppliers?tenantId=${tenantId}`, {
-          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-        }),
-        axios.get(`${API_BASE}/suppliers/inward/history?tenantId=${tenantId}`, {
-          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-        }),
-      ]);
+    setLoadError('');
+    const [supRes, purRes] = await Promise.allSettled([
+      api.get('/suppliers'),
+      api.get('/suppliers/inward/history'),
+    ]);
+    const errors: string[] = [];
 
-      if (supRes.status === 'fulfilled' && Array.isArray(supRes.value.data?.data)) {
-        setSuppliers(supRes.value.data.data);
-      }
-      if (purRes.status === 'fulfilled' && Array.isArray(purRes.value.data?.data)) {
-        setPurchases(purRes.value.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch suppliers/purchases:', err);
-    } finally {
-      setLoading(false);
+    if (supRes.status === 'fulfilled') {
+      const list = unwrap<Array<SupplierItem & { _id?: string }>>(supRes.value);
+      setSuppliers(Array.isArray(list) ? list.map((s) => ({ ...s, id: s.id ?? (s._id as string) })) : []);
+    } else {
+      console.error('Failed to fetch suppliers:', supRes.reason);
+      errors.push(getErrorMessage(supRes.reason, 'Failed to load suppliers.'));
     }
-  }, [tenantId, authToken]);
+    if (purRes.status === 'fulfilled') {
+      const list = unwrap<PurchaseItemRecord[]>(purRes.value);
+      setPurchases(Array.isArray(list) ? list : []);
+    } else {
+      console.error('Failed to fetch inward history:', purRes.reason);
+      errors.push(getErrorMessage(purRes.reason, 'Failed to load inward history.'));
+    }
+
+    setLoadError(errors.join(' '));
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     fetchAllData();
@@ -127,6 +121,12 @@ export function SuppliersView({
         </div>
       </div>
 
+      {loadError && (
+        <div className="mb-4 p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+          {loadError}
+        </div>
+      )}
+
       {/* KPI Cards */}
       <SuppliersKpiStrip
         totalPayablesDue={totalPayablesDue}
@@ -190,16 +190,12 @@ export function SuppliersView({
 
       {/* Modals */}
       <AddSupplierModal
-        tenantId={tenantId}
-        authToken={authToken}
         isOpen={isAddSupplierOpen}
         onClose={() => setIsAddSupplierOpen(false)}
         onSupplierAdded={fetchAllData}
       />
 
       <InwardStockModal
-        tenantId={tenantId}
-        authToken={authToken}
         isOpen={isInwardModalOpen}
         suppliers={suppliers}
         products={products}
@@ -208,8 +204,6 @@ export function SuppliersView({
       />
 
       <SettleDuesModal
-        tenantId={tenantId}
-        authToken={authToken}
         supplier={selectedSupForPay}
         onClose={() => setSelectedSupForPay(null)}
         onPaymentSuccess={fetchAllData}

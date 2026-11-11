@@ -1,13 +1,5 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  Param,
-  BadRequestException,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Get, Body, Query, Param, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { OrderReturnsService } from './order-returns.service';
 import { CashDrawerService } from './cash-drawer.service';
@@ -15,9 +7,10 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateReturnDto } from './dto/create-return.dto';
 import { OpenShiftDto } from './dto/open-shift.dto';
 import { CloseShiftDto } from './dto/close-shift.dto';
-import { CurrentUser } from '../../common';
+import { AuthenticatedUser, CurrentUser, TenantId } from '../../common';
 
 @ApiTags('Orders, POS, Returns & Cash Drawer')
+@ApiBearerAuth()
 @Controller('orders')
 export class OrdersController {
   constructor(
@@ -27,136 +20,106 @@ export class OrdersController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Finalize POS order and generate sequential invoice' })
+  @ApiOperation({ summary: 'Finalize POS order: server-priced, stock deducted, sequential invoice' })
   @ApiResponse({ status: 201, description: 'Order completed and stock deducted successfully' })
   async createOrder(
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateOrderDto,
-    @CurrentUser() authUser: any,
   ) {
-    const tenantId = dto.tenantId || authUser?.tenantId;
-    if (!tenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
-    return this.ordersService.createOrder(dto, authUser);
+    const data = await this.ordersService.createOrder(tenantId, dto, user);
+    return { message: `Invoice ${data.invoiceNumber} saved`, data };
   }
 
   @Get()
-  @ApiOperation({ summary: 'List orders for a tenant' })
+  @ApiOperation({ summary: 'List recent orders for the shop' })
+  @ApiQuery({ name: 'limit', required: false })
   async getOrders(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.ordersService.getOrders(resolvedTenantId);
-    return { success: true, count: data.length, data };
+    return { data: await this.ordersService.getOrders(tenantId, limit) };
   }
 
   @Get('ledger')
   @ApiOperation({ summary: 'List stock ledger movement records for audit' })
+  @ApiQuery({ name: 'limit', required: false })
   async getLedger(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
+    @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.ordersService.getLedger(resolvedTenantId);
-    return { success: true, count: data.length, data };
+    return { data: await this.ordersService.getLedger(tenantId, limit) };
   }
 
   // ---- RETURNS & EXCHANGES ----
   @Post('returns')
-  @ApiOperation({ summary: 'Process product return, stock restitution and refund' })
-  async createReturn(@Body() dto: CreateReturnDto, @CurrentUser() authUser: any) {
-    return this.orderReturnsService.createReturn(dto, authUser);
+  @ApiOperation({ summary: 'Process a sales return; refund is computed from the invoice (incl. GST)' })
+  async createReturn(
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateReturnDto,
+  ) {
+    const data = await this.orderReturnsService.createReturn(tenantId, dto, user);
+    return { message: `Return ${data.returnNumber} processed`, data };
   }
 
   @Get('returns')
   @ApiOperation({ summary: 'List processed order returns' })
+  @ApiQuery({ name: 'limit', required: false })
   async getReturns(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.orderReturnsService.getReturns(resolvedTenantId);
-    return { success: true, count: data.length, data };
+    return { data: await this.orderReturnsService.getReturns(tenantId, limit) };
   }
 
   @Get('returns/invoice/:invoiceNumber')
-  @ApiOperation({ summary: 'Find returns for a specific invoice' })
-  async getReturnsByInvoice(
-    @Param('invoiceNumber') invoiceNumber: string,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
-  ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.orderReturnsService.getReturnsByInvoice(resolvedTenantId, invoiceNumber);
-    return { success: true, data };
+  @ApiOperation({ summary: 'Invoice lookup for returns: order, past returns and returnable quantities' })
+  async getReturnsByInvoice(@TenantId() tenantId: string, @Param('invoiceNumber') invoiceNumber: string) {
+    return { data: await this.orderReturnsService.getInvoiceReturnInfo(tenantId, invoiceNumber) };
   }
 
   // ---- CASH DRAWER & SHIFT MANAGEMENT ----
   @Post('shifts/open')
   @ApiOperation({ summary: 'Open cashier drawer shift with float amount' })
-  async openShift(@Body() dto: OpenShiftDto, @CurrentUser() authUser: any) {
-    return this.cashDrawerService.openShift(dto, authUser);
+  async openShift(
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: OpenShiftDto,
+  ) {
+    const result = await this.cashDrawerService.openShift(tenantId, dto, user);
+    return {
+      message: result.isExisting ? 'A shift is already open' : `Shift ${result.shift.shiftNumber} opened`,
+      data: result.shift,
+    };
   }
 
   @Get('shifts/current')
-  @ApiOperation({ summary: 'Get active shift summary and live cash figures' })
-  async getCurrentShift(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
-  ): Promise<{ success: boolean; data: any }> {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.cashDrawerService.getCurrentShift(resolvedTenantId);
-    return { success: true, data };
+  @ApiOperation({ summary: 'Get active shift summary and live cash figures (null when closed)' })
+  async getCurrentShift(@TenantId() tenantId: string) {
+    return { data: await this.cashDrawerService.getCurrentShift(tenantId) };
   }
 
   @Post('shifts/close')
   @ApiOperation({ summary: 'Close shift, input actual counted cash, and compute variance' })
-  async closeShift(@Body() dto: CloseShiftDto, @CurrentUser() authUser: any) {
-    return this.cashDrawerService.closeShift(dto, authUser);
+  async closeShift(@TenantId() tenantId: string, @Body() dto: CloseShiftDto) {
+    const result = await this.cashDrawerService.closeShift(tenantId, dto);
+    return { message: `Shift ${result.shift.shiftNumber} closed`, data: result.shift };
   }
 
   @Get('shifts/history')
-  @ApiOperation({ summary: 'List past closed cash drawer shifts' })
+  @ApiOperation({ summary: 'List past cash drawer shifts' })
+  @ApiQuery({ name: 'limit', required: false })
   async getShiftHistory(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
+    @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.cashDrawerService.getShiftHistory(resolvedTenantId);
-    return { success: true, count: data.length, data };
+    return { data: await this.cashDrawerService.getShiftHistory(tenantId, limit) };
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get single order receipt details' })
-  async getOrderById(
-    @Param('id') id: string,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
-  ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.ordersService.getOrderById(resolvedTenantId, id);
-    return { success: true, data };
+  async getOrderById(@TenantId() tenantId: string, @Param('id') id: string) {
+    return { data: await this.ordersService.getOrderById(tenantId, id) };
   }
 }

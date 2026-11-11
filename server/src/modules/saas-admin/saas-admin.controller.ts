@@ -1,12 +1,15 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Body, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { SaasAdminService } from './saas-admin.service';
 import { SaasAdminAnalyticsService } from './saas-admin-analytics.service';
-import { TenantStatus, SubscriptionPlanCode } from '../../shared';
 import { PlatformAdminLoginDto } from './dto/platform-admin-login.dto';
+import { UpdateTenantPlanDto, UpdateTenantStatusDto } from './dto/update-tenant.dto';
 import { Public } from '../../common';
+import { PlatformAdminGuard } from '../auth/guards/platform-admin.guard';
 
 @ApiTags('SaaS Super Admin Platform Operations')
+@ApiBearerAuth()
+@UseGuards(PlatformAdminGuard)
 @Controller('saas-admin')
 export class SaasAdminController {
   constructor(
@@ -70,9 +73,9 @@ export class SaasAdminController {
   @ApiOperation({ summary: 'Update tenant account status (ACTIVE, SUSPENDED, TRIAL)' })
   async updateStatus(
     @Param('id') id: string,
-    @Body('status') status: TenantStatus,
+    @Body() dto: UpdateTenantStatusDto,
   ) {
-    const data = await this.saasAdminService.updateTenantStatus(id, status);
+    const data = await this.saasAdminService.updateTenantStatus(id, dto.status);
     return {
       success: true,
       message: 'Tenant status successfully updated',
@@ -84,9 +87,9 @@ export class SaasAdminController {
   @ApiOperation({ summary: 'Update tenant subscription plan (FREE_TRIAL, STARTER, GROWTH, BUSINESS)' })
   async updatePlan(
     @Param('id') id: string,
-    @Body('plan') plan: SubscriptionPlanCode,
+    @Body() dto: UpdateTenantPlanDto,
   ) {
-    const data = await this.saasAdminService.updateTenantPlan(id, plan);
+    const data = await this.saasAdminService.updateTenantPlan(id, dto.plan);
     return {
       success: true,
       message: 'Tenant subscription plan successfully updated',

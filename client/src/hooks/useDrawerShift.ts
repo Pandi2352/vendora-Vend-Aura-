@@ -1,35 +1,31 @@
 import { useState, useCallback, useEffect } from 'react';
-import axios from 'axios';
+import { api, unwrap } from '../lib/api';
 import type { ShiftSummary } from '../types/shift-return.types';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
-export function useDrawerShift(tenantId?: string) {
+export function useDrawerShift(enabled: boolean) {
   const [activeShift, setActiveShift] = useState<ShiftSummary | null>(null);
-  const [isLoadingShift, setIsLoadingShift] = useState(false);
 
   const fetchShift = useCallback(async () => {
-    if (!tenantId) return;
-    setIsLoadingShift(true);
+    if (!enabled) return;
     try {
-      const res = await axios.get(`${API_BASE}/orders/shifts/current?tenantId=${tenantId}`);
-      setActiveShift(res.data?.data || null);
-    } catch {
-      // silently handle
-    } finally {
-      setIsLoadingShift(false);
+      const res = await api.get('/orders/shifts/current');
+      setActiveShift(unwrap<ShiftSummary | null>(res) || null);
+    } catch (err) {
+      console.error('Failed to load current cash-drawer shift:', err);
     }
-  }, [tenantId]);
+  }, [enabled]);
 
   useEffect(() => {
-    fetchShift();
-  }, [fetchShift]);
+    if (enabled) {
+      fetchShift();
+    } else {
+      setActiveShift(null);
+    }
+  }, [enabled, fetchShift]);
 
   return {
     activeShift,
     setActiveShift,
-    isLoadingShift,
     refreshShift: fetchShift,
   };
 }
-

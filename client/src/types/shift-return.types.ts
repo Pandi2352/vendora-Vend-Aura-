@@ -1,8 +1,10 @@
-import type { CartItem } from './pos.types';
+import type { CartItem, CustomerItem, OrderItemRecord } from './pos.types';
 
 export interface HeldCart {
   id: string;
   heldAt: string;
+  customerId?: string;
+  customer?: CustomerItem | null;
   customerName?: string;
   customerPhone?: string;
   items: CartItem[];
@@ -13,6 +15,7 @@ export interface HeldCart {
 }
 
 export interface ShiftSummary {
+  id?: string;
   _id?: string;
   shiftNumber: string;
   cashierName: string;
@@ -33,8 +36,30 @@ export interface ShiftSummary {
   notes?: string;
 }
 
+export type ReturnReason = 'CUSTOMER_REQUEST' | 'DEFECTIVE' | 'EXCHANGE' | 'WRONG_ITEM';
+export type RefundMode = 'CASH' | 'UPI' | 'CREDIT_NOTE' | 'CUSTOMER_KHATA';
+
+export interface ReturnableItem {
+  productId: string;
+  name: string;
+  barcode: string;
+  soldQty: number;
+  returnedQty: number;
+  returnableQty: number;
+  unitPrice: number;
+  taxRatePercent: number;
+  unitRefund: number;
+}
+
+export interface InvoiceReturnLookup {
+  order: OrderItemRecord;
+  returns: OrderReturnRecord[];
+  returnableItems: ReturnableItem[];
+}
+
 export interface OrderReturnRecord {
-  _id: string;
+  id?: string;
+  _id?: string;
   returnNumber: string;
   originalInvoiceNumber: string;
   items: Array<{
@@ -45,10 +70,10 @@ export interface OrderReturnRecord {
     unitPrice: number;
     taxRatePercent: number;
     refundAmount: number;
-    reason: 'DEFECTIVE' | 'EXCHANGE' | 'WRONG_ITEM' | 'CUSTOMER_REQUEST';
+    reason: ReturnReason;
   }>;
   totalRefundAmount: number;
-  refundMode: 'CASH' | 'UPI' | 'CREDIT_NOTE' | 'CUSTOMER_KHATA';
+  refundMode: RefundMode;
   customerName?: string;
   customerPhone?: string;
   cashierName: string;

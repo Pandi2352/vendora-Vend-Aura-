@@ -1,0 +1,138 @@
+// Smoke test against the throwaway server on :5055 (database vendora_smoketest).
+const ids = JSON.parse(process.argv[2] || require('fs').readFileSync(0, 'utf8'));
+const B = process.env.SMOKE_API_URL || 'http://localhost:5055/api/v1';
+let pass = 0, fail = 0;
+async function call(method, path, body, token) {
+  const res = await fetch(B + path, {
+    method,
+    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let json = null;
+  try { json = await res.json(); } catch {}
+  return { status: res.status, json };
+}
+function check(name, cond, extra) {
+  if (cond) { pass++; console.log('PASS', name); }
+  else { fail++; console.log('FAIL', name, extra !== undefined ? JSON.stringify(extra).slice(0, 300) : ''); }
+}
+(async () => {
+  let r = await call('GET', `/orders?tenantId=${ids.tenantId}`);
+  check('orders without token -> 401', r.status === 401, r);
+  r = await call('GET', '/saas-admin/overview');
+  check('admin overview without token -> 401', r.status === 401, r);
+  r = await call('GET', `/catalog/products?tenantId=${ids.tenantId}`);
+  check('catalog without token -> 401', r.status === 401, r);
+
+  r = await call('POST', '/saas-admin/login', { username: 'admin', password: 'ptest123' });
+  check("admin login with 'admin' alias rejected", r.status === 401, r);
+  r = await call('POST', '/saas-admin/login', { username: 'padmin', password: 'ptest123' });
+  check('admin login ok', r.status === 200, r);
+  const adminToken = r.json?.data?.accessToken;
+  r = await call('GET', '/saas-admin/overview', null, adminToken);
+  check('admin overview with token -> 200', r.status === 200, r);
+  r = await call('GET', '/orders', null, adminToken);
+  check('admin token cannot use store endpoints -> 403', r.status === 403, r);
+
+  r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_admin', password: 'TempPass1!' });
+  check('store login ok', r.status === 200 && r.json.data.mustChangePassword === true, r);
+  let { accessToken, refreshToken, user } = r.json.data;
+  check('login returns store info', user.store && user.store.gstin === '33ABCDE1234F1Z5' && user.store.outletCode === 'OUT-01', user.store);
+
+  r = await call('GET', '/orders', null, accessToken);
+  check('temp password blocked -> 403 PASSWORD_CHANGE_REQUIRED', r.status === 403 && r.json.errorCode === 'PASSWORD_CHANGE_REQUIRED', r.json);
+  r = await call('GET', '/saas-admin/overview', null, accessToken);
+  check('store token cannot use admin endpoints', r.status === 403, r);
+  r = await call('GET', '/orders', null, refreshToken);
+  check('refresh token rejected as access token -> 401', r.status === 401, r);
+
+  r = await call('POST', '/auth/change-password', { currentPassword: 'TempPass1!', newPassword: 'NewPass123!' }, accessToken);
+  check('change password ok', r.status === 200, r);
+  r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_admin', password: 'NewPass123!' });
+  ({ accessToken, refreshToken } = r.json.data);
+  r = await call('POST', '/auth/refresh', { refreshToken });
+  check('refresh ok + rotated', r.status === 200 && r.json.data.refreshToken && r.json.data.refreshToken !== refreshToken, r);
+  const oldRefresh = refreshToken;
+  accessToken = r.json.data.accessToken; refreshToken = r.json.data.refreshToken;
+  r = await call('POST', '/auth/refresh', { refreshToken: oldRefresh });
+  check('old refresh token revoked after rotation', r.status === 401, r);
+
+  r = await call('GET', `/catalog/products?tenantId=${ids.other}`, null, accessToken);
+  check('tenantId query ignored (only own products)', r.status === 200 && r.json.data.length === 2 && r.json.data.every((p) => p.name !== 'Foreign'), r.json?.data);
+
+  r = await call('POST', '/orders', { items: [{ productId: ids.soap, quantity: 1 }], paymentMode: 'CASH' }, accessToken);
+  check('billing without open shift -> 400', r.status === 400 && /shift/i.test(r.json.message), r.json);
+
+  r = await call('POST', '/orders/shifts/open', { openingFloat: 1000 }, accessToken);
+  check('open shift', r.status === 201 && r.json.data.shiftNumber, r.json);
+
+  r = await call('POST', '/orders', { tenantId: ids.other, items: [{ productId: ids.soap, quantity: 1 }], paymentMode: 'CASH' }, accessToken);
+  check('body tenantId rejected (forbidNonWhitelisted)', r.status === 400, r.json);
+
+  r = await call('POST', '/orders', { items: [{ productId: ids.soap, quantity: 3, unitPrice: 0.01, total: 0.03 }, { productId: ids.rice, quantity: 1 }], paymentMode: 'CASH', grandTotal: 1, cashTendered: 500 }, accessToken);
+  const o1 = r.json?.data;
+  // soap: 99.99 base, tax 18.00 (17.9982) ; rice 100 base, tax 5 -> sub 199.99 tax 23 -> 222.99 -> 223
+  check('order priced on server', r.status === 201 && o1.subTotal === 199.99 && o1.taxTotal === 23 && o1.grandTotal === 223 && o1.roundOff === 0.01, o1);
+  check('cgst+sgst = tax', o1 && o1.cgst + o1.sgst === o1.taxTotal, o1);
+  check('change due computed', o1 && o1.changeDue === 277, o1);
+  check('order has id + itemsCount', o1 && o1.id && o1.itemsCount === 2, o1);
+  check('invoice number format', o1 && /^INV-\d{4}-00001$/.test(o1.invoiceNumber), o1?.invoiceNumber);
+
+  r = await call('POST', '/orders', { items: [{ productId: ids.rice, quantity: 5 }], paymentMode: 'CASH' }, accessToken);
+  check('insufficient stock -> 400', r.status === 400 && /stock/i.test(r.json.message), r.json);
+  r = await call('POST', '/orders', { items: [{ productId: ids.foreign, quantity: 1 }], paymentMode: 'CASH' }, accessToken);
+  check("other shop's product rejected", r.status === 400, r.json);
+
+  r = await call('POST', '/orders', { items: [{ productId: ids.soap, quantity: 6 }], paymentMode: 'CREDIT', customerId: ids.customer }, accessToken);
+  check('credit limit enforced -> 400', r.status === 400 && /limit/i.test(r.json.message), r.json);
+  r = await call('POST', '/orders', { items: [{ productId: ids.soap, quantity: 2 }], paymentMode: 'CREDIT', customerId: ids.customer }, accessToken);
+  check('credit sale within limit ok', r.status === 201, r.json);
+  const o2 = r.json?.data;
+  check('second invoice sequential', o2 && /-00002$/.test(o2.invoiceNumber), o2?.invoiceNumber);
+
+  // concurrency: 5 parallel bills -> unique invoice numbers
+  const par = await Promise.all([...Array(5)].map(() => call('POST', '/orders', { items: [{ productId: ids.soap, quantity: 1 }], paymentMode: 'UPI' }, accessToken)));
+  const nums = par.map((p) => p.json?.data?.invoiceNumber);
+  check('parallel bills get unique invoice numbers', par.every((p) => p.status === 201) && new Set(nums).size === 5, nums);
+
+  r = await call('GET', `/orders/returns/invoice/${o1.invoiceNumber}`, null, accessToken);
+  const soapLine = r.json?.data?.returnableItems?.find((i) => i.productId === ids.soap);
+  check('returnable items', r.status === 200 && soapLine && soapLine.returnableQty === 3 && soapLine.unitRefund === 39.33, r.json?.data?.returnableItems);
+  r = await call('POST', '/orders/returns', { originalInvoiceNumber: o1.invoiceNumber, items: [{ productId: ids.soap, quantityReturned: 2, reason: 'DEFECTIVE' }], refundMode: 'CASH' }, accessToken);
+  check('return incl GST', r.status === 201 && r.json.data.totalRefundAmount === 78.66 && /^RET-\d{4}-00001$/.test(r.json.data.returnNumber), r.json);
+  r = await call('POST', '/orders/returns', { originalInvoiceNumber: o1.invoiceNumber, items: [{ productId: ids.soap, quantityReturned: 2, reason: 'DEFECTIVE' }], refundMode: 'CASH' }, accessToken);
+  check('over-return rejected', r.status === 400, r.json);
+
+  r = await call('GET', '/orders?limit=5', null, accessToken);
+  check('orders list has id/itemsCount', r.status === 200 && r.json.data.every((o) => o.id && typeof o.itemsCount === 'number'), r.json);
+
+  for (const period of ['today', 'week', 'month', 'fy', 'all']) {
+    r = await call('GET', `/reports/executive?period=${period}`, null, accessToken);
+    check(`reports period=${period}`, r.status === 200, r.json);
+  }
+  r = await call('GET', '/reports/executive?period=30d', null, accessToken);
+  check('reports period=30d rejected', r.status === 400, r.json);
+
+  r = await call('GET', '/orders/shifts/current', null, accessToken);
+  const shift = r.json?.data;
+  check('current shift', r.status === 200 && shift && shift.billsCount === 7, shift && { billsCount: shift.billsCount, expectedCash: shift.expectedCash });
+  r = await call('POST', '/orders/shifts/close', { shiftId: String(shift._id), actualCashCounted: shift.expectedCash }, accessToken);
+  check('close shift', r.status === 201 && r.json.data.status === 'CLOSED' && r.json.data.variance === 0, r.json);
+
+  // suspend tenant -> existing access token stops working
+  const tenants = await call('GET', '/saas-admin/tenants', null, adminToken);
+  check('admin tenants list', tenants.status === 200, tenants.json);
+  r = await call('PATCH', `/saas-admin/tenants/${ids.tenantId}/status`, { status: 'BOGUS' }, adminToken);
+  check('invalid status rejected', r.status === 400, r.json);
+  r = await call('PATCH', `/saas-admin/tenants/${ids.tenantId}/status`, { status: 'SUSPENDED' }, adminToken);
+  check('suspend tenant', r.status === 200, r.json);
+  r = await call('GET', '/orders', null, accessToken);
+  check('suspended shop token rejected', r.status === 401, r.json);
+  r = await call('POST', '/auth/refresh', { refreshToken });
+  check('suspended shop refresh rejected', r.status === 401, r.json);
+
+  r = await call('POST', '/onboarding/request-otp', { email: 'new@shop.in', plan: 'GROWTH' });
+  check("request-otp with old 'plan' field -> 400", r.status === 400, r.json);
+
+  console.log(`\n${pass} passed, ${fail} failed`);
+})().catch((e) => { console.error(e); process.exit(1); });

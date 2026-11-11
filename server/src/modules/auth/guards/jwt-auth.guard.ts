@@ -1,23 +1,41 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { IS_PUBLIC_KEY } from '../../../common';
+import {
+  IS_PUBLIC_KEY,
+  ALLOW_TEMPORARY_PASSWORD_KEY,
+  ERROR_CODES,
+  AuthenticatedUser,
+} from '../../../common';
 
+/**
+ * Registered globally (APP_GUARD). Every route requires a valid access token
+ * unless marked @Public(). Users on a temporary password may only reach routes
+ * marked @AllowTemporaryPassword().
+ */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private readonly reflector: Reflector) {
     super();
   }
 
-  canActivate(context: ExecutionContext) {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const targets = [context.getHandler(), context.getClass()];
+    if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, targets)) {
       return true;
     }
-    return super.canActivate(context);
+
+    await super.canActivate(context);
+
+    const user = context.switchToHttp().getRequest().user as AuthenticatedUser;
+    const allowTemporary = this.reflector.getAllAndOverride<boolean>(ALLOW_TEMPORARY_PASSWORD_KEY, targets);
+    if (user?.isTemporaryPassword && !allowTemporary) {
+      throw new ForbiddenException({
+        message: 'Please change your temporary password before continuing.',
+        errorCode: ERROR_CODES.PASSWORD_CHANGE_REQUIRED,
+      });
+    }
+    return true;
   }
 
   handleRequest(err: any, user: any) {

@@ -9,10 +9,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSupplierDto {
-  @ApiPropertyOptional({ description: 'Tenant ObjectId if calling directly' })
-  @IsString()
-  @IsOptional()
-  tenantId?: string;
 
   @ApiProperty({ example: 'Sri Meenakshi Traders', description: 'Supplier / Distributor Trading Name' })
   @IsString()

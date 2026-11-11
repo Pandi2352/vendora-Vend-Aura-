@@ -1,23 +1,17 @@
-import { IsNotEmpty, IsNumber, Min, IsOptional, IsString } from 'class-validator';
+import { IsMongoId, IsNumber, Min, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CloseShiftDto {
-  @ApiProperty({ description: 'Tenant Mongo ID', required: false })
-  @IsOptional()
-  @IsString()
-  tenantId?: string;
-
-  @ApiProperty({ description: 'Shift Mongo ID', example: '60d0fe4f5311236168a109ca' })
-  @IsNotEmpty()
-  @IsString()
+  @ApiProperty({ description: 'Open shift ID' })
+  @IsMongoId()
   shiftId: string;
 
-  @ApiProperty({ description: 'Actual physical cash counted in drawer (₹)', example: 14500 })
+  @ApiProperty({ description: 'Physically counted cash in drawer (₹)', example: 5400 })
   @IsNumber()
   @Min(0)
   actualCashCounted: number;
 
-  @ApiProperty({ description: 'Closing notes or variance reason', required: false })
+  @ApiProperty({ description: 'Optional closing notes', required: false })
   @IsOptional()
   @IsString()
   notes?: string;

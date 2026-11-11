@@ -24,7 +24,7 @@ export function OrdersTable({ orders, loading, onReprint }: OrdersTableProps) {
       </thead>
       <tbody className="divide-y divide-zinc-200">
         {orders.map((o) => (
-          <tr key={o.id} className="hover:bg-zinc-50 transition-colors">
+          <tr key={o.id ?? o._id ?? o.invoiceNumber} className="hover:bg-zinc-50 transition-colors">
             <td className="py-2.5 px-4 font-mono font-bold text-zinc-900">{o.invoiceNumber}</td>
             <td className="py-2.5 px-4 text-zinc-500 font-mono text-[11px]">
               <div className="flex items-center gap-1">

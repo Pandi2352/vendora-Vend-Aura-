@@ -19,6 +19,8 @@ export * from './decorators/public.decorator';
 export * from './decorators/current-user.decorator';
 export * from './decorators/roles.decorator';
 export * from './decorators/request-id.decorator';
+export * from './decorators/allow-temporary-password.decorator';
+export * from './decorators/tenant-id.decorator';
 
 // Utils
 export * from './utils/uuid.util';
@@ -29,6 +31,8 @@ export * from './utils/number.util';
 export * from './utils/object.util';
 export * from './utils/array.util';
 export * from './utils/pagination.util';
+export * from './utils/transaction.util';
+export * from './utils/document-view.util';
 
 // Interceptors & Filters
 export * from './interceptors/transform-response.interceptor';

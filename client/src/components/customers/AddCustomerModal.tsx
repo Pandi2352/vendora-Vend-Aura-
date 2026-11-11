@@ -1,20 +1,14 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { api, getErrorMessage } from '../../lib/api';
 import { UserPlus, X } from '@phosphor-icons/react';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 interface AddCustomerModalProps {
-  tenantId?: string;
-  authToken: string | null;
   isOpen: boolean;
   onClose: () => void;
   onCustomerAdded: () => void;
 }
 
 export function AddCustomerModal({
-  tenantId,
-  authToken,
   isOpen,
   onClose,
   onCustomerAdded,
@@ -39,18 +33,13 @@ export function AddCustomerModal({
 
     setLoading(true);
     try {
-      await axios.post(
-        `${API_BASE}/customers`,
-        {
-          tenantId,
-          name: name.trim(),
-          phone: phone.trim(),
-          email: email.trim() || undefined,
-          gstin: gstin.trim() || undefined,
-          creditLimit: Number(creditLimit) || 5000,
-        },
-        { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
-      );
+      await api.post(`/customers`, {
+        name: name.trim(),
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        gstin: gstin.trim() || undefined,
+        creditLimit: Number(creditLimit) || 5000,
+      });
 
       setName('');
       setPhone('');
@@ -58,8 +47,8 @@ export function AddCustomerModal({
       setGstin('');
       onCustomerAdded();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create customer');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to create customer'));
     } finally {
       setLoading(false);
     }

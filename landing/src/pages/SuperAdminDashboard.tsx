@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { WarningCircle, X } from '@phosphor-icons/react';
 import { AdminLoginScreen } from '../components/admin/AdminLoginScreen';
 import { AdminNavbar } from '../components/admin/AdminNavbar';
 import type { AdminTab } from '../components/admin/AdminNavbar';
@@ -10,80 +10,88 @@ import { ContactsTab } from '../components/admin/ContactsTab';
 import { ReportsTab } from '../components/admin/ReportsTab';
 import { TenantDetailModal } from '../components/admin/TenantDetailModal';
 import type { TenantItem, ContactItem, OverviewStats, ReportsData } from '../components/admin/types';
-
-const API_BASE = 'http://localhost:5000/api/v1';
+import {
+  adminApi,
+  clearAdminSession,
+  getAdminToken,
+  setAdminUnauthorizedHandler,
+} from '../lib/adminApi';
+import { getApiErrorMessage } from '../lib/apiError';
+import type { TenantStatus } from '../shared';
 
 export function SuperAdminDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!localStorage.getItem('vendora_platform_admin_token');
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!getAdminToken());
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [loading, setLoading] = useState(false);
-  const [selectedTenant, setSelectedTenant] = useState<TenantItem | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [updatingTenantId, setUpdatingTenantId] = useState<string | null>(null);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
   const [tenants, setTenants] = useState<TenantItem[]>([]);
   const [contacts, setContacts] = useState<ContactItem[]>([]);
   const [overviewStats, setOverviewStats] = useState<OverviewStats | null>(null);
   const [reportsData, setReportsData] = useState<ReportsData | null>(null);
 
+  // Any 401/403 from /saas-admin clears the session (in adminApi) and returns to the login screen.
+  useEffect(() => {
+    setAdminUnauthorizedHandler(() => {
+      setSelectedTenantId(null);
+      setIsAuthenticated(false);
+    });
+    return () => setAdminUnauthorizedHandler(null);
+  }, []);
+
   const fetchAllData = useCallback(async () => {
     setLoading(true);
-    try {
-      const [tenantsRes, overviewRes, contactsRes, reportsRes] = await Promise.allSettled([
-        axios.get(`${API_BASE}/saas-admin/tenants`),
-        axios.get(`${API_BASE}/saas-admin/overview`),
-        axios.get(`${API_BASE}/saas-admin/contacts`),
-        axios.get(`${API_BASE}/saas-admin/reports`),
-      ]);
+    setLoadError('');
+    const [tenantsRes, overviewRes, contactsRes, reportsRes] = await Promise.allSettled([
+      adminApi.get('/tenants'),
+      adminApi.get('/overview'),
+      adminApi.get('/contacts'),
+      adminApi.get('/reports'),
+    ]);
 
-      if (tenantsRes.status === 'fulfilled' && Array.isArray(tenantsRes.value.data?.data)) {
-        setTenants(tenantsRes.value.data.data);
-      } else {
-        setTenants([]);
+    // Failed sections keep their previous data; the banner names what could not be refreshed.
+    const failures: string[] = [];
+    let firstError: unknown = null;
+    const noteFailure = (section: string, result: PromiseSettledResult<unknown>) => {
+      failures.push(section);
+      if (firstError === null) {
+        firstError = result.status === 'rejected' ? result.reason : new Error('Unexpected response');
       }
+    };
 
-      if (overviewRes.status === 'fulfilled' && overviewRes.value.data?.data) {
-        setOverviewStats(overviewRes.value.data.data);
-      } else {
-        setOverviewStats({
-          metrics: {
-            totalTenants: 0,
-            activeTenants: 0,
-            trialTenants: 0,
-            suspendedTenants: 0,
-            totalMonthlyRevenue: 0,
-            totalBillsGenerated: 0,
-            totalLeads: 0,
-          },
-          planDistribution: {},
-          sectorDistribution: {},
-          recentTenants: [],
-        });
-      }
-
-      if (contactsRes.status === 'fulfilled' && Array.isArray(contactsRes.value.data?.data)) {
-        setContacts(contactsRes.value.data.data);
-      } else {
-        setContacts([]);
-      }
-
-      if (reportsRes.status === 'fulfilled' && reportsRes.value.data?.data) {
-        setReportsData(reportsRes.value.data.data);
-      } else {
-        setReportsData({
-          sectorStats: {},
-          planStats: [],
-          totalTenants: 0,
-          activeSubscriptions: 0,
-          trialSubscriptions: 0,
-        });
-      }
-    } catch {
-      setTenants([]);
-    } finally {
-      setLoading(false);
+    if (tenantsRes.status === 'fulfilled' && Array.isArray(tenantsRes.value.data?.data)) {
+      setTenants(tenantsRes.value.data.data);
+    } else {
+      noteFailure('tenants', tenantsRes);
     }
+
+    if (overviewRes.status === 'fulfilled' && overviewRes.value.data?.data) {
+      setOverviewStats(overviewRes.value.data.data);
+    } else {
+      noteFailure('overview', overviewRes);
+    }
+
+    if (contactsRes.status === 'fulfilled' && Array.isArray(contactsRes.value.data?.data)) {
+      setContacts(contactsRes.value.data.data);
+    } else {
+      noteFailure('contacts', contactsRes);
+    }
+
+    if (reportsRes.status === 'fulfilled' && reportsRes.value.data?.data) {
+      setReportsData(reportsRes.value.data.data);
+    } else {
+      noteFailure('reports', reportsRes);
+    }
+
+    if (failures.length > 0) {
+      const reason = getApiErrorMessage(firstError, 'The server could not be reached.');
+      setLoadError(`Could not load ${failures.join(', ')}: ${reason}`);
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -93,32 +101,33 @@ export function SuperAdminDashboard() {
   }, [isAuthenticated, fetchAllData]);
 
   const handleSignOut = () => {
-    localStorage.removeItem('vendora_platform_admin_token');
-    localStorage.removeItem('vendora_platform_admin_user');
+    clearAdminSession();
+    setSelectedTenantId(null);
     setIsAuthenticated(false);
   };
 
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
-
-  const handleUpdateStatus = async (id: string, newStatus: 'ACTIVE' | 'SUSPENDED' | 'TRIAL') => {
+  const handleUpdateStatus = async (id: string, newStatus: TenantStatus) => {
+    setActionError('');
+    setUpdatingTenantId(id);
     try {
-      await axios.patch(`${API_BASE}/saas-admin/tenants/${id}/status`, { status: newStatus });
-      setTenants((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
-      );
-    } catch {
-      // Local fallback
-      setTenants((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
-      );
+      const res = await adminApi.patch(`/tenants/${encodeURIComponent(id)}/status`, { status: newStatus });
+      const confirmedStatus: TenantStatus = res.data?.data?.status ?? newStatus;
+      setTenants((prev) => prev.map((t) => (t.id === id ? { ...t, status: confirmedStatus } : t)));
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, 'Could not update the tenant status. Please try again.'));
+    } finally {
+      setUpdatingTenantId(null);
     }
   };
 
+  const errorBanners = [
+    { key: 'load', message: loadError, onDismiss: () => setLoadError('') },
+    { key: 'action', message: actionError, onDismiss: () => setActionError('') },
+  ].filter((banner) => banner.message);
+
   // If not authenticated as Platform Admin, render secure login screen
   if (!isAuthenticated) {
-    return <AdminLoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return <AdminLoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />;
   }
 
   return (
@@ -142,10 +151,28 @@ export function SuperAdminDashboard() {
 
       {/* 3. Full-Width Main Content Canvas */}
       <main className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
+        {errorBanners.map((banner) => (
+          <div
+            key={banner.key}
+            role="alert"
+            className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-700 flex items-start gap-2.5 text-xs"
+          >
+            <WarningCircle weight="bold" className="w-4 h-4 shrink-0 mt-0.5" />
+            <span className="font-medium flex-1">{banner.message}</span>
+            <button
+              onClick={banner.onDismiss}
+              className="text-red-500 hover:text-red-800 cursor-pointer"
+              aria-label="Dismiss error"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ))}
+
         {activeTab === 'overview' && (
           <OverviewTab
             stats={overviewStats}
-            onInspectTenant={(t) => setSelectedTenant(t)}
+            onInspectTenant={setSelectedTenantId}
             onNavigateToTenants={() => setActiveTab('tenants')}
           />
         )}
@@ -153,8 +180,9 @@ export function SuperAdminDashboard() {
         {activeTab === 'tenants' && (
           <TenantsTab
             tenants={tenants}
-            onInspectTenant={(t) => setSelectedTenant(t)}
+            onInspectTenant={setSelectedTenantId}
             onUpdateStatus={handleUpdateStatus}
+            updatingTenantId={updatingTenantId}
           />
         )}
 
@@ -168,11 +196,11 @@ export function SuperAdminDashboard() {
       </main>
 
       {/* 4. Modular Tenant Profile Drawer Modal */}
-      {selectedTenant && (
+      {selectedTenantId && (
         <TenantDetailModal
-          tenant={selectedTenant}
-          onClose={() => setSelectedTenant(null)}
-          onStatusChange={handleUpdateStatus}
+          tenantId={selectedTenantId}
+          fallback={tenants.find((t) => t.id === selectedTenantId)}
+          onClose={() => setSelectedTenantId(null)}
         />
       )}
     </div>

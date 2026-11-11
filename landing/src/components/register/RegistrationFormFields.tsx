@@ -1,7 +1,10 @@
 import { WarningCircle, CircleNotch } from '@phosphor-icons/react';
 import { CustomerIdField } from './CustomerIdField';
+import { FormTextField } from './FormTextField';
 import { BusinessTypeDropdown } from '../BusinessTypeDropdown';
-import { SubscriptionPlanCode, BusinessType, SUBSCRIPTION_PLANS } from '../../shared';
+import { SubscriptionPlanCode } from '../../shared';
+import type { SubscriptionPlanDetails } from '../../shared';
+import type { FieldChangeHandler, RegistrationFormValues } from './registrationForm';
 
 interface IdCheckStatus {
   available: boolean;
@@ -9,28 +12,15 @@ interface IdCheckStatus {
 }
 
 interface RegistrationFormFieldsProps {
+  values: RegistrationFormValues;
+  onFieldChange: FieldChangeHandler;
   selectedPlan: SubscriptionPlanCode;
+  planInfo: SubscriptionPlanDetails;
   onSelectPlan: (plan: SubscriptionPlanCode) => void;
-  customerId: string;
-  onCustomerIdChange: (val: string) => void;
   onCustomerIdBlur: () => void;
   onManualCheckId: () => void;
   isCheckingId: boolean;
   idCheckStatus: IdCheckStatus | null;
-  companyName: string;
-  onCompanyNameChange: (val: string) => void;
-  city: string;
-  onCityChange: (val: string) => void;
-  businessType: BusinessType;
-  onBusinessTypeChange: (val: BusinessType) => void;
-  contactPerson: string;
-  onContactPersonChange: (val: string) => void;
-  mobileNumber: string;
-  onMobileNumberChange: (val: string) => void;
-  email: string;
-  onEmailChange: (val: string) => void;
-  otp: string;
-  onOtpChange: (val: string) => void;
   otpSent: boolean;
   isSendingOtp: boolean;
   resendTimer: number;
@@ -41,29 +31,18 @@ interface RegistrationFormFieldsProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
+const digitsOnly = (val: string, maxLength: number) => val.replace(/\D/g, '').slice(0, maxLength);
+
 export function RegistrationFormFields({
+  values,
+  onFieldChange,
   selectedPlan,
+  planInfo,
   onSelectPlan,
-  customerId,
-  onCustomerIdChange,
   onCustomerIdBlur,
   onManualCheckId,
   isCheckingId,
   idCheckStatus,
-  companyName,
-  onCompanyNameChange,
-  city,
-  onCityChange,
-  businessType,
-  onBusinessTypeChange,
-  contactPerson,
-  onContactPersonChange,
-  mobileNumber,
-  onMobileNumberChange,
-  email,
-  onEmailChange,
-  otp,
-  onOtpChange,
   otpSent,
   isSendingOtp,
   resendTimer,
@@ -73,8 +52,6 @@ export function RegistrationFormFields({
   isSubmitting,
   onSubmit,
 }: RegistrationFormFieldsProps) {
-  const planInfo = SUBSCRIPTION_PLANS[selectedPlan] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.GROWTH];
-
   return (
     <form onSubmit={onSubmit} className="space-y-5 text-left font-sans" noValidate>
       <div>
@@ -100,7 +77,7 @@ export function RegistrationFormFields({
             Plan
           </span>
           <span className="text-xs sm:text-sm font-bold text-zinc-900">
-            {planInfo.name} ({planInfo.monthlyPrice === 0 ? '30 Days Free' : `₹${planInfo.monthlyPrice}/mo`})
+            {planInfo.name} ({planInfo.monthlyPrice === 0 ? '30 Days Free' : `₹${planInfo.monthlyPrice.toLocaleString('en-IN')}/mo`})
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -123,8 +100,8 @@ export function RegistrationFormFields({
 
       {/* Customer ID Field with onBlur duplication check */}
       <CustomerIdField
-        value={customerId}
-        onChange={onCustomerIdChange}
+        value={values.customerId}
+        onChange={(val) => onFieldChange('customerId', val)}
         onBlur={onCustomerIdBlur}
         onManualCheck={onManualCheckId}
         isChecking={isCheckingId}
@@ -132,53 +109,43 @@ export function RegistrationFormFields({
         errorMessage={fieldErrors.customerId}
       />
 
-      {/* Company Name & City */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-bold text-zinc-900 mb-1.5">
-            Company / shop name <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            value={companyName}
-            onChange={(e) => onCompanyNameChange(e.target.value)}
-            placeholder="e.g. Apex Supermarket"
-            className={`w-full px-3.5 py-2.5 rounded-md border text-sm font-medium outline-hidden transition-all ${
-              fieldErrors.companyName
-                ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                : 'border-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-            }`}
-          />
-          {fieldErrors.companyName && (
-            <p className="text-red-600 text-xs font-semibold mt-1.5 flex items-center gap-1.5">
-              <WarningCircle weight="fill" className="w-3.5 h-3.5 shrink-0 text-red-500" />
-              <span>{fieldErrors.companyName}</span>
-            </p>
-          )}
-        </div>
+      <FormTextField
+        label="Company / shop name"
+        value={values.companyName}
+        onChange={(val) => onFieldChange('companyName', val)}
+        placeholder="e.g. Apex Supermarket"
+        error={fieldErrors.companyName}
+        autoComplete="organization"
+      />
 
-        <div>
-          <label className="block text-xs font-bold text-zinc-900 mb-1.5">
-            City <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => onCityChange(e.target.value)}
-            placeholder="Start typing your city"
-            className={`w-full px-3.5 py-2.5 rounded-md border text-sm font-medium outline-hidden transition-all ${
-              fieldErrors.city
-                ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                : 'border-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-            }`}
-          />
-          {fieldErrors.city && (
-            <p className="text-red-600 text-xs font-semibold mt-1.5 flex items-center gap-1.5">
-              <WarningCircle weight="fill" className="w-3.5 h-3.5 shrink-0 text-red-500" />
-              <span>{fieldErrors.city}</span>
-            </p>
-          )}
-        </div>
+      {/* City, State & Pincode */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <FormTextField
+          label="City"
+          value={values.city}
+          onChange={(val) => onFieldChange('city', val)}
+          placeholder="e.g. Coimbatore"
+          error={fieldErrors.city}
+          autoComplete="address-level2"
+        />
+        <FormTextField
+          label="State"
+          value={values.state}
+          onChange={(val) => onFieldChange('state', val)}
+          placeholder="e.g. Tamil Nadu"
+          error={fieldErrors.state}
+          autoComplete="address-level1"
+        />
+        <FormTextField
+          label="Pincode"
+          value={values.pincode}
+          onChange={(val) => onFieldChange('pincode', digitsOnly(val, 6))}
+          placeholder="6-digit pincode"
+          error={fieldErrors.pincode}
+          inputMode="numeric"
+          maxLength={6}
+          autoComplete="postal-code"
+        />
       </div>
 
       {/* Business Type & Contact Person */}
@@ -187,57 +154,33 @@ export function RegistrationFormFields({
           <label className="block text-xs font-bold text-zinc-900 mb-1.5">
             Business type <span className="text-red-600">*</span>
           </label>
-          <BusinessTypeDropdown value={businessType} onChange={onBusinessTypeChange} />
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-zinc-900 mb-1.5">
-            Contact person <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            value={contactPerson}
-            onChange={(e) => onContactPersonChange(e.target.value)}
-            placeholder="e.g. Ramesh Kumar"
-            className={`w-full px-3.5 py-2.5 rounded-md border text-sm font-medium outline-hidden transition-all ${
-              fieldErrors.contactPerson
-                ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                : 'border-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-            }`}
+          <BusinessTypeDropdown
+            value={values.businessType}
+            onChange={(val) => onFieldChange('businessType', val)}
           />
-          {fieldErrors.contactPerson && (
-            <p className="text-red-600 text-xs font-semibold mt-1.5 flex items-center gap-1.5">
-              <WarningCircle weight="fill" className="w-3.5 h-3.5 shrink-0 text-red-500" />
-              <span>{fieldErrors.contactPerson}</span>
-            </p>
-          )}
         </div>
+
+        <FormTextField
+          label="Contact person"
+          value={values.contactPerson}
+          onChange={(val) => onFieldChange('contactPerson', val)}
+          placeholder="e.g. Ramesh Kumar"
+          error={fieldErrors.contactPerson}
+          autoComplete="name"
+        />
       </div>
 
-      {/* Mobile Number */}
-      <div>
-        <label className="block text-xs font-bold text-zinc-900 mb-1.5">
-          Mobile number <span className="text-red-600">*</span>
-        </label>
-        <input
-          type="tel"
-          value={mobileNumber}
-          onChange={(e) => onMobileNumberChange(e.target.value)}
-          placeholder="9080709078"
-          maxLength={10}
-          className={`w-full px-3.5 py-2.5 rounded-md border text-sm font-medium outline-hidden transition-all ${
-            fieldErrors.mobileNumber
-              ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-              : 'border-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-          }`}
-        />
-        {fieldErrors.mobileNumber && (
-          <p className="text-red-600 text-xs font-semibold mt-1.5 flex items-center gap-1.5">
-            <WarningCircle weight="fill" className="w-3.5 h-3.5 shrink-0 text-red-500" />
-            <span>{fieldErrors.mobileNumber}</span>
-          </p>
-        )}
-      </div>
+      <FormTextField
+        label="Mobile number"
+        type="tel"
+        value={values.mobileNumber}
+        onChange={(val) => onFieldChange('mobileNumber', digitsOnly(val, 10))}
+        placeholder="10-digit mobile number"
+        error={fieldErrors.mobileNumber}
+        inputMode="numeric"
+        maxLength={10}
+        autoComplete="tel-national"
+      />
 
       {/* Email & Send OTP */}
       <div>
@@ -247,9 +190,10 @@ export function RegistrationFormFields({
         <div className="flex items-center gap-2">
           <input
             type="email"
-            value={email}
-            onChange={(e) => onEmailChange(e.target.value)}
-            placeholder="mvp.bose52@gmail.com"
+            value={values.email}
+            onChange={(e) => onFieldChange('email', e.target.value)}
+            placeholder="owner@yourshop.in"
+            autoComplete="email"
             className={`w-full px-3.5 py-2.5 rounded-md border text-sm font-medium outline-hidden transition-all ${
               fieldErrors.email
                 ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-1 focus:ring-red-500'
@@ -301,9 +245,11 @@ export function RegistrationFormFields({
           </label>
           <input
             type="text"
-            value={otp}
-            onChange={(e) => onOtpChange(e.target.value.replace(/\D/g, '').substring(0, 6))}
+            value={values.otp}
+            onChange={(e) => onFieldChange('otp', digitsOnly(e.target.value, 6))}
             placeholder="6-digit code from your email"
+            inputMode="numeric"
+            autoComplete="one-time-code"
             maxLength={6}
             className={`w-full px-3.5 py-2.5 rounded-md border text-sm font-medium outline-hidden transition-all ${
               fieldErrors.otp
@@ -319,7 +265,7 @@ export function RegistrationFormFields({
           ) : (
             <p className="text-emerald-600 text-xs mt-1.5 font-medium flex items-center gap-1">
               <span>✓</span>
-              <span>OTP sent to {email}. Check your inbox (and spam). It works for 10 minutes.</span>
+              <span>OTP sent to {values.email}. Check your inbox (and spam). It works for 10 minutes.</span>
             </p>
           )}
         </div>
@@ -354,4 +300,3 @@ export function RegistrationFormFields({
     </form>
   );
 }
-

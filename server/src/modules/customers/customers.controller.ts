@@ -6,15 +6,16 @@ import {
   Body,
   Param,
   Query,
-  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { RecordCustomerPaymentDto } from './dto/record-customer-payment.dto';
-import { CurrentUser } from '../../common';
+import { TenantId } from '../../common';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @ApiTags('Customers & Khata Ledger')
+@ApiBearerAuth()
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
@@ -23,12 +24,8 @@ export class CustomersController {
   @ApiOperation({ summary: 'Register a new customer profile' })
   async createCustomer(
     @Body() dto: CreateCustomerDto,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
   ) {
-    const tenantId = dto.tenantId || authTenantId;
-    if (!tenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
     const data = await this.customersService.createCustomer(tenantId, dto);
     return { success: true, data };
   }
@@ -36,15 +33,10 @@ export class CustomersController {
   @Get()
   @ApiOperation({ summary: 'Search and list customers for a tenant' })
   async getCustomers(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
     @Query('search') search?: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.customersService.getCustomers(resolvedTenantId, search);
+    const data = await this.customersService.getCustomers(tenantId, search);
     return { success: true, count: data.length, data };
   }
 
@@ -52,14 +44,9 @@ export class CustomersController {
   @ApiOperation({ summary: 'Get single customer profile' })
   async getCustomerById(
     @Param('id') id: string,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.customersService.getCustomerById(resolvedTenantId, id);
+    const data = await this.customersService.getCustomerById(tenantId, id);
     return { success: true, data };
   }
 
@@ -67,15 +54,10 @@ export class CustomersController {
   @ApiOperation({ summary: 'Update customer profile' })
   async updateCustomer(
     @Param('id') id: string,
-    @Body() dto: Partial<CreateCustomerDto>,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @Body() dto: UpdateCustomerDto,
+    @TenantId() tenantId: string,
   ) {
-    const resolvedTenantId = dto.tenantId || queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
-    const data = await this.customersService.updateCustomer(resolvedTenantId, id, dto);
+    const data = await this.customersService.updateCustomer(tenantId, id, dto);
     return { success: true, data };
   }
 
@@ -84,14 +66,9 @@ export class CustomersController {
   async recordPayment(
     @Param('id') id: string,
     @Body() dto: RecordCustomerPaymentDto,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
-    const data = await this.customersService.recordPayment(resolvedTenantId, id, dto);
+    const data = await this.customersService.recordPayment(tenantId, id, dto);
     return { success: true, data };
   }
 
@@ -99,14 +76,9 @@ export class CustomersController {
   @ApiOperation({ summary: 'Get customer double-entry Khata statement ledger' })
   async getCustomerLedger(
     @Param('id') id: string,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.customersService.getCustomerLedger(resolvedTenantId, id);
+    const data = await this.customersService.getCustomerLedger(tenantId, id);
     return { success: true, count: data.length, data };
   }
 }

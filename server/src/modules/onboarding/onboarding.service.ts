@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { 
   Injectable, 
   BadRequestException, 
@@ -6,7 +7,7 @@ import {
   Logger 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
@@ -40,6 +41,7 @@ export class OnboardingService {
     @InjectModel(RegistrationSession.name) private readonly sessionModel: Model<RegistrationSessionDocument>,
     private readonly mailService: MailService,
     private readonly catalogService: CatalogService,
+    private readonly configService: ConfigService,
   ) {}
 
   // 1. Get SaaS Pricing Plans
@@ -183,98 +185,117 @@ export class OnboardingService {
       throw new ConflictException(`Shop ID "${shopId}" is already taken. Please pick another identifier.`);
     }
 
-    // Provision Tenant Document
-    const tenant = await this.tenantModel.create({
-      shopId,
-      businessName: dto.businessName.trim(),
-      ownerName: dto.ownerName.trim(),
-      email: session.email,
-      phone: dto.phone.trim(),
-      businessType: dto.businessType,
-      status: TenantStatus.TRIAL,
-      settings: {
-        currency: 'INR',
-        timezone: 'Asia/Kolkata',
-        taxType: 'GST',
-        address: dto.address,
-        gstin: dto.gstin,
-      },
-    });
+    const planCode = dto.selectedPlanCode ?? session.selectedPlanCode;
+    let tenant: TenantDocument | null = null;
+    let subscription: SubscriptionDocument | null = null;
+    let username = '';
+    let tempPassword = '';
 
-    // Provision Default Primary Outlet (Main Branch)
-    const outlet = await this.outletModel.create({
-      tenantId: tenant._id,
-      name: 'Main Branch',
-      code: 'OUT-01',
-      isPrimary: true,
-      phone: dto.phone.trim(),
-      email: session.email,
-      address: dto.address,
-      isActive: true,
-    });
-
-    // Generate Secure Temporary Password (e.g. "Vn7#kM9q!")
-    const tempPassword = `Vn${UuidUtil.generateToken(4)}!`;
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
-    const username = `${shopId}_admin`;
-
-    // Provision Super Admin (Owner) User
-    const user = await this.userModel.create({
-      tenantId: tenant._id,
-      outletIds: [outlet._id],
-      username,
-      email: session.email,
-      fullName: dto.ownerName.trim(),
-      passwordHash,
-      role: UserRole.OWNER,
-      isTemporaryPassword: true,
-      isActive: true,
-    });
-
-    // Provision 30-Day Free Trial Subscription
-    const planDetails = SUBSCRIPTION_PLANS[session.selectedPlanCode] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.FREE_TRIAL];
-    const subscription = await this.subscriptionModel.create({
-      tenantId: tenant._id,
-      planCode: session.selectedPlanCode,
-      status: 'TRIAL',
-      startsAt: DateUtil.nowUtc(),
-      expiresAt: DateUtil.addDays(DateUtil.nowUtc(), planDetails.durationDays || 30),
-      maxOutlets: planDetails.maxOutlets,
-      maxUsers: planDetails.maxUsers,
-      maxBillsPerMonth: planDetails.maxBillsPerMonth,
-      billsGeneratedThisMonth: 0,
-      isTrial: true,
-    });
-
-    // Link references to Tenant
-    await this.tenantModel.updateOne(
-      { _id: tenant._id },
-      {
-        $set: {
-          primaryOutletId: outlet._id,
-          subscriptionId: subscription._id,
+    // Provisioning is several documents; on any failure, remove what was created
+    // so the shop ID is free again and the user can retry.
+    try {
+      // Provision Tenant Document
+      tenant = await this.tenantModel.create({
+        shopId,
+        businessName: dto.businessName.trim(),
+        ownerName: dto.ownerName.trim(),
+        email: session.email,
+        phone: dto.phone.trim(),
+        businessType: dto.businessType,
+        status: TenantStatus.TRIAL,
+        settings: {
+          currency: 'INR',
+          timezone: 'Asia/Kolkata',
+          taxType: 'GST',
+          address: dto.address,
+          gstin: dto.gstin,
         },
-      },
-    );
+      });
+
+      // Provision Default Primary Outlet (Main Branch)
+      const outlet = await this.outletModel.create({
+        tenantId: tenant._id,
+        name: 'Main Branch',
+        code: 'OUT-01',
+        isPrimary: true,
+        phone: dto.phone.trim(),
+        email: session.email,
+        address: dto.address,
+        isActive: true,
+      });
+
+      // Generate Secure Temporary Password (e.g. "Vn7#kM9q!")
+      tempPassword = `Vn${UuidUtil.generateToken(4)}!`;
+      const passwordHash = await bcrypt.hash(tempPassword, 10);
+      username = `${shopId}_admin`;
+
+      // Provision Super Admin (Owner) User
+      await this.userModel.create({
+        tenantId: tenant._id,
+        outletIds: [outlet._id],
+        username,
+        email: session.email,
+        fullName: dto.ownerName.trim(),
+        passwordHash,
+        role: UserRole.OWNER,
+        isTemporaryPassword: true,
+        isActive: true,
+      });
+
+      // Provision 30-Day Free Trial Subscription
+      const planDetails = SUBSCRIPTION_PLANS[planCode] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.FREE_TRIAL];
+      subscription = await this.subscriptionModel.create({
+        tenantId: tenant._id,
+        planCode: planCode,
+        status: 'TRIAL',
+        startsAt: DateUtil.nowUtc(),
+        expiresAt: DateUtil.addDays(DateUtil.nowUtc(), planDetails.durationDays || 30),
+        maxOutlets: planDetails.maxOutlets,
+        maxUsers: planDetails.maxUsers,
+        maxBillsPerMonth: planDetails.maxBillsPerMonth,
+        billsGeneratedThisMonth: 0,
+        isTrial: true,
+      });
+
+      // Link references to Tenant
+      await this.tenantModel.updateOne(
+        { _id: tenant._id },
+        {
+          $set: {
+            primaryOutletId: outlet._id,
+            subscriptionId: subscription._id,
+          },
+        },
+      );
+    } catch (err) {
+      if (tenant) {
+        await this.rollbackProvisioning(tenant._id as Types.ObjectId);
+      }
+      throw err;
+    }
 
     // Seed initial starter catalog tailored to business sector
     try {
-      await this.catalogService.seedTenantCatalog(tenant._id, tenant.businessType);
+      await this.catalogService.seedTenantCatalog(tenant!._id as Types.ObjectId, tenant!.businessType);
     } catch (err: any) {
       this.logger.warn(`Could not seed catalog for tenant ${shopId}: ${err.message}`);
     }
 
-    // Send Welcome Credentials Email
-    const loginUrl = `http://localhost:4001/login?shopId=${shopId}`;
-    await this.mailService.sendWelcomeCredentialsEmail({
-      to: session.email,
-      ownerName: dto.ownerName,
-      businessName: dto.businessName,
-      shopId,
-      username,
-      temporaryPassword: tempPassword,
-      shopUrl: loginUrl,
-    });
+    // Send Welcome Credentials Email (non-fatal: credentials are also shown on screen)
+    const loginUrl = `${this.clientBaseUrl}/login?shopId=${encodeURIComponent(shopId)}`;
+    try {
+      await this.mailService.sendWelcomeCredentialsEmail({
+        to: session.email,
+        ownerName: dto.ownerName,
+        businessName: dto.businessName,
+        shopId,
+        username,
+        temporaryPassword: tempPassword,
+        shopUrl: loginUrl,
+      });
+    } catch (err: any) {
+      this.logger.warn(`Welcome email to ${session.email} failed for shop ${shopId}: ${err?.message}`);
+    }
 
     // Update Session status to ACTIVE
     await this.sessionModel.updateOne(
@@ -285,12 +306,26 @@ export class OnboardingService {
     this.logger.log(`✓ Tenant [${shopId}] successfully provisioned with Owner [${username}].`);
 
     return {
-      tenantId: tenant._id,
-      shopId: tenant.shopId,
+      tenantId: tenant!._id,
+      shopId: tenant!.shopId,
       loginUrl,
       username,
       temporaryPassword: tempPassword,
-      trialEndsAt: subscription.expiresAt,
+      trialEndsAt: subscription!.expiresAt,
     };
+  }
+
+  private get clientBaseUrl(): string {
+    return (this.configService.get<string>('CLIENT_BASE_URL') || 'http://localhost:4001').replace(/\/+$/, '');
+  }
+
+  private async rollbackProvisioning(tenantId: Types.ObjectId) {
+    this.logger.warn(`Rolling back partial provisioning for tenant ${tenantId.toString()}`);
+    await Promise.allSettled([
+      this.userModel.deleteMany({ tenantId }),
+      this.outletModel.deleteMany({ tenantId }),
+      this.subscriptionModel.deleteMany({ tenantId }),
+      this.tenantModel.deleteOne({ _id: tenantId }),
+    ]);
   }
 }

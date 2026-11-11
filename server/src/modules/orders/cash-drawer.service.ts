@@ -8,7 +8,8 @@ import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { OpenShiftDto } from './dto/open-shift.dto';
 import { CloseShiftDto } from './dto/close-shift.dto';
-import { DateUtil, NumberUtil } from '../../common';
+import { AuthenticatedUser, DateUtil, NumberUtil } from '../../common';
+import { SequenceService } from '../sequence/sequence.service';
 
 export interface CurrentShiftSummary {
   _id?: any;
@@ -43,17 +44,11 @@ export class CashDrawerService {
     @InjectModel(OrderReturn.name) private readonly returnModel: Model<OrderReturnDocument>,
     @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
     @InjectModel(Outlet.name) private readonly outletModel: Model<OutletDocument>,
+    private readonly sequenceService: SequenceService,
   ) {}
 
-  async openShift(
-    dto: OpenShiftDto,
-    authUser?: { tenantId?: string; outletIds?: string[]; fullName?: string; username?: string },
-  ) {
-    const rawTenantId = dto.tenantId || authUser?.tenantId;
-    if (!rawTenantId || !Types.ObjectId.isValid(rawTenantId)) {
-      throw new BadRequestException('Valid tenant ID is required.');
-    }
-    const tenantId = new Types.ObjectId(rawTenantId);
+  async openShift(tenantIdStr: string, dto: OpenShiftDto, user: AuthenticatedUser) {
+    const tenantId = new Types.ObjectId(tenantIdStr);
 
     // Check if an open shift already exists
     const activeShift = await this.shiftModel.findOne({ tenantId, status: 'OPEN' });
@@ -61,25 +56,34 @@ export class CashDrawerService {
       return { success: true, isExisting: true, shift: activeShift };
     }
 
-    // Resolve outlet
+    const tenant = await this.tenantModel.findById(tenantId).select('primaryOutletId settings').lean();
     let outletId: Types.ObjectId | null = null;
-    if (dto.outletId && Types.ObjectId.isValid(dto.outletId)) {
-      outletId = new Types.ObjectId(dto.outletId);
+    const userOutlet = user.outletIds?.[0];
+    if (userOutlet && Types.ObjectId.isValid(userOutlet)) {
+      outletId = new Types.ObjectId(userOutlet);
+    } else if (tenant?.primaryOutletId) {
+      outletId = tenant.primaryOutletId as Types.ObjectId;
     } else {
-      const tenant = await this.tenantModel.findById(tenantId);
-      outletId = tenant?.primaryOutletId as Types.ObjectId;
-      if (!outletId) {
-        const anyOutlet = await this.outletModel.findOne({ tenantId });
-        outletId = anyOutlet ? anyOutlet._id : new Types.ObjectId();
-      }
+      const anyOutlet = await this.outletModel.findOne({ tenantId }).select('_id').lean();
+      if (!anyOutlet) throw new BadRequestException('This shop has no outlet configured.');
+      outletId = anyOutlet._id as Types.ObjectId;
     }
 
-    const currentYear = DateUtil.nowUtc().getFullYear();
-    const shiftCount = await this.shiftModel.countDocuments({ tenantId });
-    const shiftSeq = String(shiftCount + 1).padStart(5, '0');
-    const shiftNumber = `SHIFT-${currentYear}-${shiftSeq}`;
+    const shiftNumber = await this.sequenceService.next({
+      tenantId,
+      prefix: 'SHIFT',
+      timezone: tenant?.settings?.timezone,
+      findExistingMax: async (prefix) => {
+        const last = await this.shiftModel
+          .findOne({ tenantId, shiftNumber: { $regex: `^${prefix}` } })
+          .sort({ shiftNumber: -1 })
+          .select('shiftNumber')
+          .lean();
+        return SequenceService.parseSequence(last?.shiftNumber);
+      },
+    });
 
-    const cashierName = dto.cashierName || authUser?.fullName || authUser?.username || 'Cashier';
+    const cashierName = user.fullName || user.username || 'Cashier';
 
     const shift = await this.shiftModel.create({
       tenantId,
@@ -163,15 +167,8 @@ export class CashDrawerService {
     };
   }
 
-  async closeShift(
-    dto: CloseShiftDto,
-    authUser?: { tenantId?: string; fullName?: string },
-  ) {
-    const rawTenantId = dto.tenantId || authUser?.tenantId;
-    if (!rawTenantId || !Types.ObjectId.isValid(rawTenantId)) {
-      throw new BadRequestException('Valid tenant ID is required.');
-    }
-    const tenantId = new Types.ObjectId(rawTenantId);
+  async closeShift(tenantIdStr: string, dto: CloseShiftDto) {
+    const tenantId = new Types.ObjectId(tenantIdStr);
 
     const shift = await this.shiftModel.findOne({
       _id: new Types.ObjectId(dto.shiftId),
@@ -183,9 +180,9 @@ export class CashDrawerService {
     }
 
     // Real-time calculation
-    const liveStats = await this.getCurrentShift(rawTenantId);
+    const liveStats = await this.getCurrentShift(tenantIdStr);
     const expectedCash = liveStats?.expectedCash ?? shift.openingFloat;
-    const variance = dto.actualCashCounted - expectedCash;
+    const variance = NumberUtil.round(dto.actualCashCounted - expectedCash, 2);
 
     shift.closedAt = DateUtil.nowUtc();
     shift.actualCashCounted = dto.actualCashCounted;
@@ -214,7 +211,7 @@ export class CashDrawerService {
     return this.shiftModel
       .find({ tenantId: new Types.ObjectId(tenantId) })
       .sort({ openedAt: -1 })
-      .limit(limit)
+      .limit(Math.min(Math.max(limit, 1), 200))
       .lean();
   }
 }

@@ -40,14 +40,11 @@ export function ThermalReceiptModal({
           {/* Store Info */}
           <div className="text-center space-y-1">
             <h2 className="font-bold text-base uppercase tracking-tight">{invoice.shopName}</h2>
-            <p className="text-[11px] text-zinc-600">
-              {invoice.address || 'Main Road, Retail Counter'}
-            </p>
-            <p className="text-[11px] text-zinc-600">
-              GSTIN: {invoice.gstin || '33AAAAA0000A1Z5'}
-            </p>
+            {invoice.address && <p className="text-[11px] text-zinc-600">{invoice.address}</p>}
+            {invoice.phone && <p className="text-[11px] text-zinc-600">Ph: {invoice.phone}</p>}
+            {invoice.gstin && <p className="text-[11px] text-zinc-600">GSTIN: {invoice.gstin}</p>}
             <p className="text-[10px] text-zinc-500">
-              Terminal: {invoice.terminal} • Cashier: {invoice.cashier}
+              {invoice.terminal ? `Terminal: ${invoice.terminal} • ` : ''}Cashier: {invoice.cashier}
             </p>
           </div>
 
@@ -78,12 +75,12 @@ export function ThermalReceiptModal({
 
           {/* Items List */}
           <div className="space-y-1.5 text-[11px]">
-            {invoice.items.map((item) => (
-              <div key={item.id} className="flex justify-between">
+            {invoice.items.map((item, idx) => (
+              <div key={`${item.id}-${idx}`} className="flex justify-between">
                 <span className="w-1/2 truncate font-medium">{item.name}</span>
                 <span className="w-1/6 text-center">{item.quantity}</span>
                 <span className="w-1/6 text-right">₹{item.unitPrice}</span>
-                <span className="w-1/6 text-right font-bold">₹{item.unitPrice * item.quantity}</span>
+                <span className="w-1/6 text-right font-bold">₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
@@ -104,6 +101,12 @@ export function ThermalReceiptModal({
               <span>SGST:</span>
               <span>₹{(invoice.sgst).toFixed(2)}</span>
             </div>
+            {invoice.roundOff !== 0 && (
+              <div className="flex justify-between text-zinc-600">
+                <span>Round Off:</span>
+                <span>{invoice.roundOff > 0 ? '+' : '-'}₹{Math.abs(invoice.roundOff).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-sm pt-1 border-t border-zinc-400">
               <span>NET PAYABLE:</span>
               <span>₹{invoice.grandTotal.toLocaleString('en-IN')}</span>

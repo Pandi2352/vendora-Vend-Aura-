@@ -1,31 +1,22 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { X, Vault, ArrowsClockwise } from '@phosphor-icons/react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Vault, ArrowsClockwise, WarningCircle } from '@phosphor-icons/react';
+import { api, unwrap, getErrorMessage } from '../../lib/api';
 import type { ShiftSummary } from '../../types/shift-return.types';
 import { ShiftHistoryTab } from './shift/ShiftHistoryTab';
 import { ActiveShiftContent } from './shift/ActiveShiftContent';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 interface CashDrawerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  tenantId: string;
-  cashierName: string;
   onShiftChange?: (shift: ShiftSummary | null) => void;
 }
 
-export function CashDrawerModal({
-  isOpen,
-  onClose,
-  tenantId,
-  cashierName,
-  onShiftChange,
-}: CashDrawerModalProps) {
+export function CashDrawerModal({ isOpen, onClose, onShiftChange }: CashDrawerModalProps) {
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current');
   const [activeShift, setActiveShift] = useState<ShiftSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [historyList, setHistoryList] = useState<ShiftSummary[]>([]);
+  const [loadError, setLoadError] = useState('');
 
   // Shift Forms State
   const [openingFloat, setOpeningFloat] = useState<number>(2000);
@@ -35,68 +26,72 @@ export function CashDrawerModal({
   const [closeNotes, setCloseNotes] = useState('');
   const [isClosing, setIsClosing] = useState(false);
 
-  const fetchCurrentShift = async () => {
+  const fetchCurrentShift = useCallback(async () => {
     setIsLoading(true);
+    setLoadError('');
     try {
-      const res = await axios.get(`${API_BASE}/orders/shifts/current?tenantId=${tenantId}`);
-      const shift = res.data?.data || null;
+      const shift = unwrap<ShiftSummary | null>(await api.get('/orders/shifts/current')) || null;
       setActiveShift(shift);
-      if (onShiftChange) onShiftChange(shift);
-    } catch {
-      // ignore
+      onShiftChange?.(shift);
+    } catch (err) {
+      setLoadError(getErrorMessage(err, 'Failed to load current shift.'));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onShiftChange]);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_BASE}/orders/shifts/history?tenantId=${tenantId}`);
-      setHistoryList(res.data?.data || []);
-    } catch {
-      // ignore
+      const list = unwrap<ShiftSummary[]>(await api.get('/orders/shifts/history', { params: { limit: 30 } }));
+      setHistoryList(Array.isArray(list) ? list : []);
+    } catch (err) {
+      setLoadError(getErrorMessage(err, 'Failed to load shift history.'));
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchCurrentShift();
-      if (activeTab === 'history') fetchHistory();
-    }
-  }, [isOpen, activeTab]);
+    if (!isOpen) return;
+    fetchCurrentShift();
+    if (activeTab === 'history') fetchHistory();
+  }, [isOpen, activeTab, fetchCurrentShift, fetchHistory]);
 
   if (!isOpen) return null;
 
   const handleOpenShift = async () => {
     setIsOpening(true);
     try {
-      const payload = { tenantId, cashierName, openingFloat: Number(openingFloat) || 0, notes: openNotes };
-      const res = await axios.post(`${API_BASE}/orders/shifts/open`, payload);
-      const shift = res.data?.data?.shift || res.data?.shift;
+      const res = await api.post('/orders/shifts/open', {
+        openingFloat: Number(openingFloat) || 0,
+        notes: openNotes || undefined,
+      });
+      const shift = unwrap<ShiftSummary>(res);
       setActiveShift(shift);
-      if (onShiftChange) onShiftChange(shift);
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to open shift.');
+      onShiftChange?.(shift);
+      setOpenNotes('');
+    } catch (err) {
+      alert(getErrorMessage(err, 'Failed to open shift.'));
     } finally {
       setIsOpening(false);
     }
   };
 
   const handleCloseShift = async () => {
-    if (!activeShift?._id) return;
+    const shiftId = activeShift?._id ?? activeShift?.id;
+    if (!shiftId) return;
     setIsClosing(true);
     try {
-      const counted = parseFloat(actualCash) || 0;
-      const payload = { tenantId, shiftId: activeShift._id, actualCashCounted: counted, notes: closeNotes };
-      await axios.post(`${API_BASE}/orders/shifts/close`, payload);
+      await api.post('/orders/shifts/close', {
+        shiftId,
+        actualCashCounted: parseFloat(actualCash) || 0,
+        notes: closeNotes || undefined,
+      });
       setActiveShift(null);
       setActualCash('');
       setCloseNotes('');
-      if (onShiftChange) onShiftChange(null);
-      fetchHistory();
+      onShiftChange?.(null);
       setActiveTab('history');
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to close shift.');
+    } catch (err) {
+      alert(getErrorMessage(err, 'Failed to close shift.'));
     } finally {
       setIsClosing(false);
     }
@@ -130,7 +125,7 @@ export function CashDrawerModal({
             Current Shift
           </button>
           <button
-            onClick={() => { setActiveTab('history'); fetchHistory(); }}
+            onClick={() => setActiveTab('history')}
             className={`pb-2 px-3 text-xs font-bold border-b-2 cursor-pointer transition-colors ${
               activeTab === 'history' ? 'border-red-600 text-red-600' : 'border-transparent text-zinc-500 hover:text-zinc-900'
             }`}
@@ -146,6 +141,12 @@ export function CashDrawerModal({
 
         {/* Content */}
         <div className="p-4 overflow-y-auto flex-1 space-y-4">
+          {loadError && (
+            <div className="p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+              <WarningCircle weight="bold" className="w-4 h-4 shrink-0" />
+              <span>{loadError}</span>
+            </div>
+          )}
           {activeTab === 'current' ? (
             <ActiveShiftContent
               activeShift={activeShift}

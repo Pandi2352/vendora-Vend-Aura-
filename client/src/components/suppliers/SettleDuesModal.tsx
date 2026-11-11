@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api, getErrorMessage } from '../../lib/api';
 import { CurrencyInr, X } from '@phosphor-icons/react';
 import type { SupplierItem } from '../../types/pos.types';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 interface SettleDuesModalProps {
-  tenantId?: string;
-  authToken: string | null;
   supplier: SupplierItem | null;
   onClose: () => void;
   onPaymentSuccess: () => void;
 }
 
 export function SettleDuesModal({
-  tenantId,
-  authToken,
   supplier,
   onClose,
   onPaymentSuccess,
@@ -47,20 +41,16 @@ export function SettleDuesModal({
     setLoading(true);
     setError('');
     try {
-      await axios.post(
-        `${API_BASE}/suppliers/${supplier.id}/pay?tenantId=${tenantId}`,
-        {
-          amount,
-          paymentMode: payMode,
-          referenceNumber: payRef.trim() || undefined,
-        },
-        { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
-      );
+      await api.post(`/suppliers/${supplier.id}/pay`, {
+        amount,
+        paymentMode: payMode,
+        referenceNumber: payRef.trim() || undefined,
+      });
 
       onPaymentSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to record supplier payment');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to record supplier payment'));
     } finally {
       setLoading(false);
     }

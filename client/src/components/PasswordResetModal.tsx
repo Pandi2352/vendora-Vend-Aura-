@@ -9,6 +9,8 @@ import {
 } from '@phosphor-icons/react';
 
 interface PasswordResetModalProps {
+  currentPassword: string;
+  setCurrentPassword: (val: string) => void;
   newPassword: string;
   setNewPassword: (val: string) => void;
   confirmPassword: string;
@@ -16,9 +18,12 @@ interface PasswordResetModalProps {
   passwordError: string;
   isUpdatingPassword: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  onSignOut?: () => void;
 }
 
 export function PasswordResetModal({
+  currentPassword,
+  setCurrentPassword,
   newPassword,
   setNewPassword,
   confirmPassword,
@@ -26,6 +31,7 @@ export function PasswordResetModal({
   passwordError,
   isUpdatingPassword,
   onSubmit,
+  onSignOut,
 }: PasswordResetModalProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -58,6 +64,23 @@ export function PasswordResetModal({
         )}
 
         <form onSubmit={onSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-zinc-700 mb-1">
+              Current (Temporary) Password
+            </label>
+            <div className="relative">
+              <LockKey className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Password from your onboarding email"
+                className="w-full pl-9 pr-3 py-2 rounded-md border border-zinc-300 text-xs sm:text-sm text-zinc-950 focus:border-red-600 outline-none"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-zinc-700 mb-1">
               New Password
@@ -113,11 +136,21 @@ export function PasswordResetModal({
 
           <button
             type="submit"
-            disabled={!hasLength || !isMatch || isUpdatingPassword}
+            disabled={!currentPassword || !hasLength || !isMatch || isUpdatingPassword}
             className="w-full py-2.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-50"
           >
             {isUpdatingPassword ? 'Saving Password...' : 'Save & Enter POS Register'}
           </button>
+
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="w-full text-[11px] text-zinc-500 hover:text-red-600 font-semibold cursor-pointer"
+            >
+              Sign out
+            </button>
+          )}
         </form>
       </div>
     </div>

@@ -6,93 +6,121 @@ import { RetailPosLogo } from '../components/RetailPosLogo';
 import { RegistrationHeroColumn } from '../components/register/RegistrationHeroColumn';
 import { RegistrationSuccessScreen } from '../components/register/RegistrationSuccessScreen';
 import { RegistrationFormFields } from '../components/register/RegistrationFormFields';
-import { SUBSCRIPTION_PLANS, SubscriptionPlanCode, BusinessType } from '../shared';
+import {
+  EMAIL_REGEX,
+  EMPTY_REGISTRATION_FORM,
+  validateRegistrationForm,
+} from '../components/register/registrationForm';
+import type { FieldChangeHandler, RegistrationFormValues } from '../components/register/registrationForm';
+import { SUBSCRIPTION_PLANS, SubscriptionPlanCode } from '../shared';
+import type {
+  CompleteRegistrationDto,
+  CompleteRegistrationResult,
+  RequestEmailOtpDto,
+  VerifyEmailOtpDto,
+} from '../shared';
+import { API_BASE, posLoginUrl } from '../lib/config';
+import { getApiErrorMessage } from '../lib/apiError';
 
-const API_BASE = 'http://localhost:5000/api/v1';
+const OTP_RESEND_SECONDS = 60;
+
+const isPlanCode = (value: string | null): value is SubscriptionPlanCode =>
+  !!value && (Object.values(SubscriptionPlanCode) as string[]).includes(value);
 
 export function RegisterPage() {
   const [searchParams] = useSearchParams();
-  const queryPlan = searchParams.get('plan') as SubscriptionPlanCode;
+  const queryPlan = searchParams.get('plan');
 
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanCode>(
-    queryPlan && Object.values(SubscriptionPlanCode).includes(queryPlan)
-      ? queryPlan
-      : SubscriptionPlanCode.GROWTH
+    isPlanCode(queryPlan) ? queryPlan : SubscriptionPlanCode.GROWTH
   );
 
-  // Form fields
-  const [customerId, setCustomerId] = useState('');
+  const [form, setForm] = useState<RegistrationFormValues>(EMPTY_REGISTRATION_FORM);
   const [isCheckingId, setIsCheckingId] = useState(false);
   const [idCheckStatus, setIdCheckStatus] = useState<{ available: boolean; message: string } | null>(null);
-
-  const [companyName, setCompanyName] = useState('');
-  const [city, setCity] = useState('');
-  const [businessType, setBusinessType] = useState<BusinessType>(BusinessType.TEXTILE_GARMENTS);
-  const [contactPerson, setContactPerson] = useState('');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [email, setEmail] = useState('');
 
   // Field validation error state
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
 
   // OTP state
-  const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [resendTimer, setResendTimer] = useState(60);
+  const [resendTimer, setResendTimer] = useState(OTP_RESEND_SECONDS);
   const [sessionId, setSessionId] = useState('');
 
   // Submission & Success state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdData, setCreatedData] = useState<{
-    shopId: string;
-    username: string;
-    loginUrl: string;
-    temporaryPassword?: string;
-  } | null>(null);
+  const [createdData, setCreatedData] = useState<CompleteRegistrationResult | null>(null);
 
   useEffect(() => {
-    if (queryPlan && Object.values(SubscriptionPlanCode).includes(queryPlan)) {
+    if (isPlanCode(queryPlan)) {
       setSelectedPlan(queryPlan);
     }
   }, [queryPlan]);
 
   useEffect(() => {
-    let interval: any;
-    if (otpSent && resendTimer > 0) {
-      interval = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
-    }
+    if (!otpSent || resendTimer <= 0) return;
+    const interval = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
     return () => clearInterval(interval);
   }, [otpSent, resendTimer]);
 
-  const clearFieldError = (field: string) => {
-    if (fieldErrors[field]) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
+  const planInfo = SUBSCRIPTION_PLANS[selectedPlan] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.GROWTH];
+
+  const setFieldError = (field: string, message: string) =>
+    setFieldErrors((prev) => ({ ...prev, [field]: message }));
+
+  const clearFieldError = (...fields: string[]) => {
+    setFieldErrors((prev) => {
+      if (!fields.some((f) => prev[f])) return prev;
+      const next = { ...prev };
+      fields.forEach((f) => delete next[f]);
+      return next;
+    });
+  };
+
+  const handleFieldChange: FieldChangeHandler = (field, value) => {
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      // Suggest a Customer ID from the shop name until the user types one.
+      if (field === 'companyName' && !prev.customerId) {
+        const suggested = String(value).toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 6);
+        if (suggested.length >= 3) next.customerId = suggested;
+      }
+      // A new email address needs a fresh OTP.
+      if (field === 'email') next.otp = '';
+      return next;
+    });
+    clearFieldError(field);
+
+    if (field === 'customerId' || (field === 'companyName' && !form.customerId)) {
+      setIdCheckStatus(null);
+      clearFieldError('customerId');
+    }
+    if (field === 'email') {
+      setOtpSent(false);
+      setSessionId('');
+      clearFieldError('otp');
     }
   };
 
   // Check Customer ID availability via live API on blur or check button
-  const checkCustomerIdValidity = async (idToValidate?: string): Promise<boolean> => {
-    const cleanId = (idToValidate !== undefined ? idToValidate : customerId).trim().toLowerCase();
+  const checkCustomerIdValidity = async (): Promise<boolean> => {
+    const cleanId = form.customerId.trim().toLowerCase();
     if (!cleanId) {
-      setFieldErrors((prev) => ({ ...prev, customerId: 'Customer ID is required (3 to 6 characters).' }));
+      setFieldError('customerId', 'Customer ID is required (3 to 6 characters).');
       setIdCheckStatus(null);
       return false;
     }
 
     if (cleanId.length < 3 || cleanId.length > 6) {
-      setFieldErrors((prev) => ({ ...prev, customerId: 'Customer ID must be between 3 and 6 letters or numbers.' }));
+      setFieldError('customerId', 'Customer ID must be between 3 and 6 letters or numbers.');
       setIdCheckStatus({ available: false, message: 'Must be 3 to 6 characters' });
       return false;
     }
 
     if (!/^[a-z0-9]+$/i.test(cleanId)) {
-      setFieldErrors((prev) => ({ ...prev, customerId: 'Only letters and numbers are allowed.' }));
+      setFieldError('customerId', 'Only letters and numbers are allowed.');
       setIdCheckStatus({ available: false, message: 'Only alphanumeric characters allowed' });
       return false;
     }
@@ -101,7 +129,7 @@ export function RegisterPage() {
     setIsCheckingId(true);
 
     try {
-      const res = await axios.get(`${API_BASE}/onboarding/check-subdomain?shopId=${cleanId}`);
+      const res = await axios.get(`${API_BASE}/onboarding/check-subdomain`, { params: { shopId: cleanId } });
       if (res.data?.success && res.data?.data?.isAvailable) {
         clearFieldError('customerId');
         setIdCheckStatus({
@@ -109,15 +137,14 @@ export function RegisterPage() {
           message: res.data?.data?.message || `"${cleanId}" is available!`,
         });
         return true;
-      } else {
-        const reason = res.data?.data?.reason || `Customer ID "${cleanId}" is already taken. Please choose another.`;
-        setFieldErrors((prev) => ({ ...prev, customerId: reason }));
-        setIdCheckStatus({ available: false, message: reason });
-        return false;
       }
-    } catch (err: any) {
-      const errMsg = err.response?.data?.message || 'Unable to verify Customer ID. Please check server.';
-      setFieldErrors((prev) => ({ ...prev, customerId: errMsg }));
+      const reason = res.data?.data?.reason || `Customer ID "${cleanId}" is already taken. Please choose another.`;
+      setFieldError('customerId', reason);
+      setIdCheckStatus({ available: false, message: reason });
+      return false;
+    } catch (err) {
+      const errMsg = getApiErrorMessage(err, 'Unable to check this Customer ID right now. Please try again.');
+      setFieldError('customerId', errMsg);
       setIdCheckStatus({ available: false, message: errMsg });
       return false;
     } finally {
@@ -125,103 +152,42 @@ export function RegisterPage() {
     }
   };
 
-  const handleCustomerIdBlur = () => {
-    if (customerId.trim()) {
-      checkCustomerIdValidity();
-    }
-  };
-
-  const handleCompanyNameChange = (val: string) => {
-    setCompanyName(val);
-    clearFieldError('companyName');
-    if (!customerId) {
-      const sanitized = val.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 6);
-      if (sanitized.length >= 3) {
-        setCustomerId(sanitized);
-        setIdCheckStatus(null);
-        clearFieldError('customerId');
-      }
-    }
-  };
-
   const handleSendOtp = async () => {
-    const cleanEmail = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = form.email.trim();
     if (!cleanEmail) {
-      setFieldErrors((prev) => ({ ...prev, email: 'Email address is required to receive OTP.' }));
+      setFieldError('email', 'Email address is required to receive OTP.');
       return;
     }
-    if (!emailRegex.test(cleanEmail)) {
-      setFieldErrors((prev) => ({ ...prev, email: 'Please enter a valid email address.' }));
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      setFieldError('email', 'Please enter a valid email address.');
       return;
     }
 
-    clearFieldError('email');
-    clearFieldError('otp');
+    clearFieldError('email', 'otp');
     setIsSendingOtp(true);
     try {
-      const res = await axios.post(`${API_BASE}/onboarding/request-otp`, {
-        email: cleanEmail,
-        plan: selectedPlan,
-      });
+      const body: RequestEmailOtpDto = { email: cleanEmail, selectedPlanCode: selectedPlan };
+      const res = await axios.post(`${API_BASE}/onboarding/request-otp`, body);
       if (res.data?.data?.sessionId) {
         setSessionId(res.data.data.sessionId);
       }
       setOtpSent(true);
-      setResendTimer(60);
-    } catch (err: any) {
-      setFieldErrors((prev) => ({
-        ...prev,
-        email: err.response?.data?.message || 'Failed to dispatch verification email. Verify SMTP settings.',
-      }));
+      setResendTimer(OTP_RESEND_SECONDS);
+    } catch (err) {
+      setFieldError(
+        'email',
+        getApiErrorMessage(err, "We couldn't send the verification email. Please check the address and try again shortly."),
+      );
     } finally {
       setIsSendingOtp(false);
     }
-  };
-
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-    const cleanId = customerId.trim().toLowerCase();
-    if (!cleanId) {
-      errors.customerId = 'Customer ID is required.';
-    } else if (cleanId.length < 3 || cleanId.length > 6) {
-      errors.customerId = 'Customer ID must be between 3 and 6 characters.';
-    }
-
-    if (!companyName.trim()) errors.companyName = 'Company or shop name is required.';
-    if (!city.trim()) errors.city = 'City is required.';
-    if (!contactPerson.trim()) errors.contactPerson = 'Contact person name is required.';
-
-    const cleanMobile = mobileNumber.replace(/\D/g, '');
-    if (!mobileNumber.trim()) {
-      errors.mobileNumber = 'Mobile number is required.';
-    } else if (cleanMobile.length !== 10) {
-      errors.mobileNumber = 'Please enter a valid 10-digit mobile number.';
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      errors.email = 'Email address is required.';
-    } else if (!emailRegex.test(email.trim())) {
-      errors.email = 'Please enter a valid email address.';
-    }
-
-    if (!otpSent) {
-      errors.otp = 'Please click "Send OTP" to verify your email first.';
-    } else if (!otp.trim()) {
-      errors.otp = 'Please enter the 6-digit verification code from your email.';
-    } else if (otp.trim().length !== 6) {
-      errors.otp = 'Verification code must be exactly 6 digits.';
-    }
-
-    return errors;
   };
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
 
-    const errors = validateForm();
+    const errors = validateRegistrationForm(form, otpSent);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -231,43 +197,45 @@ export function RegisterPage() {
     if (!isIdValid) return;
 
     setIsSubmitting(true);
-    const cleanId = customerId.trim().toLowerCase();
+    const cleanId = form.customerId.trim().toLowerCase();
 
     try {
-      await axios.post(`${API_BASE}/onboarding/verify-otp`, {
-        sessionId,
-        otp: otp.trim(),
-      });
+      const verifyBody: VerifyEmailOtpDto = { sessionId, otp: form.otp.trim() };
+      await axios.post(`${API_BASE}/onboarding/verify-otp`, verifyBody);
 
-      const res = await axios.post(`${API_BASE}/onboarding/complete-registration`, {
+      const registrationBody: CompleteRegistrationDto = {
         sessionId,
-        businessName: companyName.trim(),
-        ownerName: contactPerson.trim(),
-        phone: mobileNumber.trim(),
-        businessType,
+        businessName: form.companyName.trim(),
+        ownerName: form.contactPerson.trim(),
+        phone: form.mobileNumber,
+        businessType: form.businessType,
         preferredShopId: cleanId,
+        selectedPlanCode: selectedPlan,
         address: {
-          street: 'Main Commercial Hub',
-          city: city.trim(),
-          state: 'Tamil Nadu',
-          pincode: '600001',
+          city: form.city.trim(),
+          state: form.state.trim(),
+          pincode: form.pincode.trim(),
           country: 'India',
         },
-      });
+      };
+      const res = await axios.post(`${API_BASE}/onboarding/complete-registration`, registrationBody);
+      const result: Partial<CompleteRegistrationResult> = res.data?.data ?? {};
+      const shopId = result.shopId || cleanId;
 
       setCreatedData({
-        shopId: res.data?.data?.shopId || cleanId,
-        username: res.data?.data?.username || `${cleanId}_admin`,
-        loginUrl: res.data?.data?.loginUrl || 'http://localhost:4001',
-        temporaryPassword: res.data?.data?.temporaryPassword,
+        shopId,
+        username: result.username || `${cleanId}_admin`,
+        loginUrl: result.loginUrl || posLoginUrl(shopId),
+        temporaryPassword: result.temporaryPassword,
       });
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Registration failed. Please check inputs and retry.';
+    } catch (err) {
+      const msg = getApiErrorMessage(err, 'Registration failed. Please check your details and try again.');
       setSubmitError(msg);
-      if (msg.toLowerCase().includes('otp')) {
-        setFieldErrors((prev) => ({ ...prev, otp: msg }));
-      } else if (msg.toLowerCase().includes('shop id') || msg.toLowerCase().includes('customer id')) {
-        setFieldErrors((prev) => ({ ...prev, customerId: msg }));
+      const lower = msg.toLowerCase();
+      if (lower.includes('otp')) {
+        setFieldError('otp', msg);
+      } else if (lower.includes('shop id') || lower.includes('customer id')) {
+        setFieldError('customerId', msg);
         setIdCheckStatus({ available: false, message: msg });
       }
     } finally {
@@ -275,7 +243,16 @@ export function RegisterPage() {
     }
   };
 
-  const planInfo = SUBSCRIPTION_PLANS[selectedPlan] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.GROWTH];
+  const handleRegisterAnother = () => {
+    setCreatedData(null);
+    setForm(EMPTY_REGISTRATION_FORM);
+    setSessionId('');
+    setOtpSent(false);
+    setResendTimer(OTP_RESEND_SECONDS);
+    setFieldErrors({});
+    setSubmitError('');
+    setIdCheckStatus(null);
+  };
 
   return (
     <div className="min-h-screen bg-[#070b19] flex flex-col font-sans select-none text-zinc-100">
@@ -306,66 +283,21 @@ export function RegisterPage() {
               {createdData ? (
                 <RegistrationSuccessScreen
                   data={{ ...createdData, planName: planInfo.name }}
-                  onRegisterAnother={() => {
-                    setCreatedData(null);
-                    setCustomerId('');
-                    setCompanyName('');
-                    setCity('');
-                    setContactPerson('');
-                    setMobileNumber('');
-                    setEmail('');
-                    setOtpSent(false);
-                    setOtp('');
-                    setFieldErrors({});
-                    setIdCheckStatus(null);
-                  }}
+                  onRegisterAnother={handleRegisterAnother}
                 />
               ) : (
                 <RegistrationFormFields
+                  values={form}
+                  onFieldChange={handleFieldChange}
                   selectedPlan={selectedPlan}
+                  planInfo={planInfo}
                   onSelectPlan={setSelectedPlan}
-                  customerId={customerId}
-                  onCustomerIdChange={(val) => {
-                    setCustomerId(val);
-                    clearFieldError('customerId');
-                    setIdCheckStatus(null);
+                  onCustomerIdBlur={() => {
+                    if (form.customerId.trim()) checkCustomerIdValidity();
                   }}
-                  onCustomerIdBlur={handleCustomerIdBlur}
-                  onManualCheckId={() => checkCustomerIdValidity()}
+                  onManualCheckId={checkCustomerIdValidity}
                   isCheckingId={isCheckingId}
                   idCheckStatus={idCheckStatus}
-                  companyName={companyName}
-                  onCompanyNameChange={handleCompanyNameChange}
-                  city={city}
-                  onCityChange={(val) => {
-                    setCity(val);
-                    clearFieldError('city');
-                  }}
-                  businessType={businessType}
-                  onBusinessTypeChange={setBusinessType}
-                  contactPerson={contactPerson}
-                  onContactPersonChange={(val) => {
-                    setContactPerson(val);
-                    clearFieldError('contactPerson');
-                  }}
-                  mobileNumber={mobileNumber}
-                  onMobileNumberChange={(val) => {
-                    setMobileNumber(val);
-                    clearFieldError('mobileNumber');
-                  }}
-                  email={email}
-                  onEmailChange={(val) => {
-                    setEmail(val);
-                    setOtpSent(false);
-                    setOtp('');
-                    clearFieldError('email');
-                    clearFieldError('otp');
-                  }}
-                  otp={otp}
-                  onOtpChange={(val) => {
-                    setOtp(val);
-                    clearFieldError('otp');
-                  }}
                   otpSent={otpSent}
                   isSendingOtp={isSendingOtp}
                   resendTimer={resendTimer}

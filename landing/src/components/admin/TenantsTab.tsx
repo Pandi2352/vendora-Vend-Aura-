@@ -8,18 +8,31 @@ import {
   Prohibit,
 } from '@phosphor-icons/react';
 import type { TenantItem } from './types';
-import { BUSINESS_TYPE_LABELS, SubscriptionPlanCode } from '../../shared';
+import { TenantStatusBadge } from './TenantStatusBadge';
+import { BUSINESS_TYPE_LABELS, SUBSCRIPTION_PLANS, TenantStatus } from '../../shared';
+import { posLoginUrl } from '../../lib/config';
+
+const STATUS_FILTERS = ['ALL', ...Object.values(TenantStatus)];
+
+function formatPlanOption(code: keyof typeof SUBSCRIPTION_PLANS): string {
+  const plan = SUBSCRIPTION_PLANS[code];
+  return plan.monthlyPrice === 0
+    ? plan.name
+    : `${plan.name} (₹${plan.monthlyPrice.toLocaleString('en-IN')})`;
+}
 
 interface TenantsTabProps {
   tenants: TenantItem[];
-  onInspectTenant: (tenant: TenantItem) => void;
-  onUpdateStatus?: (id: string, newStatus: 'ACTIVE' | 'SUSPENDED' | 'TRIAL') => void;
+  onInspectTenant: (tenantId: string) => void;
+  onUpdateStatus?: (id: string, newStatus: TenantStatus) => void;
+  updatingTenantId?: string | null;
 }
 
 export function TenantsTab({
   tenants,
   onInspectTenant,
   onUpdateStatus,
+  updatingTenantId = null,
 }: TenantsTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPlan, setFilterPlan] = useState<string>('ALL');
@@ -61,7 +74,7 @@ export function TenantsTab({
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Status Pills */}
           <div className="flex items-center rounded-md border border-zinc-300 overflow-hidden bg-zinc-50 p-0.5">
-            {['ALL', 'ACTIVE', 'TRIAL', 'SUSPENDED'].map((st) => (
+            {STATUS_FILTERS.map((st) => (
               <button
                 key={st}
                 onClick={() => setFilterStatus(st)}
@@ -85,10 +98,11 @@ export function TenantsTab({
               className="px-2 py-1.5 rounded-md border border-zinc-300 bg-white text-xs font-medium text-zinc-800 outline-none"
             >
               <option value="ALL">All Plans</option>
-              <option value={SubscriptionPlanCode.FREE_TRIAL}>Free Trial</option>
-              <option value={SubscriptionPlanCode.STARTER}>Starter (₹999)</option>
-              <option value={SubscriptionPlanCode.GROWTH}>Growth (₹1,999)</option>
-              <option value={SubscriptionPlanCode.BUSINESS}>Business (₹3,999)</option>
+              {Object.values(SUBSCRIPTION_PLANS).map((plan) => (
+                <option key={plan.code} value={plan.code}>
+                  {formatPlanOption(plan.code)}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -157,17 +171,7 @@ export function TenantsTab({
 
                     <td className="py-3 px-4">
                       <div className="font-semibold text-zinc-900">{tenant.plan}</div>
-                      <span
-                        className={`inline-block px-1.5 py-0.2 rounded-md text-[10px] font-bold mt-0.5 ${
-                          tenant.status === 'ACTIVE'
-                            ? 'bg-zinc-950 text-white'
-                            : tenant.status === 'TRIAL'
-                            ? 'bg-red-50 text-red-700 border border-red-200'
-                            : 'bg-zinc-200 text-zinc-700'
-                        }`}
-                      >
-                        {tenant.status}
-                      </span>
+                      <TenantStatusBadge status={tenant.status} className="mt-0.5" />
                     </td>
 
                     <td className="py-3 px-4 font-mono font-medium text-zinc-800">
@@ -181,7 +185,7 @@ export function TenantsTab({
                     <td className="py-3 px-4 text-right">
                       <div className="inline-flex items-center gap-1.5">
                         <button
-                          onClick={() => onInspectTenant(tenant)}
+                          onClick={() => onInspectTenant(tenant.id)}
                           className="px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-900 hover:text-white border border-zinc-200 font-semibold text-[11px] text-zinc-800 transition-colors cursor-pointer inline-flex items-center gap-1"
                           title="Inspect Tenant Details"
                         >
@@ -194,17 +198,18 @@ export function TenantsTab({
                             onClick={() =>
                               onUpdateStatus(
                                 tenant.id,
-                                tenant.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+                                tenant.status === TenantStatus.ACTIVE ? TenantStatus.SUSPENDED : TenantStatus.ACTIVE
                               )
                             }
-                            className={`px-2 py-1 rounded-md border font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 ${
-                              tenant.status === 'ACTIVE'
+                            disabled={updatingTenantId === tenant.id}
+                            className={`px-2 py-1 rounded-md border font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-wait ${
+                              tenant.status === TenantStatus.ACTIVE
                                 ? 'border-amber-300 text-amber-700 hover:bg-amber-50'
                                 : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
                             }`}
-                            title={tenant.status === 'ACTIVE' ? 'Suspend Store' : 'Activate Store'}
+                            title={tenant.status === TenantStatus.ACTIVE ? 'Suspend Store' : 'Activate Store'}
                           >
-                            {tenant.status === 'ACTIVE' ? (
+                            {tenant.status === TenantStatus.ACTIVE ? (
                               <>
                                 <Prohibit className="w-3 h-3" />
                                 <span>Suspend</span>
@@ -219,7 +224,7 @@ export function TenantsTab({
                         )}
 
                         <a
-                          href={`http://localhost:4001?shopId=${tenant.shopId}`}
+                          href={posLoginUrl(tenant.shopId)}
                           target="_blank"
                           rel="noreferrer"
                           className="px-2 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-[11px] transition-colors inline-flex items-center gap-1"

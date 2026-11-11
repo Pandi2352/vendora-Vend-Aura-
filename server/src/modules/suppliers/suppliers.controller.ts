@@ -6,7 +6,6 @@ import {
   Body,
   Param,
   Query,
-  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SuppliersService } from './suppliers.service';
@@ -14,7 +13,8 @@ import { PurchaseInwardService } from './purchase-inward.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { RecordSupplierPaymentDto } from './dto/record-payment.dto';
-import { CurrentUser } from '../../common';
+import { AuthenticatedUser, CurrentUser, TenantId } from '../../common';
+import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
 @ApiTags('Suppliers & Purchase Management')
 @Controller('suppliers')
@@ -28,12 +28,8 @@ export class SuppliersController {
   @ApiOperation({ summary: 'Register a new supplier' })
   async createSupplier(
     @Body() dto: CreateSupplierDto,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
   ) {
-    const tenantId = dto.tenantId || authTenantId;
-    if (!tenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
     const data = await this.suppliersService.createSupplier(tenantId, dto);
     return { success: true, data };
   }
@@ -41,15 +37,10 @@ export class SuppliersController {
   @Get()
   @ApiOperation({ summary: 'List all suppliers for tenant' })
   async getSuppliers(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
     @Query('search') search?: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.suppliersService.getSuppliers(resolvedTenantId, search);
+    const data = await this.suppliersService.getSuppliers(tenantId, search);
     return { success: true, count: data.length, data };
   }
 
@@ -57,13 +48,10 @@ export class SuppliersController {
   @ApiOperation({ summary: 'Record Purchase Inward / GRN and increment inventory' })
   async createPurchaseInward(
     @Body() dto: CreatePurchaseDto,
-    @CurrentUser() authUser?: any,
+    @TenantId() tenantId: string,
+    @CurrentUser() authUser: AuthenticatedUser,
   ) {
-    const tenantId = dto.tenantId || authUser?.tenantId;
-    if (!tenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
-    const outletId = dto.outletId || authUser?.outletIds?.[0];
+    const outletId = authUser.outletIds?.[0];
     const data = await this.purchaseInwardService.createPurchaseInward(tenantId, dto, outletId);
     return { success: true, data };
   }
@@ -71,15 +59,10 @@ export class SuppliersController {
   @Get('inward/history')
   @ApiOperation({ summary: 'List inward shipments and GRNs' })
   async getPurchases(
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
     @Query('supplierId') supplierId?: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.purchaseInwardService.getPurchases(resolvedTenantId, supplierId);
+    const data = await this.purchaseInwardService.getPurchases(tenantId, supplierId);
     return { success: true, count: data.length, data };
   }
 
@@ -87,14 +70,9 @@ export class SuppliersController {
   @ApiOperation({ summary: 'Get single supplier details' })
   async getSupplierById(
     @Param('id') id: string,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId query parameter is required');
-    }
-    const data = await this.suppliersService.getSupplierById(resolvedTenantId, id);
+    const data = await this.suppliersService.getSupplierById(tenantId, id);
     return { success: true, data };
   }
 
@@ -102,15 +80,10 @@ export class SuppliersController {
   @ApiOperation({ summary: 'Update supplier profile' })
   async updateSupplier(
     @Param('id') id: string,
-    @Body() dto: Partial<CreateSupplierDto>,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @Body() dto: UpdateSupplierDto,
+    @TenantId() tenantId: string,
   ) {
-    const resolvedTenantId = dto.tenantId || queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
-    const data = await this.suppliersService.updateSupplier(resolvedTenantId, id, dto);
+    const data = await this.suppliersService.updateSupplier(tenantId, id, dto);
     return { success: true, data };
   }
 
@@ -119,14 +92,9 @@ export class SuppliersController {
   async recordPayment(
     @Param('id') id: string,
     @Body() dto: RecordSupplierPaymentDto,
-    @Query('tenantId') queryTenantId?: string,
-    @CurrentUser('tenantId') authTenantId?: string,
+    @TenantId() tenantId: string,
   ) {
-    const resolvedTenantId = queryTenantId || authTenantId;
-    if (!resolvedTenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
-    const data = await this.suppliersService.recordSupplierPayment(resolvedTenantId, id, dto);
+    const data = await this.suppliersService.recordSupplierPayment(tenantId, id, dto);
     return { success: true, data };
   }
 }

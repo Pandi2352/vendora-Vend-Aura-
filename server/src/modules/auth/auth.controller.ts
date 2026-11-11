@@ -3,7 +3,6 @@ import {
   Post,
   Get,
   Body,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -12,8 +11,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { Public, CurrentUser } from '../../common';
+import { Public, CurrentUser, AllowTemporaryPassword } from '../../common';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -50,7 +48,7 @@ export class AuthController {
   }
 
   @Post('change-password')
-  @UseGuards(JwtAuthGuard)
+  @AllowTemporaryPassword()
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Change password (first login or regular update)' })
@@ -67,7 +65,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @AllowTemporaryPassword()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current authenticated user profile & store context' })
   @ApiResponse({ status: 200, description: 'User profile retrieved successfully' })

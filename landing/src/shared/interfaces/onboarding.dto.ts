@@ -11,6 +11,14 @@ export interface VerifyEmailOtpDto {
   otp: string;
 }
 
+export interface RegistrationAddressDto {
+  city: string;
+  state?: string;
+  pincode?: string;
+  street?: string;
+  country?: string;
+}
+
 export interface CompleteRegistrationDto {
   sessionId: string;
   businessName: string;
@@ -18,14 +26,16 @@ export interface CompleteRegistrationDto {
   phone: string;
   businessType: BusinessType;
   preferredShopId: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    pincode: string;
-    country?: string;
-  };
+  selectedPlanCode?: SubscriptionPlanCode;
+  address: RegistrationAddressDto;
   gstin?: string;
+}
+
+export interface CompleteRegistrationResult {
+  shopId: string;
+  username: string;
+  loginUrl: string;
+  temporaryPassword?: string;
 }
 
 export interface ApiResponse<T = any> {

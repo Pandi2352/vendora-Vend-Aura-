@@ -1,4 +1,5 @@
 import { Phone, EnvelopeSimple, MapPin } from '@phosphor-icons/react';
+import { posLoginUrl } from '../lib/config';
 
 export function Footer() {
   return (
@@ -66,7 +67,7 @@ export function Footer() {
             <ul className="space-y-2 text-zinc-400">
               <li>
                 <a
-                  href="http://localhost:4001"
+                  href={posLoginUrl()}
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-white transition-colors"
@@ -83,11 +84,9 @@ export function Footer() {
 
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-500 text-[11px]">
           <p>© {new Date().getFullYear()} Vendora Technologies. Powered by Vendora. All rights reserved.</p>
-          <div className="flex items-center gap-5">
-            <a href="#privacy" className="hover:text-zinc-300 transition-colors">Privacy Policy</a>
-            <a href="#terms" className="hover:text-zinc-300 transition-colors">Terms of Service</a>
-            <a href="#security" className="hover:text-zinc-300 transition-colors">Security</a>
-          </div>
+          <a href="mailto:support@vendora.com" className="hover:text-zinc-300 transition-colors">
+            Questions about privacy, terms or security? support@vendora.com
+          </a>
         </div>
       </div>
     </footer>

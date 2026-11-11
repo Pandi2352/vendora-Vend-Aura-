@@ -1,8 +1,8 @@
 import { QrCode, WarningCircle } from '@phosphor-icons/react';
-import type { CustomerItem } from '../../types/pos.types';
+import type { CustomerItem, PaymentMode } from '../../types/pos.types';
 
 interface PaymentModePanelsProps {
-  paymentMode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT';
+  paymentMode: PaymentMode;
   grandTotal: number;
   cashTendered: number;
   selectedCustomer: CustomerItem | null;
@@ -146,8 +146,13 @@ export function PaymentModePanels({
           </div>
 
           {isCreditExceeded && (
-            <div className="text-[11px] text-amber-700 font-semibold">
-              ⚠️ Note: This bill exceeds customer's credit limit of ₹{selectedCustomer.creditLimit}. Owner approval confirmed.
+            <div className="flex items-start gap-2 text-[11px] text-red-700 font-semibold">
+              <WarningCircle weight="bold" className="w-4 h-4 shrink-0" />
+              <span>
+                Credit limit exceeded: this bill would take the khata balance above the limit of ₹
+                {selectedCustomer.creditLimit.toLocaleString('en-IN')}. Collect payment by another mode or record a
+                repayment first.
+              </span>
             </div>
           )}
         </div>

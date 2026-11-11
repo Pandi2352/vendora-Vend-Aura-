@@ -1,4 +1,4 @@
-import { BusinessType, SubscriptionPlanCode } from '../../shared';
+import type { BusinessType, SubscriptionPlanCode, TenantStatus } from '../../shared';
 
 export interface TenantItem {
   id: string;
@@ -9,7 +9,7 @@ export interface TenantItem {
   phone: string;
   businessType: BusinessType;
   plan: SubscriptionPlanCode;
-  status: 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
+  status: TenantStatus;
   billsCount: number;
   maxBills?: number;
   trialExpiresAt?: string;
@@ -61,7 +61,7 @@ export interface OverviewStats {
     businessName: string;
     ownerName: string;
     businessType: BusinessType;
-    status: 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
+    status: TenantStatus;
     plan: SubscriptionPlanCode;
     createdAt: string;
   }[];

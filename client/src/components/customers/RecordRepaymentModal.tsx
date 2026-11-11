@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api, getErrorMessage } from '../../lib/api';
 import { CurrencyInr, X } from '@phosphor-icons/react';
 import type { CustomerItem } from '../../types/pos.types';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 interface RecordRepaymentModalProps {
-  tenantId?: string;
-  authToken: string | null;
   customer: CustomerItem | null;
   onClose: () => void;
   onRepaymentSuccess: () => void;
 }
 
 export function RecordRepaymentModal({
-  tenantId,
-  authToken,
   customer,
   onClose,
   onRepaymentSuccess,
@@ -47,20 +41,16 @@ export function RecordRepaymentModal({
     setLoading(true);
     setError('');
     try {
-      await axios.post(
-        `${API_BASE}/customers/${customer.id}/payment?tenantId=${tenantId}`,
-        {
-          amount,
-          paymentMode: repayMode,
-          referenceNumber: repayRef.trim() || undefined,
-        },
-        { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
-      );
+      await api.post(`/customers/${customer.id}/payment`, {
+        amount,
+        paymentMode: repayMode,
+        referenceNumber: repayRef.trim() || undefined,
+      });
 
       onRepaymentSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to record repayment');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to record repayment'));
     } finally {
       setLoading(false);
     }

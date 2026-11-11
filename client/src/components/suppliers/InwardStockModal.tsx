@@ -1,14 +1,10 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { api, getErrorMessage } from '../../lib/api';
 import { Package, X } from '@phosphor-icons/react';
 import type { SupplierItem, ProductItem } from '../../types/pos.types';
 import { InwardItemsTable, type InwardLineItem } from './InwardItemsTable';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 interface InwardStockModalProps {
-  tenantId?: string;
-  authToken: string | null;
   isOpen: boolean;
   suppliers: SupplierItem[];
   products: ProductItem[];
@@ -17,8 +13,6 @@ interface InwardStockModalProps {
 }
 
 export function InwardStockModal({
-  tenantId,
-  authToken,
   isOpen,
   suppliers,
   products,
@@ -81,7 +75,6 @@ export function InwardStockModal({
     setError('');
     try {
       const payload = {
-        tenantId,
         supplierId: selectedSupplierId,
         supplierInvoiceNumber: supplierBillNo.trim() || undefined,
         items: inwardItems.map((it) => ({
@@ -101,14 +94,12 @@ export function InwardStockModal({
         amountPaid: paymentStatus === 'PAID' ? grandTotal : Number(amountPaid) || 0,
       };
 
-      await axios.post(`${API_BASE}/suppliers/inward`, payload, {
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-      });
+      await api.post(`/suppliers/inward`, payload);
 
       onInwardSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit inward shipment');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to submit inward shipment'));
     } finally {
       setLoading(false);
     }

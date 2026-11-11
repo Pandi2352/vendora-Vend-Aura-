@@ -1,20 +1,14 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { api, getErrorMessage } from '../../lib/api';
 import { Truck, X } from '@phosphor-icons/react';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 interface AddSupplierModalProps {
-  tenantId?: string;
-  authToken: string | null;
   isOpen: boolean;
   onClose: () => void;
   onSupplierAdded: () => void;
 }
 
 export function AddSupplierModal({
-  tenantId,
-  authToken,
   isOpen,
   onClose,
   onSupplierAdded,
@@ -41,25 +35,20 @@ export function AddSupplierModal({
     setLoading(true);
     setError('');
     try {
-      await axios.post(
-        `${API_BASE}/suppliers`,
-        {
-          tenantId,
-          name: name.trim(),
-          contactPerson: contactPerson.trim() || undefined,
-          phone: phone.trim(),
-          email: email.trim() || undefined,
-          gstin: gstin.trim() || undefined,
-          category,
-          creditDays: Number(creditDays) || 30,
-        },
-        { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
-      );
+      await api.post(`/suppliers`, {
+        name: name.trim(),
+        contactPerson: contactPerson.trim() || undefined,
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        gstin: gstin.trim() || undefined,
+        category,
+        creditDays: Number(creditDays) || 30,
+      });
 
       onSupplierAdded();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register supplier');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to register supplier'));
     } finally {
       setLoading(false);
     }

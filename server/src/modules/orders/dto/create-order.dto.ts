@@ -1,132 +1,72 @@
 import {
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
+  IsString,
   IsNumber,
   IsOptional,
-  IsString,
-  Min,
+  IsArray,
   ValidateNested,
+  IsIn,
+  IsMongoId,
+  ArrayMinSize,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
+export const PAYMENT_MODES = ['CASH', 'UPI', 'CARD', 'CREDIT'] as const;
+export type OrderPaymentMode = (typeof PAYMENT_MODES)[number];
+
+/**
+ * Only productId and quantity are used. Prices, tax and totals are always
+ * looked up from the catalog on the server; the remaining fields are accepted
+ * for backwards compatibility and ignored.
+ */
 export class OrderItemDto {
-  @ApiProperty({ example: '6731...', description: 'Product Mongo ID or Catalog ID' })
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ example: '665f1c...' })
+  @IsMongoId()
   productId: string;
 
-  @ApiProperty({ example: 'Ponni Boiled Rice 5kg', description: 'Product Name' })
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty({ example: '890103000001', description: 'Product Barcode' })
-  @IsString()
-  @IsNotEmpty()
-  barcode: string;
-
-  @ApiProperty({ example: 2, description: 'Quantity purchased' })
+  @ApiProperty({ example: 2 })
   @IsNumber()
-  @Min(1)
+  @Min(0.001)
   quantity: number;
 
-  @ApiProperty({ example: 320, description: 'Unit selling price' })
-  @IsNumber()
-  @Min(0)
-  unitPrice: number;
-
-  @ApiProperty({ example: 5, description: 'GST rate percent' })
-  @IsNumber()
-  @IsOptional()
-  taxRatePercent?: number;
-
-  @ApiProperty({ example: 32, description: 'GST amount' })
-  @IsNumber()
-  @IsOptional()
-  taxAmount?: number;
-
-  @ApiProperty({ example: 672, description: 'Line total inclusive of tax' })
-  @IsNumber()
-  @Min(0)
-  total: number;
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() barcode?: string;
+  @IsOptional() @IsNumber() unitPrice?: number;
+  @IsOptional() @IsNumber() taxRatePercent?: number;
+  @IsOptional() @IsNumber() taxAmount?: number;
+  @IsOptional() @IsNumber() total?: number;
 }
 
 export class CreateOrderDto {
-  @ApiPropertyOptional({ description: 'Tenant ObjectId if calling directly' })
-  @IsString()
-  @IsOptional()
-  tenantId?: string;
-
-  @ApiPropertyOptional({ description: 'Outlet ObjectId' })
-  @IsString()
-  @IsOptional()
-  outletId?: string;
-
-  @ApiProperty({ type: [OrderItemDto], description: 'Items in cart' })
+  @ApiProperty({ type: [OrderItemDto] })
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
 
-  @ApiProperty({ example: 640, description: 'Items subtotal before tax' })
-  @IsNumber()
-  @Min(0)
-  subTotal: number;
+  @ApiProperty({ enum: PAYMENT_MODES, example: 'CASH' })
+  @IsIn(PAYMENT_MODES)
+  paymentMode: OrderPaymentMode;
 
-  @ApiProperty({ example: 32, description: 'Total tax amount' })
-  @IsNumber()
+  @ApiProperty({ required: false, description: 'Registered customer (required for CREDIT)' })
   @IsOptional()
-  taxTotal?: number;
-
-  @ApiProperty({ example: 16, description: 'CGST 50% split' })
-  @IsNumber()
-  @IsOptional()
-  cgst?: number;
-
-  @ApiProperty({ example: 16, description: 'SGST 50% split' })
-  @IsNumber()
-  @IsOptional()
-  sgst?: number;
-
-  @ApiProperty({ example: 672, description: 'Invoice grand total' })
-  @IsNumber()
-  @Min(0)
-  grandTotal: number;
-
-  @ApiProperty({ example: 'CASH', enum: ['CASH', 'UPI', 'CARD', 'CREDIT'] })
-  @IsEnum(['CASH', 'UPI', 'CARD', 'CREDIT'])
-  paymentMode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT';
-
-  @ApiPropertyOptional({ description: 'Customer ObjectId for Khata / CRM tracking' })
-  @IsString()
-  @IsOptional()
+  @IsMongoId()
   customerId?: string;
 
-  @ApiPropertyOptional({ example: 'Arun Kumar', description: 'Customer Name' })
-  @IsString()
+  @ApiProperty({ required: false, description: 'Cash received (CASH only); defaults to the bill total' })
   @IsOptional()
-  customerName?: string;
-
-  @ApiPropertyOptional({ example: '9840123456', description: 'Customer Phone' })
-  @IsString()
-  @IsOptional()
-  customerPhone?: string;
-
-  @ApiPropertyOptional({ example: 1000, description: 'Cash tendered by customer' })
   @IsNumber()
-  @IsOptional()
+  @Min(0)
   cashTendered?: number;
 
-  @ApiPropertyOptional({ example: 328, description: 'Change due back to customer' })
-  @IsNumber()
-  @IsOptional()
-  changeDue?: number;
-
-  @ApiPropertyOptional({ example: 'Pandi Selvam', description: 'Cashier operator name' })
-  @IsString()
-  @IsOptional()
-  cashierName?: string;
+  @IsOptional() @IsString() customerName?: string;
+  @IsOptional() @IsString() customerPhone?: string;
+  @IsOptional() @IsNumber() subTotal?: number;
+  @IsOptional() @IsNumber() taxTotal?: number;
+  @IsOptional() @IsNumber() cgst?: number;
+  @IsOptional() @IsNumber() sgst?: number;
+  @IsOptional() @IsNumber() grandTotal?: number;
+  @IsOptional() @IsNumber() changeDue?: number;
 }
-

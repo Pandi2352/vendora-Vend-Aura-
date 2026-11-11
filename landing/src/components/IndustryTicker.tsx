@@ -1,25 +1,11 @@
 import { useState } from 'react';
 import { Play, Pause } from '@phosphor-icons/react';
+import { BUSINESS_TYPE_LABELS } from '../shared';
+
+const industries = Object.values(BUSINESS_TYPE_LABELS);
 
 export function IndustryTicker() {
   const [isPaused, setIsPaused] = useState(false);
-
-  const industries = [
-    'Cosmetics & Beauty',
-    'Jewellery',
-    'Others',
-    'Textile & Garments',
-    'Fruits & Vegetables',
-    'Grocery / Kirana',
-    'Supermarket',
-    'Bakery & Sweets',
-    'Restaurant / Café',
-    'Pharmacy / Medical',
-    'Footwear',
-    'Electronics & Mobiles',
-    'Stationery & Books',
-    'Hardware & Paints',
-  ];
 
   return (
     <div className="border-y border-white/10 bg-[#030612] py-3.5 text-white overflow-hidden relative w-full">

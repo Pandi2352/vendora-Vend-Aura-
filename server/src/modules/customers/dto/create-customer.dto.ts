@@ -11,10 +11,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCustomerDto {
-  @ApiPropertyOptional({ description: 'Tenant ObjectId' })
-  @IsString()
-  @IsOptional()
-  tenantId?: string;
 
   @ApiProperty({ example: 'Arun Kumar', description: 'Customer full name' })
   @IsString()

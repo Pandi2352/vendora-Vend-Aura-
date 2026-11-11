@@ -24,7 +24,7 @@ export class OrderReturn extends TenantBaseEntity {
         productId: { type: Types.ObjectId, ref: 'Product', required: true },
         name: { type: String, required: true },
         barcode: { type: String, required: true },
-        quantityReturned: { type: Number, required: true, min: 1 },
+        quantityReturned: { type: Number, required: true, min: 0.001 },
         unitPrice: { type: Number, required: true, min: 0 },
         taxRatePercent: { type: Number, default: 0 },
         refundAmount: { type: Number, required: true, min: 0 },

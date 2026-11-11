@@ -22,7 +22,7 @@ export function InwardsTable({ purchases, loading }: InwardsTableProps) {
       </thead>
       <tbody className="divide-y divide-zinc-200">
         {purchases.map((p) => (
-          <tr key={p.id} className="hover:bg-zinc-50 transition-colors">
+          <tr key={p.id ?? p._id ?? p.grnNumber} className="hover:bg-zinc-50 transition-colors">
             <td className="py-3 px-4 font-mono font-bold text-zinc-950">
               {p.grnNumber}
             </td>

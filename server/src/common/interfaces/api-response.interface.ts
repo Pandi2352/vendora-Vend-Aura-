@@ -36,5 +36,8 @@ export interface AuthenticatedUser {
   tenantId?: string;
   outletIds?: string[];
   shopId?: string;
+  fullName?: string;
+  isTemporaryPassword?: boolean;
+  isPlatformAdmin?: boolean;
 }
 

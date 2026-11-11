@@ -1,32 +1,30 @@
-# React + TypeScript + Vite
+# Vendora Store POS (client)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The cashier/owner counter app for Vendora: billing, held carts, returns, cash-drawer shifts,
+customers (khata), suppliers/GRN and reports. React 19 + Vite + Tailwind 4, talking to the
+NestJS API in `../server`.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cp .env.example .env   # adjust if the API is not on localhost:5000
+npm install
+npm run dev            # http://localhost:5173
+npm run build          # type-check (tsc -b) + production build into dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The API server must be running for login and billing.
+
+## Environment variables
+
+| Variable           | Default                        | Purpose                                     |
+| ------------------ | ------------------------------ | ------------------------------------------- |
+| `VITE_API_URL`     | `http://localhost:5000/api/v1` | Base URL of the Vendora API                 |
+| `VITE_LANDING_URL` | `http://localhost:4000`        | Landing/onboarding site linked from login   |
+
+## Layout
+
+- `src/lib/api.ts` – the only axios instance: bearer token, automatic refresh on 401, `unwrap`, `getErrorMessage`
+- `src/lib/config.ts` – env-driven URLs
+- `src/hooks/` – session, cart/held carts, drawer shift, catalog + customers
+- `src/components/` – views and modals (no router; tabs are local state in `App.tsx`)

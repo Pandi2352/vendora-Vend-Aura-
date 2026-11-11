@@ -1,10 +1,9 @@
 import { CheckoutModal } from './CheckoutModal';
 import { ThermalReceiptModal } from './ThermalReceiptModal';
-import { PasswordResetModal } from './PasswordResetModal';
 import { HeldCartsModal } from './cart/HeldCartsModal';
 import { SalesReturnModal } from './orders/SalesReturnModal';
 import { CashDrawerModal } from './orders/CashDrawerModal';
-import type { InvoiceData, CustomerItem, AuthUser } from '../types/pos.types';
+import type { InvoiceData, CustomerItem, PaymentMode } from '../types/pos.types';
 import type { ShiftSummary, HeldCart } from '../types/shift-return.types';
 
 interface AppModalsProps {
@@ -14,20 +13,13 @@ interface AppModalsProps {
   selectedCustomer: CustomerItem | null;
   onSelectCustomer: (c: CustomerItem | null) => void;
   onCloseCheckout: () => void;
-  onFinalizeBill: (mode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT', cashTendered: number, customer?: CustomerItem | null) => void;
+  onFinalizeBill: (mode: PaymentMode, cashTendered: number, customer?: CustomerItem | null) => void;
+  checkoutError: string;
+  isSubmittingBill: boolean;
 
   completedInvoice: InvoiceData | null;
   onCloseReceipt: () => void;
   onNewSale: () => void;
-
-  mustChangePassword?: boolean;
-  newPassword?: string;
-  setNewPassword?: (val: string) => void;
-  confirmPassword?: string;
-  setConfirmPassword?: (val: string) => void;
-  passwordError?: string;
-  isUpdatingPassword?: boolean;
-  onChangePassword?: (e: React.FormEvent) => void;
 
   isHeldCartsOpen: boolean;
   onCloseHeldCarts: () => void;
@@ -35,7 +27,6 @@ interface AppModalsProps {
   onResumeCart: (session: HeldCart) => void;
   onDiscardCart: (id: string) => void;
 
-  currentUser: AuthUser | null;
   isReturnModalOpen: boolean;
   onCloseReturnModal: () => void;
   onReturnSuccess: () => void;
@@ -52,23 +43,16 @@ export function AppModals({
   onSelectCustomer,
   onCloseCheckout,
   onFinalizeBill,
+  checkoutError,
+  isSubmittingBill,
   completedInvoice,
   onCloseReceipt,
   onNewSale,
-  mustChangePassword,
-  newPassword = '',
-  setNewPassword = () => {},
-  confirmPassword = '',
-  setConfirmPassword = () => {},
-  passwordError = '',
-  isUpdatingPassword = false,
-  onChangePassword = () => {},
   isHeldCartsOpen,
   onCloseHeldCarts,
   heldCarts,
   onResumeCart,
   onDiscardCart,
-  currentUser,
   isReturnModalOpen,
   onCloseReturnModal,
   onReturnSuccess,
@@ -78,33 +62,24 @@ export function AppModals({
 }: AppModalsProps) {
   return (
     <>
-      <CheckoutModal
-        grandTotal={grandTotal}
-        isOpen={isCheckoutOpen}
-        customers={customers}
-        selectedCustomer={selectedCustomer}
-        onSelectCustomer={onSelectCustomer}
-        onClose={onCloseCheckout}
-        onFinalize={onFinalizeBill}
-      />
+      {isCheckoutOpen && (
+        <CheckoutModal
+          grandTotal={grandTotal}
+          customers={customers}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={onSelectCustomer}
+          onClose={onCloseCheckout}
+          onFinalize={onFinalizeBill}
+          error={checkoutError}
+          isSubmitting={isSubmittingBill}
+        />
+      )}
 
       {completedInvoice && (
         <ThermalReceiptModal
           invoice={completedInvoice}
           onClose={onCloseReceipt}
           onNewSale={onNewSale}
-        />
-      )}
-
-      {mustChangePassword && (
-        <PasswordResetModal
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          confirmPassword={confirmPassword}
-          setConfirmPassword={setConfirmPassword}
-          passwordError={passwordError}
-          isUpdatingPassword={isUpdatingPassword}
-          onSubmit={onChangePassword}
         />
       )}
 
@@ -116,25 +91,15 @@ export function AppModals({
         onDiscardCart={onDiscardCart}
       />
 
-      {currentUser?.tenantId && (
-        <>
-          <SalesReturnModal
-            isOpen={isReturnModalOpen}
-            onClose={onCloseReturnModal}
-            tenantId={currentUser.tenantId}
-            cashierName={currentUser.fullName || currentUser.username || 'Cashier'}
-            onReturnSuccess={onReturnSuccess}
-          />
-
-          <CashDrawerModal
-            isOpen={isDrawerModalOpen}
-            onClose={onCloseDrawerModal}
-            tenantId={currentUser.tenantId}
-            cashierName={currentUser.fullName || currentUser.username || 'Cashier'}
-            onShiftChange={onShiftChange}
-          />
-        </>
+      {isReturnModalOpen && (
+        <SalesReturnModal onClose={onCloseReturnModal} onReturnSuccess={onReturnSuccess} />
       )}
+
+      <CashDrawerModal
+        isOpen={isDrawerModalOpen}
+        onClose={onCloseDrawerModal}
+        onShiftChange={onShiftChange}
+      />
     </>
   );
 }

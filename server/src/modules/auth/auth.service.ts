@@ -5,11 +5,14 @@ import {
   NotFoundException 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { createHash, randomUUID, timingSafeEqual } from 'crypto';
 import { User, UserDocument } from '../user/schemas/user.schema';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
+import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { TenantStatus } from '../../shared';
 import { DateUtil } from '../../common';
 import { LoginDto } from './dto/login.dto';
@@ -21,7 +24,9 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
+    @InjectModel(Outlet.name) private readonly outletModel: Model<OutletDocument>,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -31,59 +36,35 @@ export class AuthService {
     const shopId = dto.shopId.toLowerCase().trim();
     const identifier = dto.username.toLowerCase().trim();
 
-    // 1. Verify Tenant Store existence & status
     const tenant = await this.tenantModel.findOne({ shopId });
     if (!tenant) {
       throw new UnauthorizedException(`Shop "${shopId}" not found. Please verify your Shop ID.`);
     }
+    this.assertTenantActive(tenant);
 
-    if (tenant.status === TenantStatus.SUSPENDED || tenant.status === TenantStatus.EXPIRED) {
-      throw new UnauthorizedException(`Shop subscription is ${tenant.status.toLowerCase()}. Please contact store administrator.`);
-    }
-
-    // 2. Find User within this Tenant Workspace (by username or email)
     const user = await this.userModel.findOne({
       tenantId: tenant._id,
       $or: [{ username: identifier }, { email: identifier }],
     });
-
     if (!user) {
       throw new UnauthorizedException('Invalid username or password for this shop.');
     }
-
     if (!user.isActive) {
       throw new UnauthorizedException('Account has been deactivated. Please contact your store manager.');
     }
 
-    // 3. Verify Password Hash with bcrypt
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid username or password for this shop.');
     }
 
-    // 4. Generate Access Token (15m) and Refresh Token (7d)
-    const payload = {
-      sub: user._id.toString(),
-      tenantId: tenant._id.toString(),
-      username: user.username,
-      role: user.role,
-      isTemporaryPassword: user.isTemporaryPassword,
-    };
-
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign(
-      { sub: user._id.toString(), tenantId: tenant._id.toString() },
-      { expiresIn: '7d' },
-    );
-
-    // 5. Store Hashed Refresh Token & Last Login
-    user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
     user.lastLoginAt = DateUtil.nowUtc();
-    await user.save();
+    const tokens = await this.issueTokens(user);
+    const outlet = await this.resolveOutlet(tenant, user);
+    const outletAddress = outlet?.address?.city ? outlet.address : undefined;
 
     return {
-      accessToken,
-      refreshToken,
+      ...tokens,
       mustChangePassword: user.isTemporaryPassword,
       user: {
         id: user._id.toString(),
@@ -95,44 +76,111 @@ export class AuthService {
         tenantId: tenant._id.toString(),
         shopId: tenant.shopId,
         businessName: tenant.businessName,
+        store: {
+          address: this.formatAddress(outletAddress || tenant.settings?.address),
+          gstin: tenant.settings?.gstin || null,
+          phone: outlet?.phone || tenant.phone,
+          outletCode: outlet?.code || 'OUT-01',
+        },
       },
     };
   }
 
   /**
-   * Rotate and Issue New Access Token using Refresh Token
+   * Rotates the refresh token and issues a new access token. Refresh tokens are
+   * signed with JWT_REFRESH_SECRET, so they can never pass as access tokens.
    */
   async refreshToken(dto: RefreshTokenDto) {
+    let decoded: { sub?: string };
     try {
-      const decoded: any = this.jwtService.verify(dto.refreshToken);
-      const user = await this.userModel.findById(decoded.sub);
-
-      if (!user || !user.isActive || !user.refreshTokenHash) {
-        throw new UnauthorizedException('Invalid or expired refresh token session.');
-      }
-
-      const isMatching = await bcrypt.compare(dto.refreshToken, user.refreshTokenHash);
-      if (!isMatching) {
-        throw new UnauthorizedException('Refresh token has been revoked.');
-      }
-
-      const newAccessToken = this.jwtService.sign(
-        {
-          sub: user._id.toString(),
-          tenantId: user.tenantId.toString(),
-          username: user.username,
-          role: user.role,
-          isTemporaryPassword: user.isTemporaryPassword,
-        },
-        { expiresIn: '15m' },
-      );
-
-      return {
-        accessToken: newAccessToken,
-      };
+      decoded = this.jwtService.verify(dto.refreshToken, { secret: this.refreshSecret });
     } catch {
       throw new UnauthorizedException('Session expired. Please log in again.');
     }
+
+    const user = decoded.sub && Types.ObjectId.isValid(decoded.sub)
+      ? await this.userModel.findById(decoded.sub)
+      : null;
+    if (!user || !user.isActive || !user.refreshTokenHash) {
+      throw new UnauthorizedException('Invalid or expired refresh token session.');
+    }
+
+    if (!this.matchesRefreshHash(dto.refreshToken, user.refreshTokenHash)) {
+      throw new UnauthorizedException('Refresh token has been revoked.');
+    }
+
+    const tenant = await this.tenantModel.findById(user.tenantId);
+    if (!tenant) {
+      throw new UnauthorizedException('Shop no longer exists.');
+    }
+    this.assertTenantActive(tenant);
+
+    return this.issueTokens(user);
+  }
+
+  private get refreshSecret(): string {
+    return this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+  }
+
+  private assertTenantActive(tenant: TenantDocument) {
+    if (tenant.status === TenantStatus.SUSPENDED || tenant.status === TenantStatus.EXPIRED) {
+      throw new UnauthorizedException(
+        `Shop subscription is ${tenant.status.toLowerCase()}. Please contact store administrator.`,
+      );
+    }
+  }
+
+  /** Issues an access + refresh pair and stores the refresh hash (rotation). Saves the user. */
+  private async issueTokens(user: UserDocument) {
+    const accessToken = this.jwtService.sign(
+      {
+        sub: user._id.toString(),
+        tenantId: user.tenantId.toString(),
+        username: user.username,
+        role: user.role,
+      },
+      { expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m') as any },
+    );
+    const refreshToken = this.jwtService.sign(
+      { sub: user._id.toString(), jti: randomUUID() },
+      {
+        secret: this.refreshSecret,
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as any,
+      },
+    );
+
+    user.refreshTokenHash = this.hashRefreshToken(refreshToken);
+    await user.save();
+    return { accessToken, refreshToken };
+  }
+
+  /**
+   * SHA-256, not bcrypt: bcrypt only reads the first 72 bytes and every JWT
+   * shares its first 72 bytes, so bcrypt would accept any old refresh token.
+   */
+  private hashRefreshToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private matchesRefreshHash(token: string, storedHash: string): boolean {
+    const candidate = Buffer.from(this.hashRefreshToken(token), 'hex');
+    const stored = Buffer.from(storedHash, 'hex');
+    return stored.length === candidate.length && timingSafeEqual(stored, candidate);
+  }
+
+  private async resolveOutlet(tenant: TenantDocument, user: UserDocument) {
+    const outletId = user.outletIds?.[0] || tenant.primaryOutletId;
+    if (outletId) {
+      const outlet = await this.outletModel.findOne({ _id: outletId, tenantId: tenant._id }).lean();
+      if (outlet) return outlet;
+    }
+    return this.outletModel.findOne({ tenantId: tenant._id, isPrimary: true }).lean();
+  }
+
+  private formatAddress(address?: { street?: string; city?: string; state?: string; pincode?: string }) {
+    if (!address) return '';
+    const cityLine = [address.city, address.pincode].filter(Boolean).join(' - ');
+    return [address.street, cityLine, address.state].filter(Boolean).join(', ');
   }
 
   /**

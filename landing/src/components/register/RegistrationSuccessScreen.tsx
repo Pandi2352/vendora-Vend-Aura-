@@ -1,10 +1,7 @@
-import { CheckCircle, ArrowSquareOut } from '@phosphor-icons/react';
+import { CheckCircle, ArrowSquareOut, EnvelopeSimple } from '@phosphor-icons/react';
+import type { CompleteRegistrationResult } from '../../shared';
 
-interface CreatedAccountData {
-  shopId: string;
-  username: string;
-  loginUrl: string;
-  temporaryPassword?: string;
+interface CreatedAccountData extends CompleteRegistrationResult {
   planName: string;
 }
 
@@ -56,18 +53,27 @@ export function RegistrationSuccessScreen({
         </div>
       </div>
 
+      <p className="mt-4 max-w-lg mx-auto p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs text-left flex items-start gap-2">
+        <EnvelopeSimple weight="fill" className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
+        <span>
+          These login details have also been emailed to you. You will be asked to change the temporary
+          password the first time you sign in.
+        </span>
+      </p>
+
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
         <a
-          href="http://localhost:4001"
+          href={data.loginUrl}
           target="_blank"
           rel="noreferrer"
           className="w-full sm:w-auto px-8 py-3.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
-          <span>Open Store Counter (Port 4001)</span>
+          <span>Open Store Counter</span>
           <ArrowSquareOut weight="bold" className="w-4 h-4" />
         </a>
 
         <button
+          type="button"
           onClick={onRegisterAnother}
           className="w-full sm:w-auto px-6 py-3.5 rounded-md bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-sm transition-all border border-zinc-200 cursor-pointer"
         >
@@ -77,4 +83,3 @@ export function RegistrationSuccessScreen({
     </div>
   );
 }
-

@@ -48,21 +48,14 @@ export class PurchaseItemDto {
   taxAmount?: number;
 
   @ApiProperty({ example: 7350, description: 'Line total inclusive of tax' })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  total: number;
+  total?: number;
 }
 
 export class CreatePurchaseDto {
-  @ApiPropertyOptional({ description: 'Tenant ObjectId' })
-  @IsString()
-  @IsOptional()
-  tenantId?: string;
 
-  @ApiPropertyOptional({ description: 'Outlet ObjectId' })
-  @IsString()
-  @IsOptional()
-  outletId?: string;
 
   @ApiProperty({ description: 'Supplier ObjectId' })
   @IsString()
@@ -81,9 +74,10 @@ export class CreatePurchaseDto {
   items: PurchaseItemDto[];
 
   @ApiProperty({ example: 7000, description: 'Subtotal cost' })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  subTotal: number;
+  subTotal?: number;
 
   @ApiPropertyOptional({ example: 350, description: 'Tax amount' })
   @IsNumber()
@@ -91,9 +85,10 @@ export class CreatePurchaseDto {
   taxTotal?: number;
 
   @ApiProperty({ example: 7350, description: 'Grand total bill amount' })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  grandTotal: number;
+  grandTotal?: number;
 
   @ApiProperty({ example: 'UNPAID', enum: ['PAID', 'PARTIAL', 'UNPAID'] })
   @IsEnum(['PAID', 'PARTIAL', 'UNPAID'])

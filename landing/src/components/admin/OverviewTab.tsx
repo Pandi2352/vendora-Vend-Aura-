@@ -6,12 +6,16 @@ import {
   ArrowSquareOut,
   Eye,
 } from '@phosphor-icons/react';
-import type { OverviewStats, TenantItem } from './types';
-import { BUSINESS_TYPE_LABELS, SUBSCRIPTION_PLANS, SubscriptionPlanCode } from '../../shared';
+import type { OverviewStats } from './types';
+import { TenantStatusBadge } from './TenantStatusBadge';
+import { BUSINESS_TYPE_LABELS, BusinessType, SUBSCRIPTION_PLANS, SubscriptionPlanCode } from '../../shared';
+import { posLoginUrl } from '../../lib/config';
+
+const SECTOR_COUNT = Object.values(BusinessType).length;
 
 interface OverviewTabProps {
   stats: OverviewStats | null;
-  onInspectTenant: (tenant: TenantItem) => void;
+  onInspectTenant: (tenantId: string) => void;
   onNavigateToTenants: () => void;
 }
 
@@ -38,7 +42,7 @@ export function OverviewTab({ stats, onInspectTenant, onNavigateToTenants }: Ove
           <div>
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Tenants</p>
             <p className="text-2xl font-black text-zinc-950 mt-1">{metrics.totalTenants}</p>
-            <p className="text-[11px] text-zinc-600 font-medium mt-0.5">Across 15 retail sectors</p>
+            <p className="text-[11px] text-zinc-600 font-medium mt-0.5">Across {SECTOR_COUNT} retail sectors</p>
           </div>
           <div className="w-10 h-10 rounded-md bg-zinc-100 text-zinc-800 flex items-center justify-center border border-zinc-200">
             <Buildings weight="bold" className="w-5 h-5 text-red-600" />
@@ -144,7 +148,9 @@ export function OverviewTab({ stats, onInspectTenant, onNavigateToTenants }: Ove
                   key={sector}
                   className="p-2.5 rounded-md bg-zinc-50 border border-zinc-200 flex items-center justify-between"
                 >
-                  <span className="font-medium text-zinc-800 truncate pr-2">{sector}</span>
+                  <span className="font-medium text-zinc-800 truncate pr-2">
+                    {BUSINESS_TYPE_LABELS[sector as BusinessType] || sector}
+                  </span>
                   <span className="font-mono font-bold px-1.5 py-0.5 rounded-md bg-zinc-200 text-zinc-900 text-[11px] shrink-0">
                     {count}
                   </span>
@@ -204,38 +210,21 @@ export function OverviewTab({ stats, onInspectTenant, onNavigateToTenants }: Ove
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-semibold text-zinc-900">{t.plan}</div>
-                      <span
-                        className={`inline-block px-1.5 py-0.2 rounded-md text-[10px] font-bold mt-0.5 ${
-                          t.status === 'ACTIVE'
-                            ? 'bg-zinc-950 text-white'
-                            : t.status === 'TRIAL'
-                            ? 'bg-red-50 text-red-700 border border-red-200'
-                            : 'bg-zinc-200 text-zinc-700'
-                        }`}
-                      >
-                        {t.status}
-                      </span>
+                      <TenantStatusBadge status={t.status} className="mt-0.5" />
                     </td>
                     <td className="py-3 px-4 text-zinc-500 font-mono text-[11px]">
                       {t.createdAt || 'Recent'}
                     </td>
                     <td className="py-3 px-4 text-right space-x-2">
                       <button
-                        onClick={() =>
-                          onInspectTenant({
-                            ...t,
-                            email: '',
-                            phone: '',
-                            billsCount: 0,
-                          })
-                        }
+                        onClick={() => onInspectTenant(t.id)}
                         className="px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-zinc-900 hover:text-white border border-zinc-200 font-semibold text-[11px] text-zinc-800 transition-colors cursor-pointer inline-flex items-center gap-1"
                       >
                         <Eye className="w-3 h-3" />
                         <span>Inspect</span>
                       </button>
                       <a
-                        href={`http://localhost:4001?shopId=${t.shopId}`}
+                        href={posLoginUrl(t.shopId)}
                         target="_blank"
                         rel="noreferrer"
                         className="px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-[11px] transition-colors inline-flex items-center gap-1"

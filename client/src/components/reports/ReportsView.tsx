@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import type { AxiosResponse } from 'axios';
+import { api, unwrap, getErrorMessage } from '../../lib/api';
 import {
   ChartLineUp,
   Receipt,
@@ -8,6 +9,7 @@ import {
   CalendarBlank,
 } from '@phosphor-icons/react';
 import type {
+  ReportPeriod,
   ExecutiveOverviewData,
   Gstr1Data,
   Gstr3bData,
@@ -17,58 +19,56 @@ import { ExecutiveOverviewTab } from './ExecutiveOverviewTab';
 import { GstReportsTab } from './GstReportsTab';
 import { InventoryAnalyticsTab } from './InventoryAnalyticsTab';
 
-const API_BASE = 'http://localhost:5000/api/v1';
-
 type SubTab = 'overview' | 'gst' | 'inventory';
-type PeriodOption = 'today' | '7d' | '30d' | 'this_fy' | 'all';
 
-interface ReportsViewProps {
-  tenantId?: string;
-  authToken: string | null;
-}
-
-const PERIOD_LABELS: { key: PeriodOption; label: string }[] = [
+const PERIOD_LABELS: { key: ReportPeriod; label: string }[] = [
   { key: 'today', label: 'Today' },
-  { key: '7d', label: 'Last 7 Days' },
-  { key: '30d', label: 'Last 30 Days' },
-  { key: 'this_fy', label: 'This FY' },
+  { key: 'week', label: 'This Week' },
+  { key: 'month', label: 'This Month' },
+  { key: 'fy', label: 'This FY' },
   { key: 'all', label: 'All Time' },
 ];
 
-export function ReportsView({ tenantId, authToken }: ReportsViewProps) {
+export function ReportsView() {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('overview');
-  const [period, setPeriod] = useState<PeriodOption>('30d');
+  const [period, setPeriod] = useState<ReportPeriod>('month');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const [executiveData, setExecutiveData] = useState<ExecutiveOverviewData | null>(null);
   const [gstr1Data, setGstr1Data] = useState<Gstr1Data | null>(null);
   const [gstr3bData, setGstr3bData] = useState<Gstr3bData | null>(null);
   const [inventoryData, setInventoryData] = useState<InventoryValuationData | null>(null);
 
-  const authHeaders = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-
   const fetchReports = useCallback(async () => {
-    if (!tenantId) return;
     setIsLoading(true);
+    setLoadError('');
 
-    try {
-      const [execRes, g1Res, g3bRes, invRes] = await Promise.all([
-        axios.get(`${API_BASE}/reports/executive?tenantId=${tenantId}&period=${period}`, { headers: authHeaders }),
-        axios.get(`${API_BASE}/reports/gst/gstr-1?tenantId=${tenantId}&period=${period}`, { headers: authHeaders }),
-        axios.get(`${API_BASE}/reports/gst/gstr-3b?tenantId=${tenantId}&period=${period}`, { headers: authHeaders }),
-        axios.get(`${API_BASE}/reports/inventory?tenantId=${tenantId}`, { headers: authHeaders }),
-      ]);
+    const params = { period };
+    const [execRes, g1Res, g3bRes, invRes] = await Promise.allSettled([
+      api.get('/reports/executive', { params }),
+      api.get('/reports/gst/gstr-1', { params }),
+      api.get('/reports/gst/gstr-3b', { params }),
+      api.get('/reports/inventory'),
+    ]);
 
-      if (execRes.data?.data) setExecutiveData(execRes.data.data);
-      if (g1Res.data?.data) setGstr1Data(g1Res.data.data);
-      if (g3bRes.data?.data) setGstr3bData(g3bRes.data.data);
-      if (invRes.data?.data) setInventoryData(invRes.data.data);
-    } catch (err) {
-      console.error('Failed to load business reports:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [tenantId, authToken, period]);
+    const failed: string[] = [];
+    const take = <T,>(r: PromiseSettledResult<AxiosResponse>, label: string, set: (v: T | null) => void) => {
+      if (r.status === 'fulfilled') {
+        set(unwrap<T>(r.value) ?? null);
+      } else {
+        console.error(`Failed to load ${label} report:`, r.reason);
+        failed.push(`${label}: ${getErrorMessage(r.reason)}`);
+      }
+    };
+    take<ExecutiveOverviewData>(execRes, 'Executive overview', setExecutiveData);
+    take<Gstr1Data>(g1Res, 'GSTR-1', setGstr1Data);
+    take<Gstr3bData>(g3bRes, 'GSTR-3B', setGstr3bData);
+    take<InventoryValuationData>(invRes, 'Inventory', setInventoryData);
+
+    setLoadError(failed.join(' | '));
+    setIsLoading(false);
+  }, [period]);
 
   useEffect(() => {
     fetchReports();
@@ -156,6 +156,11 @@ export function ReportsView({ tenantId, authToken }: ReportsViewProps) {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
+          {loadError && (
+            <div className="mb-4 p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+              {loadError}
+            </div>
+          )}
           {activeSubTab === 'overview' && (
             <ExecutiveOverviewTab data={executiveData} isLoading={isLoading} />
           )}

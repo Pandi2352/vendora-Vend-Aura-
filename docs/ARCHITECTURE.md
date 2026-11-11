@@ -5,6 +5,11 @@
 
 ---
 
+> **Implementation status (Nov 2026).** This document describes the target architecture. What is built today:
+> - **Built:** NestJS modular monolith with MongoDB/Mongoose; global JWT guard (access + rotating refresh tokens, separate secrets); tenant taken from the token via `@TenantId()` and explicit `tenantId` filters in every query; platform super-admin guard; atomic per-tenant document counters (`counters` collection) for INV/RET/SHIFT/GRN numbers; MongoDB transactions for billing, returns and GRNs when running on a replica set.
+> - **Frontends:** plain React state + hooks (no Zustand / TanStack Query yet), a shared axios instance with token refresh in `client/src/lib/api.ts`, no router in the POS client.
+> - **Not built yet:** Redis, BullMQ workers, object storage, the Mongoose tenancy plugin / AsyncLocalStorage tenant context, subdomain routing, offline IndexedDB sync, service worker, ESC/POS bridge, weighing-scale integration.
+
 ## 1. High-Level System Architecture
 
 Vendora employs a modern, multi-tier, multi-tenant SaaS architecture designed for sub-second billing latency, carrier-grade data isolation, and resilient offline capabilities.

@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from 'react';
 import { LoginScreen } from './components/LoginScreen';
 import { PosHeader } from './components/PosHeader';
 import type { PosActiveTab } from './components/PosHeader';
@@ -11,16 +10,20 @@ import { CustomersView } from './components/CustomersView';
 import { SuppliersView } from './components/SuppliersView';
 import { ReportsView } from './components/reports/ReportsView';
 import { AppModals } from './components/AppModals';
+import { PasswordResetModal } from './components/PasswordResetModal';
 import { useAuthSession } from './hooks/useAuthSession';
 import { useCart } from './hooks/useCart';
 import { useDrawerShift } from './hooks/useDrawerShift';
 import { useCatalogCustomers } from './hooks/useCatalogCustomers';
-import type { InvoiceData, CustomerItem } from './types/pos.types';
-
-const API_BASE = 'http://localhost:5000/api/v1';
+import { api, unwrap, getErrorMessage, LOGOUT_EVENT } from './lib/api';
+import { orderToInvoice } from './lib/invoice';
+import type { InvoiceData, CustomerItem, OrderItemRecord, PaymentMode } from './types/pos.types';
+import type { HeldCart } from './types/shift-return.types';
 
 export default function App() {
   const auth = useAuthSession();
+  const isReady = auth.isAuthenticated && !auth.mustChangePassword && !!auth.currentUser;
+
   const {
     cart,
     addToCart,
@@ -29,19 +32,23 @@ export default function App() {
     clearCart,
     subTotal,
     taxTotal,
+    roundOff,
     grandTotal,
     heldCarts,
     holdCurrentCart,
     resumeCart,
     discardHeldCart,
-  } = useCart();
+  } = useCart(auth.currentUser?.tenantId, auth.currentUser?.id);
 
-  const { activeShift, setActiveShift, refreshShift } = useDrawerShift(auth.currentUser?.tenantId);
-  const { products, categories, customers, fetchCatalog, fetchCustomers } = useCatalogCustomers(auth.currentUser?.tenantId);
+  const { activeShift, setActiveShift, refreshShift } = useDrawerShift(isReady);
+  const { products, categories, customers, isLoadingCustomers, catalogError, fetchCatalog, fetchCustomers } =
+    useCatalogCustomers(isReady);
 
   // Active View & Modals State
   const [activeTab, setActiveTab] = useState<PosActiveTab>('pos');
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+  const [isSubmittingBill, setIsSubmittingBill] = useState(false);
   const [completedInvoice, setCompletedInvoice] = useState<InvoiceData | null>(null);
   const [isHeldCartsOpen, setIsHeldCartsOpen] = useState(false);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
@@ -52,83 +59,78 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
 
-  // Finalize POS Order
-  const handleFinalizeBill = async (
-    paymentMode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT',
-    cashTendered: number,
-    customer?: CustomerItem | null
-  ) => {
-    try {
-      let finalInvoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+  const resetWorkspace = useCallback(() => {
+    clearCart();
+    setSelectedCustomer(null);
+    setActiveTab('pos');
+    setIsCheckoutOpen(false);
+    setCompletedInvoice(null);
+    setIsHeldCartsOpen(false);
+    setIsReturnModalOpen(false);
+    setIsDrawerModalOpen(false);
+  }, [clearCart]);
 
-      if (auth.currentUser?.tenantId) {
-        const orderPayload = {
-          tenantId: auth.currentUser.tenantId,
-          outletId: auth.currentUser.outletIds?.[0],
-          cashierName: auth.currentUser.fullName || auth.currentUser.username || 'Cashier',
-          customerId: customer?.id || undefined,
-          customerName: customer?.name || undefined,
-          customerPhone: customer?.phone || undefined,
-          items: cart.map((item) => ({
-            productId: item.id,
-            name: item.name,
-            barcode: item.barcode,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            taxRatePercent: item.taxRatePercent,
-            taxAmount: Math.round(((item.unitPrice * item.quantity * item.taxRatePercent) / 100) * 100) / 100,
-            total: Math.round(item.unitPrice * item.quantity * (1 + item.taxRatePercent / 100)),
-          })),
-          subTotal,
-          taxTotal,
-          cgst: taxTotal / 2,
-          sgst: taxTotal / 2,
-          grandTotal,
-          paymentMode,
-          cashTendered: paymentMode === 'CASH' ? cashTendered : grandTotal,
-          changeDue: paymentMode === 'CASH' ? Math.max(0, cashTendered - grandTotal) : 0,
-        };
+  // Session expired / refresh failed (dispatched by the api module)
+  useEffect(() => {
+    window.addEventListener(LOGOUT_EVENT, resetWorkspace);
+    return () => window.removeEventListener(LOGOUT_EVENT, resetWorkspace);
+  }, [resetWorkspace]);
 
-        const res = await axios.post(`${API_BASE}/orders`, orderPayload, {
-          headers: auth.authToken ? { Authorization: `Bearer ${auth.authToken}` } : {},
-        });
-
-        if (res.data?.order?.invoiceNumber) {
-          finalInvoiceNumber = res.data.order.invoiceNumber;
-        }
-
-        fetchCatalog(auth.currentUser.tenantId);
-        fetchCustomers(auth.currentUser.tenantId);
-        refreshShift();
+  const handleProceedCheckout = () => {
+    if (!activeShift || activeShift.status !== 'OPEN') {
+      if (window.confirm('No cash drawer shift is open. Billing requires an open shift.\n\nOpen the cash drawer now?')) {
+        setIsDrawerModalOpen(true);
       }
+      return;
+    }
+    setCheckoutError('');
+    setIsCheckoutOpen(true);
+  };
 
-      setCompletedInvoice({
-        invoiceNumber: finalInvoiceNumber,
-        date: new Date().toLocaleDateString('en-IN'),
-        time: new Date().toLocaleTimeString('en-IN'),
-        cashier: auth.currentUser?.fullName || auth.currentUser?.username || 'Cashier',
-        terminal: 'OUT-01',
-        shopName: auth.currentUser?.businessName || 'Vendora Retail Store',
-        shopId: auth.currentUser?.shopId || 'shop',
-        customerId: customer?.id,
-        customerName: customer?.name,
-        customerPhone: customer?.phone,
-        items: [...cart],
-        subTotal,
-        cgst: taxTotal / 2,
-        sgst: taxTotal / 2,
-        grandTotal,
+  // Finalize POS Order — the server prices the bill; the receipt uses its response.
+  const handleFinalizeBill = async (paymentMode: PaymentMode, cashTendered: number, customer?: CustomerItem | null) => {
+    if (cart.length === 0 || isSubmittingBill) return;
+    setCheckoutError('');
+    setIsSubmittingBill(true);
+    try {
+      const res = await api.post('/orders', {
+        items: cart.map((item) => ({ productId: item.id, quantity: item.quantity })),
         paymentMode,
-        cashTendered: paymentMode === 'CASH' ? cashTendered : grandTotal,
-        changeDue: paymentMode === 'CASH' ? Math.max(0, cashTendered - grandTotal) : 0,
+        customerId: customer?.id || undefined,
+        cashTendered: paymentMode === 'CASH' ? cashTendered : undefined,
       });
 
+      const order = unwrap<OrderItemRecord>(res);
+      setCompletedInvoice(orderToInvoice(order, auth.currentUser));
       setIsCheckoutOpen(false);
       clearCart();
       setSelectedCustomer(null);
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to submit order to server.');
+
+      fetchCatalog();
+      fetchCustomers();
+      refreshShift();
+    } catch (err) {
+      const message = getErrorMessage(err, 'Failed to submit order to server. The cart has been kept.');
+      setCheckoutError(message);
+      if (/shift/i.test(message)) refreshShift();
+    } finally {
+      setIsSubmittingBill(false);
     }
+  };
+
+  const handleResumeCart = (held: HeldCart) => {
+    if (
+      cart.length > 0 &&
+      !window.confirm('The register already has items. Park the current bill and resume the selected one?')
+    ) {
+      return;
+    }
+    resumeCart(held, selectedCustomer);
+    const tagged = held.customer
+      ? customers.find((c) => c.id === held.customerId) || held.customer
+      : null;
+    setSelectedCustomer(tagged);
+    setIsHeldCartsOpen(false);
   };
 
   const filteredProducts = products.filter((p) => {
@@ -138,7 +140,31 @@ export default function App() {
     return matchesCat && matchesSearch;
   });
 
-  if (!auth.isAuthenticated && !auth.mustChangePassword) {
+  const handleSignOut = () => {
+    auth.handleSignOut();
+    resetWorkspace();
+  };
+
+  if (auth.mustChangePassword) {
+    return (
+      <div className="h-screen bg-zinc-100 font-sans">
+        <PasswordResetModal
+          currentPassword={auth.currentPassword}
+          setCurrentPassword={auth.setCurrentPassword}
+          newPassword={auth.newPassword}
+          setNewPassword={auth.setNewPassword}
+          confirmPassword={auth.confirmPassword}
+          setConfirmPassword={auth.setConfirmPassword}
+          passwordError={auth.passwordError}
+          isUpdatingPassword={auth.isUpdatingPassword}
+          onSubmit={auth.handleChangePassword}
+          onSignOut={handleSignOut}
+        />
+      </div>
+    );
+  }
+
+  if (!isReady) {
     return (
       <LoginScreen
         shopId={auth.shopId}
@@ -161,11 +187,7 @@ export default function App() {
         currentUser={auth.currentUser}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onSignOut={() => {
-          auth.handleSignOut();
-          setSelectedCustomer(null);
-          setActiveTab('pos');
-        }}
+        onSignOut={handleSignOut}
         activeShift={activeShift}
         onOpenDrawer={() => setIsDrawerModalOpen(true)}
         onOpenReturns={() => setIsReturnModalOpen(true)}
@@ -176,6 +198,11 @@ export default function App() {
       {/* 2. Operational Views */}
       {activeTab === 'pos' && (
         <div className="flex-1 flex flex-col overflow-hidden">
+          {catalogError && (
+            <div className="px-4 py-2 bg-red-50 border-b border-red-200 text-red-700 text-xs font-semibold">
+              {catalogError}
+            </div>
+          )}
           <CategoryBar
             categories={categories}
             activeCategory={activeCategory}
@@ -190,11 +217,19 @@ export default function App() {
             />
             <CartPanel
               cart={cart}
+              subTotal={subTotal}
+              taxTotal={taxTotal}
+              roundOff={roundOff}
+              grandTotal={grandTotal}
+              isShiftOpen={activeShift?.status === 'OPEN'}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeItem}
               onClearCart={clearCart}
-              onProceedCheckout={() => setIsCheckoutOpen(true)}
-              onHoldCart={() => holdCurrentCart(selectedCustomer)}
+              onProceedCheckout={handleProceedCheckout}
+              onHoldCart={() => {
+                holdCurrentCart(selectedCustomer);
+                setSelectedCustomer(null);
+              }}
               heldCartsCount={heldCarts.length}
               onOpenHeldCarts={() => setIsHeldCartsOpen(true)}
             />
@@ -204,39 +239,25 @@ export default function App() {
 
       {activeTab === 'orders' && (
         <OrdersHistoryView
-          tenantId={auth.currentUser?.tenantId}
-          authToken={auth.authToken}
-          shopName={auth.currentUser?.businessName || 'Vendora Retail Store'}
-          shopId={auth.currentUser?.shopId || 'shop'}
+          currentUser={auth.currentUser}
           onReprintInvoice={(inv) => setCompletedInvoice(inv)}
         />
       )}
 
       {activeTab === 'customers' && (
         <CustomersView
-          tenantId={auth.currentUser?.tenantId}
-          authToken={auth.authToken}
+          customers={customers}
+          loading={isLoadingCustomers}
+          onRefreshCustomers={fetchCustomers}
           shopName={auth.currentUser?.businessName || 'Vendora Retail Store'}
         />
       )}
 
       {activeTab === 'suppliers' && (
-        <SuppliersView
-          tenantId={auth.currentUser?.tenantId}
-          authToken={auth.authToken}
-          products={products}
-          onInwardStockCompleted={() => {
-            if (auth.currentUser?.tenantId) fetchCatalog(auth.currentUser.tenantId);
-          }}
-        />
+        <SuppliersView products={products} onInwardStockCompleted={fetchCatalog} />
       )}
 
-      {activeTab === 'reports' && (
-        <ReportsView
-          tenantId={auth.currentUser?.tenantId}
-          authToken={auth.authToken}
-        />
-      )}
+      {activeTab === 'reports' && <ReportsView />}
 
       {/* 3. Operational Modals */}
       <AppModals
@@ -247,37 +268,22 @@ export default function App() {
         onSelectCustomer={setSelectedCustomer}
         onCloseCheckout={() => setIsCheckoutOpen(false)}
         onFinalizeBill={handleFinalizeBill}
+        checkoutError={checkoutError}
+        isSubmittingBill={isSubmittingBill}
         completedInvoice={completedInvoice}
         onCloseReceipt={() => setCompletedInvoice(null)}
-        onNewSale={() => {
-          setCompletedInvoice(null);
-          clearCart();
-        }}
-        mustChangePassword={auth.mustChangePassword}
-        newPassword={auth.newPassword}
-        setNewPassword={auth.setNewPassword}
-        confirmPassword={auth.confirmPassword}
-        setConfirmPassword={auth.setConfirmPassword}
-        passwordError={auth.passwordError}
-        isUpdatingPassword={auth.isUpdatingPassword}
-        onChangePassword={auth.handleChangePassword}
+        onNewSale={() => setCompletedInvoice(null)}
         isHeldCartsOpen={isHeldCartsOpen}
         onCloseHeldCarts={() => setIsHeldCartsOpen(false)}
         heldCarts={heldCarts}
-        onResumeCart={(c) => {
-          resumeCart(c);
-          setIsHeldCartsOpen(false);
-        }}
+        onResumeCart={handleResumeCart}
         onDiscardCart={discardHeldCart}
-        currentUser={auth.currentUser}
         isReturnModalOpen={isReturnModalOpen}
         onCloseReturnModal={() => setIsReturnModalOpen(false)}
         onReturnSuccess={() => {
-          if (auth.currentUser?.tenantId) {
-            fetchCatalog(auth.currentUser.tenantId);
-            fetchCustomers(auth.currentUser.tenantId);
-            refreshShift();
-          }
+          fetchCatalog();
+          fetchCustomers();
+          refreshShift();
         }}
         isDrawerModalOpen={isDrawerModalOpen}
         onCloseDrawerModal={() => setIsDrawerModalOpen(false)}

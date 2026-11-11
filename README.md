@@ -147,23 +147,31 @@ npm run build
 
 ---
 
+## 🔐 Environment & Conventions
+
+- **Server** (`server/.env`, see `.env.example`): `MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET` (must differ), `PLATFORM_ADMIN_USERNAME` / `PLATFORM_ADMIN_PASSWORD`, `CLIENT_BASE_URL` (POS URL used in welcome emails), `CORS_ORIGINS`, SMTP settings.
+- **Landing** (`landing/.env`): `VITE_API_URL`, `VITE_POS_URL`. **Client** (`client/.env`): `VITE_API_URL`, `VITE_LANDING_URL`.
+- **Auth**: every API route needs a Bearer token except login/refresh, onboarding and health. The store (tenant) always comes from the token; never send `tenantId`.
+- **Transactions**: billing, returns, GRNs and invoice numbering run in MongoDB transactions when MongoDB is a replica set. On a standalone dev server they run without one (a warning is logged), so use a replica set in production.
+- **Shared enums**: `server/src/shared/enums` is the source of truth; `landing/src/shared/enums` is a copy and must be kept identical.
+
 ## 🚦 Roadmap at a Glance (14 MVPs)
 
 ```
 [Phase 1] MVP 01: SaaS Registration & Auto-Provisioning  (15 Modules) ──► ✅ IMPLEMENTED
-[Phase 1] MVP 02: Multi-Tenant Authentication & RBAC     (14 Modules)
-[Phase 1] MVP 03: Business Setup & GST Configuration     (14 Modules)
-[Phase 1] MVP 04: Product Catalogue & Barcode Labels     (15 Modules)
-[Phase 1] MVP 05: Basic Inventory & Stock Ledger         (12 Modules)
-[Phase 1] MVP 06: Core POS Billing Counter & Invoicing   (18 Modules) ──► 🏁 First Usable Retail Product!
-[Phase 2] MVP 07: Procurement, GRN & Supplier Accounts   (13 Modules)
-[Phase 2] MVP 08: Customer Management & Credit (Khata)   (12 Modules)
-[Phase 2] MVP 09: Advanced Sales, Hold Bills & Returns   (13 Modules)
-[Phase 2] MVP 10: Reports, Analytics & GSTR-1 Summaries  (15 Modules)
+[Phase 1] MVP 02: Multi-Tenant Authentication & RBAC     (14 Modules) ──► ✅ IMPLEMENTED
+[Phase 1] MVP 03: Business Setup & GST Configuration     (14 Modules) ──► ✅ IMPLEMENTED
+[Phase 1] MVP 04: Product Catalogue & Barcode Labels     (15 Modules) ──► ✅ IMPLEMENTED
+[Phase 1] MVP 05: Basic Inventory & Stock Ledger         (12 Modules) ──► ✅ IMPLEMENTED
+[Phase 1] MVP 06: Core POS Billing Counter & Invoicing   (18 Modules) ──► ✅ IMPLEMENTED 🏁
+[Phase 2] MVP 07: Procurement, GRN & Supplier Accounts   (13 Modules) ──► ✅ IMPLEMENTED
+[Phase 2] MVP 08: Customer Management & Credit (Khata)   (12 Modules) ──► ✅ IMPLEMENTED
+[Phase 2] MVP 09: Advanced Sales, Hold Bills & Returns   (13 Modules) ──► 🚧 PARTIAL (hold bills, returns, shifts)
+[Phase 2] MVP 10: Reports, Analytics & GSTR-1 Summaries  (15 Modules) ──► 🚧 PARTIAL (executive, GSTR-1/3B, inventory)
 [Phase 3] MVP 11: Chart of Accounts & Retail Accounting  (17 Modules)
 [Phase 3] MVP 12: Multi-Branch & Inter-Store Transfers   (13 Modules)
 [Phase 3] MVP 13: Offline-First POS & Loyalty Engine     (18 Modules)
-[Phase 4] MVP 14: Super Admin Console & SaaS Billing     (21 Modules)
+[Phase 4] MVP 14: Super Admin Console & SaaS Billing     (21 Modules) ──► ✅ IMPLEMENTED (console; billing pending)
 ```
 
 ---

@@ -18,7 +18,7 @@ export class Order extends TenantBaseEntity {
         productId: { type: String, required: true },
         name: { type: String, required: true },
         barcode: { type: String, required: true },
-        quantity: { type: Number, required: true, min: 1 },
+        quantity: { type: Number, required: true, min: 0.001 },
         unitPrice: { type: Number, required: true, min: 0 },
         taxRatePercent: { type: Number, default: 0 },
         taxAmount: { type: Number, default: 0 },
@@ -49,6 +49,9 @@ export class Order extends TenantBaseEntity {
 
   @Prop({ default: 0 })
   sgst: number;
+
+  @Prop({ default: 0 })
+  roundOff: number;
 
   @Prop({ required: true, min: 0 })
   grandTotal: number;

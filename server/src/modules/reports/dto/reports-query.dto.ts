@@ -2,10 +2,6 @@ import { IsOptional, IsString, IsIn } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ReportsQueryDto {
-  @ApiPropertyOptional({ description: 'Tenant Mongo ID' })
-  @IsOptional()
-  @IsString()
-  tenantId?: string;
 
   @ApiPropertyOptional({
     description: 'Time period preset',

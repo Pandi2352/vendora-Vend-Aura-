@@ -6,38 +6,53 @@ import {
   CreditCard,
   CheckCircle,
   HandCoins,
+  WarningCircle,
 } from '@phosphor-icons/react';
-import type { CustomerItem } from '../types/pos.types';
+import type { CustomerItem, PaymentMode } from '../types/pos.types';
 import { CustomerTagSelector } from './checkout/CustomerTagSelector';
 import { PaymentModePanels } from './checkout/PaymentModePanels';
 
+const PAYMENT_TABS: Array<{ id: PaymentMode; label: string; icon: typeof Money }> = [
+  { id: 'CASH', label: 'Cash', icon: Money },
+  { id: 'UPI', label: 'UPI / QR', icon: DeviceMobile },
+  { id: 'CARD', label: 'Card Swipe', icon: CreditCard },
+  { id: 'CREDIT', label: 'Khata / Credit', icon: HandCoins },
+];
+
+/** Mounted only while open, so tender state starts fresh (cash tendered = grand total) every time. */
 interface CheckoutModalProps {
   grandTotal: number;
-  isOpen: boolean;
   customers: CustomerItem[];
   selectedCustomer: CustomerItem | null;
   onSelectCustomer: (c: CustomerItem | null) => void;
   onClose: () => void;
-  onFinalize: (
-    paymentMode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT',
-    cashTendered: number,
-    customer?: CustomerItem | null
-  ) => void;
+  onFinalize: (paymentMode: PaymentMode, cashTendered: number, customer?: CustomerItem | null) => void;
+  error?: string;
+  isSubmitting?: boolean;
 }
 
 export function CheckoutModal({
   grandTotal,
-  isOpen,
   customers,
   selectedCustomer,
   onSelectCustomer,
   onClose,
   onFinalize,
+  error,
+  isSubmitting = false,
 }: CheckoutModalProps) {
-  const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI' | 'CARD' | 'CREDIT'>('CASH');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('CASH');
   const [cashTendered, setCashTendered] = useState<number>(grandTotal);
 
-  if (!isOpen) return null;
+  const isCreditExceeded =
+    paymentMode === 'CREDIT' &&
+    !!selectedCustomer &&
+    selectedCustomer.currentCreditBalance + grandTotal > selectedCustomer.creditLimit;
+
+  const canSubmit =
+    !isSubmitting &&
+    !(paymentMode === 'CASH' && cashTendered < grandTotal) &&
+    !(paymentMode === 'CREDIT' && (!selectedCustomer || isCreditExceeded));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-xs font-sans">
@@ -75,18 +90,13 @@ export function CheckoutModal({
 
           {/* Payment Mode Selector Tabs */}
           <div className="grid grid-cols-4 gap-2">
-            {[
-              { id: 'CASH', label: 'Cash', icon: Money },
-              { id: 'UPI', label: 'UPI / QR', icon: DeviceMobile },
-              { id: 'CARD', label: 'Card Swipe', icon: CreditCard },
-              { id: 'CREDIT', label: 'Khata / Credit', icon: HandCoins },
-            ].map((tab) => {
+            {PAYMENT_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = paymentMode === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setPaymentMode(tab.id as any)}
+                  onClick={() => setPaymentMode(tab.id)}
                   className={`p-2.5 rounded-md border flex flex-col items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
                     isActive
                       ? 'border-red-600 bg-red-50 text-red-700'
@@ -110,6 +120,13 @@ export function CheckoutModal({
             onAddCash={(amount) => setCashTendered((prev) => prev + amount)}
             onSetExact={() => setCashTendered(grandTotal)}
           />
+
+          {error && (
+            <div className="p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+              <WarningCircle weight="bold" className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -128,14 +145,11 @@ export function CheckoutModal({
                 selectedCustomer
               )
             }
-            disabled={
-              (paymentMode === 'CASH' && cashTendered < grandTotal) ||
-              (paymentMode === 'CREDIT' && !selectedCustomer)
-            }
+            disabled={!canSubmit}
             className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
           >
             <CheckCircle weight="bold" className="w-4 h-4" />
-            <span>Complete & Print Bill</span>
+            <span>{isSubmitting ? 'Saving Bill...' : 'Complete & Print Bill'}</span>
           </button>
         </div>
       </div>

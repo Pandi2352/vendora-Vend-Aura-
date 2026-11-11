@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { CaretDown, CaretUp } from '@phosphor-icons/react';
-import { BusinessType } from '../shared';
+import { BusinessType, BUSINESS_TYPE_LABELS } from '../shared';
 import {
   IconTextile,
   IconFruits,
@@ -19,29 +19,41 @@ import {
   IconOthers,
 } from './BusinessTypeIcons';
 
+type BusinessTypeIcon = React.ComponentType<{ className?: string }>;
+
+const BUSINESS_TYPE_ICONS: Record<BusinessType, BusinessTypeIcon> = {
+  [BusinessType.TEXTILE_GARMENTS]: IconTextile,
+  [BusinessType.FRUITS_VEGETABLES]: IconFruits,
+  [BusinessType.GROCERY]: IconGrocery,
+  [BusinessType.SUPERMARKET]: IconSupermarket,
+  [BusinessType.BAKERY_SWEETS]: IconBakery,
+  [BusinessType.RESTAURANT_CAFE]: IconRestaurant,
+  [BusinessType.PHARMACY]: IconPharmacy,
+  [BusinessType.FOOTWEAR]: IconFootwear,
+  [BusinessType.ELECTRONICS_MOBILES]: IconElectronics,
+  [BusinessType.STATIONERY_BOOKS]: IconStationery,
+  [BusinessType.HARDWARE_PAINTS]: IconHardware,
+  [BusinessType.COSMETICS_BEAUTY]: IconCosmetics,
+  [BusinessType.JEWELLERY]: IconJewellery,
+  [BusinessType.CRACKERS_FIREWORKS]: IconCrackers,
+  [BusinessType.OTHERS]: IconOthers,
+  [BusinessType.GENERAL_RETAIL]: IconSupermarket,
+};
+
 export interface BusinessTypeOption {
   value: BusinessType;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: BusinessTypeIcon;
 }
 
-export const BUSINESS_TYPE_OPTIONS: BusinessTypeOption[] = [
-  { value: BusinessType.TEXTILE_GARMENTS, label: 'Textile & Garments', icon: IconTextile },
-  { value: BusinessType.FRUITS_VEGETABLES, label: 'Fruits & Vegetables', icon: IconFruits },
-  { value: BusinessType.GROCERY, label: 'Grocery / Kirana', icon: IconGrocery },
-  { value: BusinessType.SUPERMARKET, label: 'Supermarket', icon: IconSupermarket },
-  { value: BusinessType.BAKERY_SWEETS, label: 'Bakery & Sweets', icon: IconBakery },
-  { value: BusinessType.RESTAURANT_CAFE, label: 'Restaurant / Café', icon: IconRestaurant },
-  { value: BusinessType.PHARMACY, label: 'Pharmacy / Medical', icon: IconPharmacy },
-  { value: BusinessType.FOOTWEAR, label: 'Footwear', icon: IconFootwear },
-  { value: BusinessType.ELECTRONICS_MOBILES, label: 'Electronics & Mobiles', icon: IconElectronics },
-  { value: BusinessType.STATIONERY_BOOKS, label: 'Stationery & Books', icon: IconStationery },
-  { value: BusinessType.HARDWARE_PAINTS, label: 'Hardware & Paints', icon: IconHardware },
-  { value: BusinessType.COSMETICS_BEAUTY, label: 'Cosmetics & Beauty', icon: IconCosmetics },
-  { value: BusinessType.JEWELLERY, label: 'Jewellery', icon: IconJewellery },
-  { value: BusinessType.CRACKERS_FIREWORKS, label: 'Crackers / Fireworks', icon: IconCrackers },
-  { value: BusinessType.OTHERS, label: 'Others', icon: IconOthers },
-];
+/** Options in the order of BUSINESS_TYPE_LABELS (the shared source of truth). */
+export const BUSINESS_TYPE_OPTIONS: BusinessTypeOption[] = (
+  Object.keys(BUSINESS_TYPE_LABELS) as BusinessType[]
+).map((value) => ({
+  value,
+  label: BUSINESS_TYPE_LABELS[value],
+  icon: BUSINESS_TYPE_ICONS[value],
+}));
 
 interface BusinessTypeDropdownProps {
   value: BusinessType;

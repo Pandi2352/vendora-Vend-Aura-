@@ -8,18 +8,53 @@ import {
   ArrowSquareOut,
   IdentificationCard,
   CreditCard,
+  CircleNotch,
+  WarningCircle,
 } from '@phosphor-icons/react';
 import type { TenantItem } from './types';
+import { TenantStatusBadge } from './TenantStatusBadge';
+import { useTenantDetail } from './useTenantDetail';
 import { BUSINESS_TYPE_LABELS } from '../../shared';
+import { posLoginUrl } from '../../lib/config';
 
 interface TenantDetailModalProps {
-  tenant: TenantItem | null;
+  tenantId: string;
+  /** Summary row already loaded in the list, shown while full details are fetched. */
+  fallback?: TenantItem;
   onClose: () => void;
-  onStatusChange?: (id: string, newStatus: 'ACTIVE' | 'SUSPENDED' | 'TRIAL') => void;
 }
 
-export function TenantDetailModal({ tenant, onClose }: TenantDetailModalProps) {
-  if (!tenant) return null;
+export function TenantDetailModal({ tenantId, fallback, onClose }: TenantDetailModalProps) {
+  const { tenant: detail, loading, error } = useTenantDetail(tenantId);
+  const tenant = detail ?? fallback ?? null;
+
+  if (!tenant) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs">
+        <div className="bg-white rounded-md border border-zinc-300 w-full max-w-md p-5 space-y-4 text-xs">
+          {loading ? (
+            <p className="flex items-center gap-2 text-zinc-700 font-medium">
+              <CircleNotch className="w-4 h-4 animate-spin text-red-600" />
+              <span>Loading tenant details...</span>
+            </p>
+          ) : (
+            <p className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 font-medium flex items-start gap-2">
+              <WarningCircle weight="bold" className="w-4 h-4 shrink-0" />
+              <span>{error || 'Tenant not found.'}</span>
+            </p>
+          )}
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-md bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-semibold cursor-pointer transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs">
@@ -35,17 +70,7 @@ export function TenantDetailModal({ tenant, onClose }: TenantDetailModalProps) {
                 <h3 className="text-base font-bold text-zinc-950 leading-tight">
                   {tenant.businessName}
                 </h3>
-                <span
-                  className={`px-2 py-0.2 rounded-md text-[10px] font-bold ${
-                    tenant.status === 'ACTIVE'
-                      ? 'bg-zinc-950 text-white'
-                      : tenant.status === 'TRIAL'
-                      ? 'bg-red-50 text-red-700 border border-red-200'
-                      : 'bg-zinc-200 text-zinc-700'
-                  }`}
-                >
-                  {tenant.status}
-                </span>
+                <TenantStatusBadge status={tenant.status} />
               </div>
               <p className="text-xs text-red-600 font-mono mt-0.5">{tenant.shopId}.vendora.com</p>
             </div>
@@ -61,6 +86,19 @@ export function TenantDetailModal({ tenant, onClose }: TenantDetailModalProps) {
 
         {/* Modal Content */}
         <div className="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+          {loading && (
+            <p className="flex items-center gap-2 text-zinc-500 font-medium">
+              <CircleNotch className="w-3.5 h-3.5 animate-spin text-red-600" />
+              <span>Refreshing full tenant details...</span>
+            </p>
+          )}
+          {error && (
+            <p className="p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 font-medium flex items-start gap-2">
+              <WarningCircle weight="bold" className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>{error} Showing the summary from the tenant list.</span>
+            </p>
+          )}
+
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-md bg-zinc-50 border border-zinc-200">
             <div>
@@ -168,7 +206,7 @@ export function TenantDetailModal({ tenant, onClose }: TenantDetailModalProps) {
               Close
             </button>
             <a
-              href={`http://localhost:4001?shopId=${tenant.shopId}`}
+              href={posLoginUrl(tenant.shopId)}
               target="_blank"
               rel="noreferrer"
               className="px-3.5 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"

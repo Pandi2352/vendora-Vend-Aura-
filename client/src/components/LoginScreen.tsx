@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LANDING_URL } from '../lib/config';
 import {
   Storefront,
   User,
@@ -183,7 +184,7 @@ export function LoginScreen({
         {/* Back Link to Landing */}
         <div className="text-center text-xs text-zinc-500">
           <a
-            href="http://localhost:4000"
+            href={LANDING_URL}
             className="hover:text-zinc-300 transition-colors"
           >
             ← Back to Vendora Platform (Port 4000)

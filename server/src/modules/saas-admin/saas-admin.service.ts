@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
@@ -10,6 +10,7 @@ import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { TenantStatus, SubscriptionPlanCode, SUBSCRIPTION_PLANS } from '../../shared';
 import { PlatformAdminLoginDto } from './dto/platform-admin-login.dto';
 import { DateUtil } from '../../common';
+import { PLATFORM_ADMIN_SUBJECT, PLATFORM_ADMIN_TOKEN_ROLE } from '../auth/strategies/jwt.strategy';
 
 @Injectable()
 export class SaasAdminService {
@@ -32,7 +33,7 @@ export class SaasAdminService {
 
     const inputUser = dto.username.toLowerCase().trim();
     const targetUser = configuredUser.toLowerCase().trim();
-    const isUserMatch = inputUser === targetUser || inputUser === 'admin';
+    const isUserMatch = inputUser === targetUser;
     const isPassMatch = dto.password === configuredPass;
 
     if (!isUserMatch || !isPassMatch) {
@@ -40,9 +41,9 @@ export class SaasAdminService {
     }
 
     const payload = {
-      sub: 'platform-super-admin',
+      sub: PLATFORM_ADMIN_SUBJECT,
       username: configuredUser,
-      role: 'PLATFORM_SUPER_ADMIN',
+      role: PLATFORM_ADMIN_TOKEN_ROLE,
     };
 
     return {
@@ -105,6 +106,7 @@ export class SaasAdminService {
   }
 
   async getTenantById(id: string) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Tenant not found');
     const tenant = await this.tenantModel.findById(id).lean();
     if (!tenant) throw new NotFoundException('Tenant not found');
 
@@ -139,12 +141,18 @@ export class SaasAdminService {
   }
 
   async updateTenantStatus(id: string, status: TenantStatus) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Tenant not found');
     const tenant = await this.tenantModel.findByIdAndUpdate(id, { $set: { status } }, { new: true });
     if (!tenant) throw new NotFoundException('Tenant not found');
+    if (status === TenantStatus.SUSPENDED || status === TenantStatus.EXPIRED) {
+      // Force every store session to end: refresh tokens stop working immediately.
+      await this.userModel.updateMany({ tenantId: tenant._id }, { $unset: { refreshTokenHash: 1 } });
+    }
     return tenant;
   }
 
   async updateTenantPlan(id: string, planCode: SubscriptionPlanCode) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Tenant not found');
     const tenant = await this.tenantModel.findById(id);
     if (!tenant) throw new NotFoundException('Tenant not found');
 

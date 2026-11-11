@@ -1,68 +1,89 @@
 import { useState, useCallback, useEffect } from 'react';
-import axios from 'axios';
+import { api, unwrap, getErrorMessage } from '../lib/api';
 import type { ProductItem, CustomerItem } from '../types/pos.types';
 
-const API_BASE = 'http://localhost:5000/api/v1';
+interface ApiProduct {
+  _id?: string;
+  id?: string;
+  name: string;
+  category: string;
+  barcode: string;
+  unitPrice: number;
+  mrp?: number;
+  costPrice?: number;
+  taxRatePercent?: number;
+  stock?: number;
+}
 
-export function useCatalogCustomers(tenantId?: string) {
+export function useCatalogCustomers(enabled: boolean) {
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [categories, setCategories] = useState<string[]>(['ALL']);
   const [customers, setCustomers] = useState<CustomerItem[]>([]);
+  const [catalogError, setCatalogError] = useState('');
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
 
-  const fetchCatalog = useCallback((tId: string) => {
-    axios
-      .get(`${API_BASE}/catalog/products?tenantId=${tId}`)
-      .then((res) => {
-        if (Array.isArray(res.data?.data)) {
-          setProducts(
-            res.data.data.map((p: any) => ({
-              id: p._id || p.id,
-              name: p.name,
-              category: p.category,
-              barcode: p.barcode,
-              unitPrice: p.unitPrice,
-              mrp: p.mrp || p.unitPrice,
-              costPrice: p.costPrice || 0,
-              taxRatePercent: p.taxRatePercent || 0,
-              stock: p.stock,
-            }))
-          );
-        }
-      })
-      .catch(() => {});
+  const fetchCatalog = useCallback(async () => {
+    const [productsRes, categoriesRes] = await Promise.allSettled([
+      api.get('/catalog/products'),
+      api.get('/catalog/categories'),
+    ]);
 
-    axios
-      .get(`${API_BASE}/catalog/categories?tenantId=${tId}`)
-      .then((res) => {
-        if (Array.isArray(res.data?.data)) {
-          setCategories(['ALL', ...res.data.data.map((c: any) => c.name)]);
-        }
-      })
-      .catch(() => {});
+    if (productsRes.status === 'fulfilled') {
+      const list = unwrap<ApiProduct[]>(productsRes.value);
+      setProducts(
+        (Array.isArray(list) ? list : []).map((p) => ({
+          id: (p._id || p.id) as string,
+          name: p.name,
+          category: p.category,
+          barcode: p.barcode,
+          unitPrice: p.unitPrice,
+          mrp: p.mrp || p.unitPrice,
+          costPrice: p.costPrice || 0,
+          taxRatePercent: p.taxRatePercent || 0,
+          stock: p.stock,
+        }))
+      );
+      setCatalogError('');
+    } else {
+      console.error('Failed to load products:', productsRes.reason);
+      setCatalogError(getErrorMessage(productsRes.reason, 'Failed to load product catalog.'));
+    }
+
+    if (categoriesRes.status === 'fulfilled') {
+      const list = unwrap<Array<{ name: string }>>(categoriesRes.value);
+      if (Array.isArray(list)) setCategories(['ALL', ...list.map((c) => c.name)]);
+    } else {
+      console.error('Failed to load categories:', categoriesRes.reason);
+    }
   }, []);
 
-  const fetchCustomers = useCallback((tId: string) => {
-    axios
-      .get(`${API_BASE}/customers?tenantId=${tId}`)
-      .then((res) => {
-        if (Array.isArray(res.data?.data)) setCustomers(res.data.data);
-      })
-      .catch(() => {});
+  const fetchCustomers = useCallback(async () => {
+    setIsLoadingCustomers(true);
+    try {
+      const res = await api.get('/customers');
+      const list = unwrap<Array<CustomerItem & { _id?: string }>>(res);
+      if (Array.isArray(list)) setCustomers(list.map((c) => ({ ...c, id: c.id ?? (c._id as string) })));
+    } catch (err) {
+      console.error('Failed to load customers:', err);
+    } finally {
+      setIsLoadingCustomers(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (tenantId) {
-      fetchCatalog(tenantId);
-      fetchCustomers(tenantId);
+    if (enabled) {
+      fetchCatalog();
+      fetchCustomers();
     }
-  }, [tenantId, fetchCatalog, fetchCustomers]);
+  }, [enabled, fetchCatalog, fetchCustomers]);
 
   return {
     products,
     categories,
     customers,
+    isLoadingCustomers,
+    catalogError,
     fetchCatalog,
     fetchCustomers,
   };
 }
-

@@ -21,6 +21,15 @@ export interface ProductItem {
   stock?: number;
 }
 
+export type PaymentMode = 'CASH' | 'UPI' | 'CARD' | 'CREDIT';
+
+export interface StoreInfo {
+  address: string;
+  gstin: string | null;
+  phone: string;
+  outletCode: string;
+}
+
 export interface AuthUser {
   id: string;
   username: string;
@@ -31,6 +40,7 @@ export interface AuthUser {
   shopId: string;
   businessName: string;
   outletIds: string[];
+  store?: StoreInfo;
 }
 
 export interface InvoiceData {
@@ -41,8 +51,9 @@ export interface InvoiceData {
   terminal: string;
   shopName: string;
   shopId: string;
-  gstin?: string;
+  gstin?: string | null;
   address?: string;
+  phone?: string;
   customerId?: string;
   customerName?: string;
   customerPhone?: string;
@@ -50,14 +61,16 @@ export interface InvoiceData {
   subTotal: number;
   cgst: number;
   sgst: number;
+  roundOff: number;
   grandTotal: number;
-  paymentMode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT';
+  paymentMode: PaymentMode;
   cashTendered: number;
   changeDue: number;
 }
 
 export interface OrderItemRecord {
   id: string;
+  _id?: string;
   invoiceNumber: string;
   customerId?: string;
   customerName?: string;
@@ -66,12 +79,13 @@ export interface OrderItemRecord {
   taxTotal: number;
   cgst: number;
   sgst: number;
+  roundOff?: number;
   grandTotal: number;
-  paymentMode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT';
+  paymentMode: PaymentMode;
   cashTendered: number;
   changeDue: number;
   cashierName: string;
-  status: string;
+  status?: string;
   itemsCount: number;
   items?: Array<{
     productId: string;
@@ -141,6 +155,7 @@ export interface SupplierItem {
 
 export interface PurchaseItemRecord {
   id: string;
+  _id?: string;
   grnNumber: string;
   supplierId: string;
   supplierName: string;

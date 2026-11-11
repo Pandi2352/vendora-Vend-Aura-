@@ -10,13 +10,13 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BusinessType } from '../../../shared';
+import { BusinessType, SubscriptionPlanCode } from '../../../shared';
 
 export class AddressDto {
   @ApiProperty({ example: '12 Bazaar Road' })
   @IsString()
-  @IsNotEmpty()
-  street: string;
+  @IsOptional()
+  street?: string;
 
   @ApiProperty({ example: 'Chennai' })
   @IsString()
@@ -25,13 +25,13 @@ export class AddressDto {
 
   @ApiProperty({ example: 'Tamil Nadu' })
   @IsString()
-  @IsNotEmpty()
-  state: string;
+  @IsOptional()
+  state?: string;
 
   @ApiProperty({ example: '600001' })
   @IsString()
-  @IsNotEmpty()
-  pincode: string;
+  @IsOptional()
+  pincode?: string;
 
   @ApiPropertyOptional({ example: 'India' })
   @IsString()
@@ -93,5 +93,10 @@ export class CompleteRegistrationDto {
   @IsString()
   @IsOptional()
   gstin?: string;
+
+  @ApiPropertyOptional({ enum: SubscriptionPlanCode, description: 'Overrides the plan chosen at OTP time' })
+  @IsEnum(SubscriptionPlanCode)
+  @IsOptional()
+  selectedPlanCode?: SubscriptionPlanCode;
 }
 
