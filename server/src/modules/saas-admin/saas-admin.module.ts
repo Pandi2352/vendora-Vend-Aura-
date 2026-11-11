@@ -20,7 +20,7 @@ import { RegistrationSession, RegistrationSessionSchema } from '../onboarding/sc
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'vendora_jwt_secret_dev_key_2026'),
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '1d' },
       }),
     }),

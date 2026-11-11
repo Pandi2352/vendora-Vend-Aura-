@@ -1,14 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { LoginScreen } from './components/LoginScreen';
 import { PasswordResetModal } from './components/PasswordResetModal';
 import { PosHeader } from './components/PosHeader';
+import type { PosActiveTab } from './components/PosHeader';
 import { CategoryBar } from './components/CategoryBar';
 import { ProductGrid } from './components/ProductGrid';
 import { CartPanel } from './components/CartPanel';
 import { CheckoutModal } from './components/CheckoutModal';
 import { ThermalReceiptModal } from './components/ThermalReceiptModal';
-import type { CartItem, ProductItem, AuthUser, InvoiceData } from './types/pos.types';
+import { OrdersHistoryView } from './components/OrdersHistoryView';
+import { CustomersView } from './components/CustomersView';
+import { SuppliersView } from './components/SuppliersView';
+import type {
+  CartItem,
+  ProductItem,
+  AuthUser,
+  InvoiceData,
+  CustomerItem,
+} from './types/pos.types';
 
 const API_BASE = 'http://localhost:5000/api/v1';
 
@@ -16,6 +26,9 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  // Active Store Operations Tab
+  const [activeTab, setActiveTab] = useState<PosActiveTab>('pos');
 
   // Sign In form state
   const [shopId, setShopId] = useState('');
@@ -37,6 +50,12 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [completedInvoice, setCompletedInvoice] = useState<InvoiceData | null>(null);
+
+  // Customers & Catalog State
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [categories, setCategories] = useState<string[]>(['ALL']);
+  const [customers, setCustomers] = useState<CustomerItem[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
 
   // Check URL query parameters for prefilled shopId
   useEffect(() => {
@@ -64,23 +83,58 @@ export default function App() {
     }
   }, []);
 
-  // Starter Retail Products Catalog
-  const sampleProducts: ProductItem[] = [
-    { id: '1', name: 'Aambal Handwash 2 x 300ml Combo', category: 'FMCG', barcode: '890103001', unitPrice: 115, mrp: 115, taxRatePercent: 0 },
-    { id: '2', name: 'Aditi Chakki Fresh Atta 1kg', category: 'Grocery', barcode: '890172518', unitPrice: 55, mrp: 73, taxRatePercent: 0 },
-    { id: '3', name: 'Bakers Al Faham Masala 80gm', category: 'Spices', barcode: '890600123', unitPrice: 75, mrp: 80, taxRatePercent: 5 },
-    { id: '4', name: 'Tata Tea Gold Leaf 500g', category: 'Beverages', barcode: '890105885', unitPrice: 320, mrp: 350, taxRatePercent: 5 },
-    { id: '5', name: 'Parle-G Gold Biscuits 1kg', category: 'FMCG', barcode: '890171910', unitPrice: 120, mrp: 140, taxRatePercent: 18 },
-    { id: '6', name: 'Fortune Sunlite Refined Oil 1L', category: 'Grocery', barcode: '890600728', unitPrice: 145, mrp: 165, taxRatePercent: 5 },
-    { id: '7', name: 'Cadbury Dairy Milk Silk 150g', category: 'Confectionery', barcode: '890123302', unitPrice: 175, mrp: 180, taxRatePercent: 18 },
-    { id: '8', name: 'Surf Excel Quick Wash 1kg', category: 'FMCG', barcode: '890103039', unitPrice: 140, mrp: 155, taxRatePercent: 18 },
-    { id: '9', name: 'Aashirvaad Select Sharbati Atta 5kg', category: 'Grocery', barcode: '890103042', unitPrice: 295, mrp: 320, taxRatePercent: 0 },
-    { id: '10', name: 'Bru Instant Coffee 200g Pouch', category: 'Beverages', barcode: '890103055', unitPrice: 210, mrp: 230, taxRatePercent: 5 },
-    { id: '11', name: 'Everest Turmeric Powder 500g', category: 'Spices', barcode: '890103067', unitPrice: 110, mrp: 125, taxRatePercent: 5 },
-    { id: '12', name: 'Amul Pasteurised Butter 500g', category: 'Dairy', barcode: '890103088', unitPrice: 275, mrp: 285, taxRatePercent: 5 },
-  ];
+  // Fetch tenant-specific products and categories dynamically from MongoDB
+  const fetchCatalog = useCallback((tenantId: string) => {
+    axios
+      .get(`${API_BASE}/catalog/products?tenantId=${tenantId}`)
+      .then((res) => {
+        if (Array.isArray(res.data?.data)) {
+          setProducts(
+            res.data.data.map((p: any) => ({
+              id: p._id || p.id,
+              name: p.name,
+              category: p.category,
+              barcode: p.barcode,
+              unitPrice: p.unitPrice,
+              mrp: p.mrp || p.unitPrice,
+              costPrice: p.costPrice || 0,
+              taxRatePercent: p.taxRatePercent || 0,
+              stock: p.stock,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
 
-  const categories = ['ALL', 'FMCG', 'Grocery', 'Spices', 'Beverages', 'Confectionery', 'Dairy'];
+    axios
+      .get(`${API_BASE}/catalog/categories?tenantId=${tenantId}`)
+      .then((res) => {
+        if (Array.isArray(res.data?.data)) {
+          const catNames = res.data.data.map((c: any) => c.name);
+          setCategories(['ALL', ...catNames]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch Customers dynamically
+  const fetchCustomers = useCallback((tenantId: string) => {
+    axios
+      .get(`${API_BASE}/customers?tenantId=${tenantId}`)
+      .then((res) => {
+        if (Array.isArray(res.data?.data)) {
+          setCustomers(res.data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (currentUser?.tenantId) {
+      fetchCatalog(currentUser.tenantId);
+      fetchCustomers(currentUser.tenantId);
+    }
+  }, [currentUser?.tenantId, fetchCatalog, fetchCustomers]);
 
   // Handle Multi-Tenant API Login
   const handleLogin = async (e: React.FormEvent) => {
@@ -115,27 +169,8 @@ export default function App() {
         }
       }
     } catch (err: any) {
-      // Fallback demo login if server is offline or mock login testing
-      if (shopId === 'srimurugan' && password.startsWith('Vn')) {
-        const mockUser: AuthUser = {
-          id: 'user-demo-1',
-          username: username.trim(),
-          fullName: 'Pandi Selvam',
-          email: 'pandi@srimurugan.in',
-          role: 'OWNER',
-          shopId: 'srimurugan',
-          businessName: 'Sri Murugan Supermarket',
-          outletIds: ['out-1'],
-        };
-        setCurrentUser(mockUser);
-        setAuthToken('mock_jwt_token_2026');
-        localStorage.setItem('vendora_token', 'mock_jwt_token_2026');
-        localStorage.setItem('vendora_user', JSON.stringify(mockUser));
-        setMustChangePassword(true);
-      } else {
-        const msg = err.response?.data?.message || 'Login failed. Please verify your Shop ID and credentials.';
-        setLoginError(msg);
-      }
+      const msg = err.response?.data?.message || 'Login failed. Please verify your Shop ID and credentials.';
+      setLoginError(msg);
     } finally {
       setIsLoggingIn(false);
     }
@@ -159,7 +194,7 @@ export default function App() {
     setIsUpdatingPassword(true);
 
     try {
-      if (authToken && authToken !== 'mock_jwt_token_2026') {
+      if (authToken) {
         await axios.post(
           `${API_BASE}/auth/change-password`,
           { currentPassword: password, newPassword },
@@ -183,6 +218,8 @@ export default function App() {
     setCurrentUser(null);
     setIsAuthenticated(false);
     setPassword('');
+    setSelectedCustomer(null);
+    setActiveTab('pos');
   };
 
   // Cart operations
@@ -239,28 +276,87 @@ export default function App() {
   );
   const grandTotal = Math.round(subTotal + taxTotal);
 
-  const handleFinalizeBill = (paymentMode: 'CASH' | 'UPI' | 'CARD', cashTendered: number) => {
-    const invoice: InvoiceData = {
-      invoiceNumber: `INV-2026-${Math.floor(10000 + Math.random() * 90000)}`,
-      date: new Date().toLocaleDateString('en-IN'),
-      time: new Date().toLocaleTimeString('en-IN'),
-      cashier: currentUser?.fullName || currentUser?.username || 'Cashier',
-      terminal: 'OUT-01',
-      shopName: currentUser?.businessName || 'Vendora Retail Store',
-      shopId: currentUser?.shopId || 'shop',
-      items: [...cart],
-      subTotal,
-      cgst: taxTotal / 2,
-      sgst: taxTotal / 2,
-      grandTotal,
-      paymentMode,
-      cashTendered,
-      changeDue: Math.max(0, cashTendered - grandTotal),
-    };
+  // Finalize POS Order with Customer Tagging & Multi-Tender Support (Cash, UPI, Card, Credit)
+  const handleFinalizeBill = async (
+    paymentMode: 'CASH' | 'UPI' | 'CARD' | 'CREDIT',
+    cashTendered: number,
+    customer?: CustomerItem | null
+  ) => {
+    try {
+      let finalInvoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
-    setCompletedInvoice(invoice);
-    setIsCheckoutOpen(false);
-    setCart([]);
+      if (currentUser?.tenantId) {
+        const orderPayload = {
+          tenantId: currentUser.tenantId,
+          outletId: currentUser.outletIds?.[0],
+          cashierName: currentUser.fullName || currentUser.username || 'Cashier',
+          customerId: customer?.id || undefined,
+          customerName: customer?.name || undefined,
+          customerPhone: customer?.phone || undefined,
+          items: cart.map((item) => ({
+            productId: item.id,
+            name: item.name,
+            barcode: item.barcode,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            taxRatePercent: item.taxRatePercent,
+            taxAmount: Math.round(((item.unitPrice * item.quantity * item.taxRatePercent) / 100) * 100) / 100,
+            total: Math.round(item.unitPrice * item.quantity * (1 + item.taxRatePercent / 100)),
+          })),
+          subTotal,
+          taxTotal,
+          cgst: taxTotal / 2,
+          sgst: taxTotal / 2,
+          grandTotal,
+          paymentMode,
+          cashTendered: paymentMode === 'CASH' ? cashTendered : grandTotal,
+          changeDue: paymentMode === 'CASH' ? Math.max(0, cashTendered - grandTotal) : 0,
+        };
+
+        const res = await axios.post(`${API_BASE}/orders`, orderPayload, {
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+        });
+
+        if (res.data?.order?.invoiceNumber) {
+          finalInvoiceNumber = res.data.order.invoiceNumber;
+        }
+
+        // Re-fetch catalog to reflect stock deduction
+        fetchCatalog(currentUser.tenantId);
+
+        // Re-fetch customers to reflect updated Khata balance & spent volume
+        fetchCustomers(currentUser.tenantId);
+      }
+
+      const invoice: InvoiceData = {
+        invoiceNumber: finalInvoiceNumber,
+        date: new Date().toLocaleDateString('en-IN'),
+        time: new Date().toLocaleTimeString('en-IN'),
+        cashier: currentUser?.fullName || currentUser?.username || 'Cashier',
+        terminal: 'OUT-01',
+        shopName: currentUser?.businessName || 'Vendora Retail Store',
+        shopId: currentUser?.shopId || 'shop',
+        customerId: customer?.id,
+        customerName: customer?.name,
+        customerPhone: customer?.phone,
+        items: [...cart],
+        subTotal,
+        cgst: taxTotal / 2,
+        sgst: taxTotal / 2,
+        grandTotal,
+        paymentMode,
+        cashTendered: paymentMode === 'CASH' ? cashTendered : grandTotal,
+        changeDue: paymentMode === 'CASH' ? Math.max(0, cashTendered - grandTotal) : 0,
+      };
+
+      setCompletedInvoice(invoice);
+      setIsCheckoutOpen(false);
+      setCart([]);
+      setSelectedCustomer(null);
+    } catch (err: any) {
+      console.error('Failed to persist order:', err);
+      alert(err.response?.data?.message || 'Failed to submit order to server. Please try again.');
+    }
   };
 
   const handleNewSale = () => {
@@ -269,7 +365,7 @@ export default function App() {
   };
 
   // Filter products by active category & search query
-  const filteredProducts = sampleProducts.filter((p) => {
+  const filteredProducts = products.filter((p) => {
     const matchesCat = activeCategory === 'ALL' || p.category === activeCategory;
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -296,45 +392,89 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-zinc-100 font-sans select-none overflow-hidden">
-      {/* 2. Top POS Bar */}
-      <PosHeader currentUser={currentUser} onSignOut={handleSignOut} />
-
-      {/* 3. Category Horizontal Pills */}
-      <CategoryBar
-        categories={categories}
-        activeCategory={activeCategory}
-        onSelectCategory={setActiveCategory}
+      {/* 2. Top POS & Operations Command Bar */}
+      <PosHeader
+        currentUser={currentUser}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onSignOut={handleSignOut}
       />
 
-      {/* 4. Main POS Workspace: Product Grid + Cart Register */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* Left: Product Catalog Grid */}
-        <ProductGrid
-          products={filteredProducts}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddToCart={handleAddToCart}
-        />
+      {/* 3. Conditional Operational View Rendering */}
+      {activeTab === 'pos' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Category Horizontal Pills */}
+          <CategoryBar
+            categories={categories}
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+          />
 
-        {/* Right: Cart & Billing Register */}
-        <CartPanel
-          cart={cart}
-          onUpdateQuantity={handleUpdateQuantity}
-          onRemoveItem={handleRemoveItem}
-          onClearCart={handleClearCart}
-          onProceedCheckout={() => setIsCheckoutOpen(true)}
-        />
-      </div>
+          {/* Main POS Workspace: Product Grid + Cart Register */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            {/* Left: Product Catalog Grid */}
+            <ProductGrid
+              products={filteredProducts}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onAddToCart={handleAddToCart}
+            />
 
-      {/* 5. Checkout Payment Tender Modal */}
+            {/* Right: Cart & Billing Register */}
+            <CartPanel
+              cart={cart}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemoveItem={handleRemoveItem}
+              onClearCart={handleClearCart}
+              onProceedCheckout={() => setIsCheckoutOpen(true)}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'orders' && (
+        <OrdersHistoryView
+          tenantId={currentUser?.tenantId}
+          authToken={authToken}
+          shopName={currentUser?.businessName || 'Vendora Retail Store'}
+          shopId={currentUser?.shopId || 'shop'}
+          onReprintInvoice={(inv) => setCompletedInvoice(inv)}
+        />
+      )}
+
+      {activeTab === 'customers' && (
+        <CustomersView
+          tenantId={currentUser?.tenantId}
+          authToken={authToken}
+          shopName={currentUser?.businessName || 'Vendora Retail Store'}
+        />
+      )}
+
+      {activeTab === 'suppliers' && (
+        <SuppliersView
+          tenantId={currentUser?.tenantId}
+          authToken={authToken}
+          products={products}
+          onInwardStockCompleted={() => {
+            if (currentUser?.tenantId) {
+              fetchCatalog(currentUser.tenantId);
+            }
+          }}
+        />
+      )}
+
+      {/* 4. Checkout Payment Tender Modal */}
       <CheckoutModal
         grandTotal={grandTotal}
         isOpen={isCheckoutOpen}
+        customers={customers}
+        selectedCustomer={selectedCustomer}
+        onSelectCustomer={setSelectedCustomer}
         onClose={() => setIsCheckoutOpen(false)}
         onFinalize={handleFinalizeBill}
       />
 
-      {/* 6. Thermal Receipt Modal */}
+      {/* 5. Thermal Receipt Modal */}
       {completedInvoice && (
         <ThermalReceiptModal
           invoice={completedInvoice}
@@ -343,7 +483,7 @@ export default function App() {
         />
       )}
 
-      {/* 7. First-Login Password Reset Modal */}
+      {/* 6. First-Login Password Reset Modal */}
       {mustChangePassword && (
         <PasswordResetModal
           newPassword={newPassword}

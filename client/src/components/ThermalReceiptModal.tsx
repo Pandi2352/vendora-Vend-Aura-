@@ -59,6 +59,13 @@ export function ThermalReceiptModal({
             <span>{invoice.date} {invoice.time}</span>
           </div>
 
+          {invoice.customerName && (
+            <div className="text-[11px] text-zinc-800 flex justify-between font-bold mt-1">
+              <span>Customer: {invoice.customerName}</span>
+              {invoice.customerPhone && <span className="font-mono">{invoice.customerPhone}</span>}
+            </div>
+          )}
+
           <div className="border-t border-dashed border-zinc-400 my-2" />
 
           {/* Items Header */}

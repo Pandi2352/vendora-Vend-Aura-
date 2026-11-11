@@ -12,6 +12,9 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { MailModule } from './modules/mail/mail.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { CustomersModule } from './modules/customers/customers.module';
 
 @Module({
   imports: [
@@ -22,7 +25,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI', 'mongodb://localhost:27017/vendora'),
+        uri: configService.getOrThrow<string>('MONGO_URI'),
       }),
       inject: [ConfigService],
     }),
@@ -35,6 +38,9 @@ import { CatalogModule } from './modules/catalog/catalog.module';
     SaasAdminModule,
     AuthModule,
     CatalogModule,
+    OrdersModule,
+    SuppliersModule,
+    CustomersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

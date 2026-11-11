@@ -8,7 +8,7 @@ import {
   ArrowRight,
   ShieldCheck,
   WarningCircle,
-  Key,
+  EnvelopeSimple,
 } from '@phosphor-icons/react';
 
 interface LoginScreenProps {
@@ -35,12 +35,6 @@ export function LoginScreen({
   onLogin,
 }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
-
-  const fillDemo = () => {
-    setShopId('srimurugan');
-    setUsername('srimurugan_admin');
-    setPassword('Vn7#kM9q!');
-  };
 
   const handleShopIdChange = (val: string) => {
     const clean = val.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -173,20 +167,16 @@ export function LoginScreen({
             </button>
           </form>
 
-          {/* Quick Demo Helper */}
+          {/* Multi-Tenant Security Note */}
           <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px]">
             <span className="text-zinc-500 flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Multi-Tenant Auth</span>
             </span>
-            <button
-              type="button"
-              onClick={fillDemo}
-              className="text-red-600 hover:text-red-700 font-semibold cursor-pointer flex items-center gap-1"
-            >
-              <Key className="w-3 h-3" />
-              <span>Fill Demo Credentials</span>
-            </button>
+            <span className="text-zinc-400 flex items-center gap-1">
+              <EnvelopeSimple className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Use credentials sent to your email</span>
+            </span>
           </div>
         </div>
 

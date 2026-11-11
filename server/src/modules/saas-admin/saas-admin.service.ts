@@ -27,8 +27,12 @@ export class SaasAdminService {
    * Platform Super Admin Authentication against .env credentials
    */
   async login(dto: PlatformAdminLoginDto) {
-    const configuredUser = this.configService.get<string>('PLATFORM_ADMIN_USERNAME', 'admin@vendora.com').trim();
-    const configuredPass = this.configService.get<string>('PLATFORM_ADMIN_PASSWORD', 'Vendora@Admin2026!');
+    const configuredUser = this.configService.get<string>('PLATFORM_ADMIN_USERNAME')?.trim();
+    const configuredPass = this.configService.get<string>('PLATFORM_ADMIN_PASSWORD');
+
+    if (!configuredUser || !configuredPass) {
+      throw new UnauthorizedException('Platform Admin credentials are not configured in environment variables.');
+    }
 
     const inputUser = dto.username.toLowerCase().trim();
     const targetUser = configuredUser.toLowerCase().trim();

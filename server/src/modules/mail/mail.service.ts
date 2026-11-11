@@ -34,7 +34,7 @@ export class MailService {
   }
 
   async sendOtpEmail(to: string, otp: string): Promise<boolean> {
-    const from = this.configService.get<string>('MAIL_FROM', 'Vendora-POS <mvp.bose2352@gmail.com>');
+    const from = this.configService.get<string>('MAIL_FROM') || this.configService.get<string>('SMTP_FROM') || 'Vendora POS';
     const subject = `Your Vendora Verification Code: ${otp}`;
 
     const html = `
@@ -101,7 +101,7 @@ export class MailService {
     temporaryPassword: string;
     shopUrl: string;
   }): Promise<boolean> {
-    const from = this.configService.get<string>('MAIL_FROM', 'Vendora-POS <mvp.bose2352@gmail.com>');
+    const from = this.configService.get<string>('MAIL_FROM') || this.configService.get<string>('SMTP_FROM') || 'Vendora POS';
     const subject = `Welcome to Vendora! Your Store Login Details 🚀`;
 
     const html = `

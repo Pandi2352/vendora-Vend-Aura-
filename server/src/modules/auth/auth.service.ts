@@ -91,6 +91,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         outletIds: (user.outletIds || []).map((id) => id.toString()),
+        tenantId: tenant._id.toString(),
         shopId: tenant.shopId,
         businessName: tenant.businessName,
       },

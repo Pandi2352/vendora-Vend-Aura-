@@ -7,7 +7,6 @@ import {
   EyeSlash,
   ArrowRight,
   WarningCircle,
-  Key,
   HouseLine,
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
@@ -24,12 +23,6 @@ export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const handleFillEnvCredentials = () => {
-    setUsername('admin@vendora.com');
-    setPassword('Vendora@Admin2026!');
-    setError('');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,22 +59,7 @@ export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
         throw new Error('No access token returned from server');
       }
     } catch (err: any) {
-      // Local fallback check if backend server is not running
-      if (
-        (username.trim().toLowerCase() === 'admin@vendora.com' || username.trim().toLowerCase() === 'admin') &&
-        password.trim() === 'Vendora@Admin2026!'
-      ) {
-        const fallbackAdmin = {
-          username: 'admin@vendora.com',
-          name: 'Vendora Platform Admin',
-          role: 'SUPER_ADMIN',
-        };
-        localStorage.setItem('vendora_platform_admin_token', 'local_platform_admin_jwt');
-        localStorage.setItem('vendora_platform_admin_user', JSON.stringify(fallbackAdmin));
-        onLoginSuccess('local_platform_admin_jwt', fallbackAdmin);
-      } else {
-        setError(err.message || 'Authentication failed. Please verify credentials configured in .env.');
-      }
+      setError(err.message || 'Authentication failed. Please verify credentials configured in .env.');
     } finally {
       setLoading(false);
     }
@@ -195,20 +173,15 @@ export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
             </button>
           </form>
 
-          {/* Quick Helper to Fill from .env */}
+          {/* Security Notice */}
           <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px]">
             <span className="text-zinc-500 flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Protected by .env</span>
+              <span>Protected by server .env</span>
             </span>
-            <button
-              type="button"
-              onClick={handleFillEnvCredentials}
-              className="text-red-600 hover:text-red-700 font-semibold cursor-pointer flex items-center gap-1"
-            >
-              <Key className="w-3 h-3" />
-              <span>Fill from .env</span>
-            </button>
+            <span className="text-zinc-400 font-mono text-[10px]">
+              PLATFORM_ADMIN_USERNAME
+            </span>
           </div>
         </div>
 
