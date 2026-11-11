@@ -1,5 +1,4 @@
 import { Phone, EnvelopeSimple, MapPin } from '@phosphor-icons/react';
-import { Link } from 'react-router-dom';
 
 export function Footer() {
   return (
@@ -61,16 +60,10 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Administration */}
+          {/* Resources */}
           <div>
-            <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-4">Administration</h4>
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-4">Resources</h4>
             <ul className="space-y-2 text-zinc-400">
-              <li>
-                <Link to="/admin" className="hover:text-red-400 transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  <span>Platform Super Admin</span>
-                </Link>
-              </li>
               <li>
                 <a
                   href="http://localhost:4001"
@@ -83,6 +76,7 @@ export function Footer() {
               </li>
               <li><a href="#comparison" className="hover:text-white transition-colors">Feature Comparison</a></li>
               <li><a href="#faq" className="hover:text-white transition-colors">Common Questions</a></li>
+              <li><a href="#plans" className="hover:text-white transition-colors">30-Day Free Trial</a></li>
             </ul>
           </div>
         </div>

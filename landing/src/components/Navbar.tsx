@@ -1,4 +1,4 @@
-import { ArrowRight, UserCheck } from '@phosphor-icons/react';
+import { ArrowRight } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { RetailPosLogo } from './RetailPosLogo';
 
@@ -47,19 +47,9 @@ export function Navbar({ onScrollToPlans }: NavbarProps) {
           </a>
         </nav>
 
-        {/* Actions - Shop Sign In removed as instructed; Create Free Account opens registration in new tab */}
+        {/* Actions - Create Free Account opens registration in new tab */}
         <div className="flex items-center gap-4 shrink-0">
-          {/* Link to Platform Super Admin */}
-          <Link
-            to="/admin"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold transition-all border border-zinc-300"
-            title="SaaS Platform Super Admin"
-          >
-            <UserCheck weight="bold" className="w-3.5 h-3.5 text-red-600" />
-            <span>Platform Admin</span>
-          </Link>
-
-          {/* Create Free Account Button: Opens /register in new tab as instructed */}
+          {/* Create Free Account Button: Opens /register in new tab */}
           <a
             href="/register"
             target="_blank"

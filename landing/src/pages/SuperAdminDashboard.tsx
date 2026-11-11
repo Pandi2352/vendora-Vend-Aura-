@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { AdminLoginScreen } from '../components/admin/AdminLoginScreen';
-import { AdminSidebar } from '../components/admin/AdminSidebar';
-import type { AdminTab } from '../components/admin/AdminSidebar';
+import { AdminNavbar } from '../components/admin/AdminNavbar';
+import type { AdminTab } from '../components/admin/AdminNavbar';
 import { AdminHeader } from '../components/admin/AdminHeader';
 import { OverviewTab } from '../components/admin/OverviewTab';
 import { TenantsTab } from '../components/admin/TenantsTab';
@@ -223,53 +223,50 @@ export function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-950 flex flex-col lg:flex-row font-sans w-full">
-      {/* 1. Modular Admin Sidebar */}
-      <AdminSidebar
+    <div className="min-h-screen bg-zinc-100 text-zinc-950 flex flex-col font-sans w-full">
+      {/* 1. Modern Top Command Bar (No Vertical Sidebar!) */}
+      <AdminNavbar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         tenantsCount={tenants.length}
         contactsCount={contacts.length}
+        loading={loading}
+        onRefresh={fetchAllData}
         onSignOut={handleSignOut}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* 2. Modular Admin Header */}
-        <AdminHeader
-          activeTab={activeTab}
-          loading={loading}
-          onRefresh={fetchAllData}
-          onSignOut={handleSignOut}
-        />
+      {/* 2. Sub-Header Context Ribbon */}
+      <AdminHeader
+        activeTab={activeTab}
+        tenantsCount={tenants.length}
+      />
 
-        {/* 3. Tab Contents */}
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-[1600px] w-full mx-auto">
-          {activeTab === 'overview' && (
-            <OverviewTab
-              stats={overviewStats}
-              onInspectTenant={(t) => setSelectedTenant(t)}
-              onNavigateToTenants={() => setActiveTab('tenants')}
-            />
-          )}
+      {/* 3. Full-Width Main Content Canvas */}
+      <main className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
+        {activeTab === 'overview' && (
+          <OverviewTab
+            stats={overviewStats}
+            onInspectTenant={(t) => setSelectedTenant(t)}
+            onNavigateToTenants={() => setActiveTab('tenants')}
+          />
+        )}
 
-          {activeTab === 'tenants' && (
-            <TenantsTab
-              tenants={tenants}
-              onInspectTenant={(t) => setSelectedTenant(t)}
-              onUpdateStatus={handleUpdateStatus}
-            />
-          )}
+        {activeTab === 'tenants' && (
+          <TenantsTab
+            tenants={tenants}
+            onInspectTenant={(t) => setSelectedTenant(t)}
+            onUpdateStatus={handleUpdateStatus}
+          />
+        )}
 
-          {activeTab === 'contacts' && (
-            <ContactsTab contacts={contacts} />
-          )}
+        {activeTab === 'contacts' && (
+          <ContactsTab contacts={contacts} />
+        )}
 
-          {activeTab === 'reports' && (
-            <ReportsTab reports={reportsData} />
-          )}
-        </main>
-      </div>
+        {activeTab === 'reports' && (
+          <ReportsTab reports={reportsData} />
+        )}
+      </main>
 
       {/* 4. Modular Tenant Profile Drawer Modal */}
       {selectedTenant && (
