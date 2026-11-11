@@ -11,57 +11,100 @@ import { ApiErrorResponse } from '../interfaces/api-response.interface';
 import { ERROR_CODES } from '../constants/error-codes.constant';
 import { DateUtil } from '../utils/date.util';
 
+interface NormalizedError {
+  statusCode: number;
+  message: string | string[];
+  errors?: unknown;
+  errorCode: string;
+}
+
 @Catch()
 export class GlobalHttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalHttpExceptionFilter.name);
+  private readonly isProduction = process.env.NODE_ENV === 'production';
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const requestId = (request.headers['x-request-id'] as string) || undefined;
 
-    let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error occurred';
-    let errors: any = undefined;
-    let errorCode: string = ERROR_CODES.INTERNAL_ERROR;
+    const { statusCode, message, errors, errorCode } = this.normalize(exception);
 
-    if (exception instanceof HttpException) {
-      statusCode = exception.getStatus();
-      const res: any = exception.getResponse();
-
-      if (typeof res === 'string') {
-        message = res;
-      } else if (typeof res === 'object' && res !== null) {
-        message = res.message || exception.message;
-        errors = res.errors || (Array.isArray(res.message) ? res.message : undefined);
-        errorCode = res.errorCode || this.mapStatusCodeToErrorCode(statusCode);
-      }
-    } else if (this.isMongoDuplicateError(exception)) {
-      statusCode = HttpStatus.CONFLICT;
-      message = 'Duplicate entry detected. A resource with these unique values already exists.';
-      errorCode = ERROR_CODES.DUPLICATE_KEY;
-      errors = (exception as any).keyValue;
-    } else if (exception instanceof Error) {
-      message = exception.message;
-      this.logger.error(`Unhandled Exception: ${exception.message}`, exception.stack);
+    if (statusCode >= 500) {
+      const err = exception as Error;
+      this.logger.error(
+        `[${requestId ?? '-'}] ${request.method} ${request.url} -> ${statusCode}: ${err?.message}`,
+        err?.stack,
+      );
     }
 
     const errorResponse: ApiErrorResponse = {
       success: false,
       statusCode,
       message: Array.isArray(message) ? message[0] : message,
-      errors: Array.isArray(message) && !errors ? message : errors,
+      errors: (Array.isArray(message) && !errors ? message : errors) as ApiErrorResponse['errors'],
       errorCode,
       timestamp: DateUtil.toIso(),
       path: request.url,
-      requestId: (request.headers['x-request-id'] as string) || undefined,
+      requestId,
     };
 
     response.status(statusCode).json(errorResponse);
   }
 
-  private isMongoDuplicateError(err: any): boolean {
-    return err && (err.code === 11000 || err.name === 'MongoServerError');
+  private normalize(exception: unknown): NormalizedError {
+    if (exception instanceof HttpException) {
+      const statusCode = exception.getStatus();
+      const res: any = exception.getResponse();
+      if (typeof res === 'string') {
+        return { statusCode, message: res, errorCode: this.mapStatusCodeToErrorCode(statusCode) };
+      }
+      return {
+        statusCode,
+        message: res?.message || exception.message,
+        errors: res?.errors,
+        errorCode: res?.errorCode || this.mapStatusCodeToErrorCode(statusCode),
+      };
+    }
+
+    const err = exception as any;
+
+    // MongoDB unique index violation
+    if (err?.code === 11000) {
+      return {
+        statusCode: HttpStatus.CONFLICT,
+        message: 'A record with these unique values already exists.',
+        errors: err.keyValue,
+        errorCode: ERROR_CODES.DUPLICATE_KEY,
+      };
+    }
+
+    // Mongoose: malformed ObjectId or wrong type in a query
+    if (err?.name === 'CastError') {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: `Invalid value for ${err.path}.`,
+        errorCode: ERROR_CODES.VALIDATION_ERROR,
+      };
+    }
+
+    // Mongoose schema validation
+    if (err?.name === 'ValidationError' && err.errors) {
+      const messages = Object.values(err.errors).map((e: any) => e.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: messages.length ? messages : 'Validation failed.',
+        errorCode: ERROR_CODES.VALIDATION_ERROR,
+      };
+    }
+
+    // Anything else is a server bug: never leak internals in production.
+    return {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: this.isProduction ? 'Internal server error occurred' : err?.message || 'Internal server error occurred',
+      errorCode: ERROR_CODES.INTERNAL_ERROR,
+    };
   }
 
   private mapStatusCodeToErrorCode(status: number): string {
@@ -76,9 +119,10 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
         return ERROR_CODES.NOT_FOUND;
       case HttpStatus.CONFLICT:
         return ERROR_CODES.DUPLICATE_KEY;
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return ERROR_CODES.RATE_LIMITED;
       default:
-        return ERROR_CODES.INTERNAL_ERROR;
+        return status >= 500 ? ERROR_CODES.INTERNAL_ERROR : ERROR_CODES.BAD_REQUEST;
     }
   }
 }
-

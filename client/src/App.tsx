@@ -1,3 +1,4 @@
+import { canManageSuppliers, canViewReports } from './lib/permissions';
 import { useState, useEffect, useCallback } from 'react';
 import { LoginScreen } from './components/LoginScreen';
 import { PosHeader } from './components/PosHeader';
@@ -253,11 +254,11 @@ export default function App() {
         />
       )}
 
-      {activeTab === 'suppliers' && (
+      {activeTab === 'suppliers' && canManageSuppliers(auth.currentUser?.role) && (
         <SuppliersView products={products} onInwardStockCompleted={fetchCatalog} />
       )}
 
-      {activeTab === 'reports' && <ReportsView />}
+      {activeTab === 'reports' && canViewReports(auth.currentUser?.role) && <ReportsView />}
 
       {/* 3. Operational Modals */}
       <AppModals

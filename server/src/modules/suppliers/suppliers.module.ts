@@ -1,3 +1,4 @@
+import { SupplierPayment, SupplierPaymentSchema } from './schemas/supplier-payment.schema';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SuppliersController } from './suppliers.controller';
@@ -15,6 +16,7 @@ import { Tenant, TenantSchema } from '../tenant/schemas/tenant.schema';
     MongooseModule.forFeature([
       { name: Supplier.name, schema: SupplierSchema },
       { name: Purchase.name, schema: PurchaseSchema },
+      { name: SupplierPayment.name, schema: SupplierPaymentSchema },
       { name: Product.name, schema: ProductSchema },
       { name: StockLedger.name, schema: StockLedgerSchema },
       { name: Outlet.name, schema: OutletSchema },

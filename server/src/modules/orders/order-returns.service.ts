@@ -10,7 +10,15 @@ import { CustomerLedger, CustomerLedgerDocument } from '../customers/schemas/cus
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { CreateReturnDto } from './dto/create-return.dto';
 import { SequenceService } from '../sequence/sequence.service';
-import { AuthenticatedUser, NumberUtil, runInTransaction, toDocumentView } from '../../common';
+import {
+  AuthenticatedUser,
+  NumberUtil,
+  ObjectIdUtil,
+  PaginationDto,
+  PaginationUtil,
+  runInTransaction,
+  toDocumentView,
+} from '../../common';
 
 const round2 = (value: number) => NumberUtil.round(value, 2);
 
@@ -45,7 +53,7 @@ export class OrderReturnsService {
 
   /** Invoice, its previous returns, and what can still be returned per line. */
   async getInvoiceReturnInfo(tenantIdStr: string, invoiceNumber: string) {
-    const tenantId = new Types.ObjectId(tenantIdStr);
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
     const order = await this.orderModel.findOne({ tenantId, invoiceNumber: invoiceNumber.trim() }).lean();
     if (!order) {
       throw new NotFoundException(`Invoice ${invoiceNumber} not found.`);
@@ -63,7 +71,7 @@ export class OrderReturnsService {
   }
 
   async createReturn(tenantIdStr: string, dto: CreateReturnDto, user: AuthenticatedUser) {
-    const tenantId = new Types.ObjectId(tenantIdStr);
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
     const { order, returnableItems } = await this.getInvoiceReturnInfo(tenantIdStr, dto.originalInvoiceNumber);
     const returnableById = new Map(returnableItems.map((r) => [r.productId, r]));
 
@@ -84,7 +92,7 @@ export class OrderReturnsService {
         );
       }
       return {
-        productId: new Types.ObjectId(productId),
+        productId: ObjectIdUtil.toObjectId(productId, 'product'),
         name: info.name,
         barcode: info.barcode,
         quantityReturned: qty,
@@ -147,13 +155,13 @@ export class OrderReturnsService {
     return toDocumentView(orderReturn.toObject());
   }
 
-  async getReturns(tenantId: string, limit = 50) {
-    const returns = await this.returnModel
-      .find({ tenantId: new Types.ObjectId(tenantId) })
-      .sort({ createdAt: -1 })
-      .limit(Math.min(Math.max(limit, 1), 500))
-      .lean();
-    return returns.map(toDocumentView);
+  async getReturns(tenantId: string, query: PaginationDto) {
+    const result = await PaginationUtil.paginate(
+      this.returnModel,
+      { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') },
+      { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
+    );
+    return { ...result, data: result.data.map(toDocumentView) };
   }
 
   private computeReturnable(

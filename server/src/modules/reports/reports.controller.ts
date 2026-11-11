@@ -4,10 +4,11 @@ import { SalesReportsService, ExecutiveOverviewResult } from './sales-reports.se
 import { GstReportsService, Gstr1SummaryResult, Gstr3bSummaryResult } from './gst-reports.service';
 import { InventoryReportsService, InventoryValuationResult } from './inventory-reports.service';
 import { ReportsQueryDto } from './dto/reports-query.dto';
-import { TenantId } from '../../common';
+import { ROLE_GROUPS, Roles, TenantId } from '../../common';
 
 @ApiTags('Business Analytics & GST Tax Reports')
 @ApiBearerAuth()
+@Roles(...ROLE_GROUPS.FINANCE)
 @Controller('reports')
 export class ReportsController {
   constructor(
@@ -21,9 +22,9 @@ export class ReportsController {
   async getExecutiveOverview(
     @Query() query: ReportsQueryDto,
     @TenantId() tenantId: string,
-  ): Promise<{ success: boolean; data: ExecutiveOverviewResult }> {
+  ): Promise<{ data: ExecutiveOverviewResult }> {
     const data = await this.salesReportsService.getExecutiveOverview(tenantId, query);
-    return { success: true, data };
+    return { data };
   }
 
   @Get('gst/gstr-1')
@@ -31,9 +32,9 @@ export class ReportsController {
   async getGstr1(
     @Query() query: ReportsQueryDto,
     @TenantId() tenantId: string,
-  ): Promise<{ success: boolean; data: Gstr1SummaryResult }> {
+  ): Promise<{ data: Gstr1SummaryResult }> {
     const data = await this.gstReportsService.getGstr1Summary(tenantId, query);
-    return { success: true, data };
+    return { data };
   }
 
   @Get('gst/gstr-3b')
@@ -41,18 +42,18 @@ export class ReportsController {
   async getGstr3b(
     @Query() query: ReportsQueryDto,
     @TenantId() tenantId: string,
-  ): Promise<{ success: boolean; data: Gstr3bSummaryResult }> {
+  ): Promise<{ data: Gstr3bSummaryResult }> {
     const data = await this.gstReportsService.getGstr3bSummary(tenantId, query);
-    return { success: true, data };
+    return { data };
   }
 
   @Get('inventory')
   @ApiOperation({ summary: 'Inventory Valuation (Cost vs Retail), Dead Stock & Low Stock Warnings' })
   async getInventoryValuation(
     @TenantId() tenantId: string,
-  ): Promise<{ success: boolean; data: InventoryValuationResult }> {
+  ): Promise<{ data: InventoryValuationResult }> {
     const data = await this.inventoryReportsService.getInventoryValuation(tenantId);
-    return { success: true, data };
+    return { data };
   }
 }
 

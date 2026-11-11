@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from '../catalog/schemas/product.schema';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
-import { DateUtil, NumberUtil } from '../../common';
+import { DateUtil, NumberUtil, ObjectIdUtil } from '../../common';
 
 export interface InventoryValuationResult {
   summary: {
@@ -41,8 +41,7 @@ export class InventoryReportsService {
   ) {}
 
   async getInventoryValuation(tenantId: string): Promise<InventoryValuationResult> {
-    if (!Types.ObjectId.isValid(tenantId)) throw new BadRequestException('Invalid Tenant ID');
-    const tid = new Types.ObjectId(tenantId);
+    const tid = ObjectIdUtil.toObjectId(tenantId, 'tenant');
 
     const products = await this.productModel.find({ tenantId: tid, isActive: true }).lean();
 

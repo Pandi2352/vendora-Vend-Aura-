@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Body, Query, Param, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { OrderReturnsService } from './order-returns.service';
 import { CashDrawerService } from './cash-drawer.service';
@@ -7,7 +7,15 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateReturnDto } from './dto/create-return.dto';
 import { OpenShiftDto } from './dto/open-shift.dto';
 import { CloseShiftDto } from './dto/close-shift.dto';
-import { AuthenticatedUser, CurrentUser, TenantId } from '../../common';
+import {
+  AuthenticatedUser,
+  CurrentUser,
+  PaginationDto,
+  ParseObjectIdPipe,
+  ROLE_GROUPS,
+  Roles,
+  TenantId,
+} from '../../common';
 
 @ApiTags('Orders, POS, Returns & Cash Drawer')
 @ApiBearerAuth()
@@ -33,22 +41,21 @@ export class OrdersController {
 
   @Get()
   @ApiOperation({ summary: 'List recent orders for the shop' })
-  @ApiQuery({ name: 'limit', required: false })
   async getOrders(
     @TenantId() tenantId: string,
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query() query: PaginationDto,
   ) {
-    return { data: await this.ordersService.getOrders(tenantId, limit) };
+    return this.ordersService.getOrders(tenantId, query);
   }
 
   @Get('ledger')
+  @Roles(...ROLE_GROUPS.FINANCE)
   @ApiOperation({ summary: 'List stock ledger movement records for audit' })
-  @ApiQuery({ name: 'limit', required: false })
   async getLedger(
     @TenantId() tenantId: string,
-    @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
+    @Query() query: PaginationDto,
   ) {
-    return { data: await this.ordersService.getLedger(tenantId, limit) };
+    return this.ordersService.getLedger(tenantId, query);
   }
 
   // ---- RETURNS & EXCHANGES ----
@@ -65,12 +72,11 @@ export class OrdersController {
 
   @Get('returns')
   @ApiOperation({ summary: 'List processed order returns' })
-  @ApiQuery({ name: 'limit', required: false })
   async getReturns(
     @TenantId() tenantId: string,
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query() query: PaginationDto,
   ) {
-    return { data: await this.orderReturnsService.getReturns(tenantId, limit) };
+    return this.orderReturnsService.getReturns(tenantId, query);
   }
 
   @Get('returns/invoice/:invoiceNumber')
@@ -109,17 +115,16 @@ export class OrdersController {
 
   @Get('shifts/history')
   @ApiOperation({ summary: 'List past cash drawer shifts' })
-  @ApiQuery({ name: 'limit', required: false })
   async getShiftHistory(
     @TenantId() tenantId: string,
-    @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
+    @Query() query: PaginationDto,
   ) {
-    return { data: await this.cashDrawerService.getShiftHistory(tenantId, limit) };
+    return this.cashDrawerService.getShiftHistory(tenantId, query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get single order receipt details' })
-  async getOrderById(@TenantId() tenantId: string, @Param('id') id: string) {
+  async getOrderById(@TenantId() tenantId: string, @Param('id', ParseObjectIdPipe) id: string) {
     return { data: await this.ordersService.getOrderById(tenantId, id) };
   }
 }

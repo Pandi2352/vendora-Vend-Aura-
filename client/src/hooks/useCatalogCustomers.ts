@@ -60,7 +60,8 @@ export function useCatalogCustomers(enabled: boolean) {
   const fetchCustomers = useCallback(async () => {
     setIsLoadingCustomers(true);
     try {
-      const res = await api.get('/customers');
+      // Server pages at max 100; checkout search filters this list client-side.
+      const res = await api.get('/customers', { params: { limit: 100 } });
       const list = unwrap<Array<CustomerItem & { _id?: string }>>(res);
       if (Array.isArray(list)) setCustomers(list.map((c) => ({ ...c, id: c.id ?? (c._id as string) })));
     } catch (err) {

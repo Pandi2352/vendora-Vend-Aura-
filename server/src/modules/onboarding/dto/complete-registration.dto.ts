@@ -1,46 +1,20 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BusinessType, SubscriptionPlanCode } from '../../../shared';
+import { AddressDto, IsGstin, IsIndianMobile } from '../../../common';
 
-export class AddressDto {
-  @ApiProperty({ example: '12 Bazaar Road' })
-  @IsString()
-  @IsOptional()
-  street?: string;
-
+/** Store address at registration: city is required, the rest optional. */
+export class RegistrationAddressDto extends AddressDto {
   @ApiProperty({ example: 'Chennai' })
   @IsString()
   @IsNotEmpty()
-  city: string;
-
-  @ApiProperty({ example: 'Tamil Nadu' })
-  @IsString()
-  @IsOptional()
-  state?: string;
-
-  @ApiProperty({ example: '600001' })
-  @IsString()
-  @IsOptional()
-  pincode?: string;
-
-  @ApiPropertyOptional({ example: 'India' })
-  @IsString()
-  @IsOptional()
-  country?: string = 'India';
+  @MaxLength(100)
+  declare city: string;
 }
 
 export class CompleteRegistrationDto {
-  @ApiProperty({ example: 'sess_12345abc', description: 'Verified registration session ID' })
+  @ApiProperty({ example: 'reg_12345abc', description: 'Verified registration session ID' })
   @IsString()
   @IsNotEmpty()
   sessionId: string;
@@ -48,49 +22,35 @@ export class CompleteRegistrationDto {
   @ApiProperty({ example: 'Sri Murugan Stores', description: 'Store trading name' })
   @IsString()
   @MinLength(2)
-  @IsNotEmpty()
+  @MaxLength(150)
   businessName: string;
 
   @ApiProperty({ example: 'Pandi Selvam', description: 'Proprietor / Owner full name' })
   @IsString()
   @MinLength(2)
-  @IsNotEmpty()
+  @MaxLength(120)
   ownerName: string;
 
-  @ApiProperty({ example: '+919876543210', description: 'Contact phone / WhatsApp number' })
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ example: '9876543210', description: 'Contact phone / WhatsApp number' })
+  @IsIndianMobile()
   phone: string;
 
-  @ApiProperty({
-    example: BusinessType.GROCERY,
-    enum: BusinessType,
-    description: 'Specific retail category',
-  })
+  @ApiProperty({ example: BusinessType.GROCERY, enum: BusinessType, description: 'Specific retail category' })
   @IsEnum(BusinessType)
-  @IsNotEmpty()
   businessType: BusinessType;
 
-  @ApiProperty({
-    example: 'srimurugan',
-    description: 'Unique store identifier / subdomain prefix',
-  })
+  @ApiProperty({ example: 'murugn', description: 'Unique store identifier: 3-6 lowercase letters or digits' })
   @IsString()
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'Shop ID can only contain lowercase letters, numbers, and hyphens (e.g., myshop)',
-  })
-  @MinLength(3)
-  @IsNotEmpty()
+  @Matches(/^[a-z0-9]{3,6}$/, { message: 'Shop ID must be 3-6 lowercase letters or numbers (e.g., myshop)' })
   preferredShopId: string;
 
-  @ApiProperty({ type: AddressDto, description: 'Store physical address' })
-  @IsObject()
+  @ApiProperty({ type: RegistrationAddressDto, description: 'Store physical address' })
   @ValidateNested()
-  @Type(() => AddressDto)
-  address: AddressDto;
+  @Type(() => RegistrationAddressDto)
+  address: RegistrationAddressDto;
 
-  @ApiPropertyOptional({ example: '33AAAAA0000A1Z5', description: '15-digit GSTIN (optional)' })
-  @IsString()
+  @ApiPropertyOptional({ example: '33AAAAA0000A1Z5', description: '15-character GSTIN (optional)' })
+  @IsGstin()
   @IsOptional()
   gstin?: string;
 
@@ -99,4 +59,3 @@ export class CompleteRegistrationDto {
   @IsOptional()
   selectedPlanCode?: SubscriptionPlanCode;
 }
-

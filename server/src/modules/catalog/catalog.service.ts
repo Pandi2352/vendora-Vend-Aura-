@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
+import { NumberUtil, ObjectIdUtil, StringUtil, withId } from '../../common';
+import { CatalogQueryDto } from './dto/catalog-query.dto';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { Category, CategoryDocument } from './schemas/category.schema';
 import { BusinessType } from '../../shared';
-import { StringUtil, NumberUtil } from '../../common';
 
 @Injectable()
 export class CatalogService {
@@ -18,36 +19,39 @@ export class CatalogService {
   /**
    * Get all products for a specific tenant with optional category/search filters
    */
-  async getProductsByTenant(tenantId: string, query?: { search?: string; category?: string }) {
-    const filter: any = { tenantId: new Types.ObjectId(tenantId), isActive: true };
+  async getProductsByTenant(tenantId: string, query: CatalogQueryDto) {
+    const filter: FilterQuery<ProductDocument> = { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'), isActive: true };
 
-    if (query?.category && query.category !== 'ALL') {
+    if (query.category && query.category !== 'ALL') {
       filter.category = query.category;
     }
-
-    if (query?.search) {
-      const regex = new RegExp(query.search.trim(), 'i');
+    const regex = StringUtil.searchRegex(query.search);
+    if (regex) {
       filter.$or = [{ name: regex }, { barcode: regex }, { category: regex }];
     }
 
-    return this.productModel.find(filter).sort({ name: 1 }).lean();
+    // The POS terminal keeps the whole active catalog in memory for instant barcode lookup,
+    // so this list is intentionally not paginated.
+    const products = await this.productModel.find(filter).sort({ name: 1 }).lean();
+    return products.map(withId);
   }
 
   /**
    * Get categories for a tenant
    */
   async getCategoriesByTenant(tenantId: string) {
-    return this.categoryModel
-      .find({ tenantId: new Types.ObjectId(tenantId), isActive: true })
+    const categories = await this.categoryModel
+      .find({ tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'), isActive: true })
       .sort({ displayOrder: 1 })
       .lean();
+    return categories.map(withId);
   }
 
   /**
    * Seed sector-specific starter catalog on tenant registration
    */
   async seedTenantCatalog(tenantId: Types.ObjectId | string, businessType: BusinessType) {
-    const tId = new Types.ObjectId(tenantId);
+    const tId = ObjectIdUtil.toObjectId(tenantId, 'tenant');
 
     // Verify if already seeded
     const existing = await this.productModel.countDocuments({ tenantId: tId });

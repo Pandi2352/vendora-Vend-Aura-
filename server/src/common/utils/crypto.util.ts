@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 
 export class CryptoUtil {
   static hash(data: string, algorithm: string = 'sha256'): string {
@@ -19,5 +19,9 @@ export class CryptoUtil {
   static generateRandomToken(byteLength: number = 32): string {
     return randomBytes(byteLength).toString('hex');
   }
-}
 
+  /** Cryptographically secure numeric code (OTP), zero-padded to `digits`. */
+  static generateNumericCode(digits: number = 6): string {
+    return randomInt(0, 10 ** digits).toString().padStart(digits, '0');
+  }
+}

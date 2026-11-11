@@ -1,26 +1,18 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Matches,
-  Min,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Min, MinLength, ValidateNested, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AddressDto, IsGstin, IsIndianMobile } from '../../../common';
 
 export class CreateCustomerDto {
-
   @ApiProperty({ example: 'Arun Kumar', description: 'Customer full name' })
   @IsString()
   @MinLength(2)
+  @MaxLength(120)
   @IsNotEmpty()
   name: string;
 
   @ApiProperty({ example: '9840123456', description: 'Mobile / WhatsApp number' })
-  @IsString()
-  @IsNotEmpty()
+  @IsIndianMobile()
   phone: string;
 
   @ApiPropertyOptional({ example: 'arun@gmail.com' })
@@ -29,7 +21,7 @@ export class CreateCustomerDto {
   email?: string;
 
   @ApiPropertyOptional({ example: '33AAAAA1234A1Z5', description: 'GSTIN for B2B Retail billing' })
-  @IsString()
+  @IsGstin()
   @IsOptional()
   gstin?: string;
 
@@ -39,20 +31,15 @@ export class CreateCustomerDto {
   @IsOptional()
   creditLimit?: number;
 
-  @ApiPropertyOptional({
-    example: { street: '15 Anna Salai', city: 'Chennai', state: 'Tamil Nadu', pincode: '600002' },
-  })
+  @ApiPropertyOptional({ type: AddressDto })
   @IsOptional()
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
-  };
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address?: AddressDto;
 
   @ApiPropertyOptional({ example: 'Regular neighbourhood customer' })
   @IsString()
+  @MaxLength(500)
   @IsOptional()
   notes?: string;
 }
-

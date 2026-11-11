@@ -31,7 +31,7 @@ export function CustomersView({ customers, loading, onRefreshCustomers, shopName
     setStatement([]);
     setLoadingStatement(true);
     try {
-      const list = unwrap<CustomerStatementItem[]>(await api.get(`/customers/${customer.id}/statement`));
+      const list = unwrap<CustomerStatementItem[]>(await api.get(`/customers/${customer.id}/statement`, { params: { limit: 100 } }));
       setStatement(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Failed to load customer statement:', err);

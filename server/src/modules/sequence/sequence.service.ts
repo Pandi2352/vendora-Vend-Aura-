@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { Counter, CounterDocument } from './counter.schema';
+import { DateUtil } from '../../common';
 
 export interface NextNumberOptions {
   tenantId: Types.ObjectId | string;
@@ -24,7 +25,7 @@ export class SequenceService {
 
   /** Returns the next document number, e.g. INV-2026-00042. Safe under concurrency. */
   async next(options: NextNumberOptions): Promise<string> {
-    const year = this.currentYear(options.timezone);
+    const year = DateUtil.yearIn(options.timezone);
     const numberPrefix = `${options.prefix}-${year}-`;
     const key = `${options.tenantId.toString()}:${options.prefix}:${year}`;
 
@@ -56,13 +57,5 @@ export class SequenceService {
     return this.counterModel
       .findOneAndUpdate({ key }, { $inc: { seq: 1 } }, { new: true, session })
       .lean();
-  }
-
-  private currentYear(timezone = 'Asia/Kolkata'): string {
-    try {
-      return new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric' }).format(new Date());
-    } catch {
-      return String(new Date().getUTCFullYear());
-    }
   }
 }

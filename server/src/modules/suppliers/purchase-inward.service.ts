@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model, Types } from 'mongoose';
+import { Connection, FilterQuery, Model, Types } from 'mongoose';
 import { Purchase, PurchaseDocument } from './schemas/purchase.schema';
 import { Supplier, SupplierDocument } from './schemas/supplier.schema';
 import { Product, ProductDocument } from '../catalog/schemas/product.schema';
 import { StockLedger, StockLedgerDocument } from '../orders/schemas/stock-ledger.schema';
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { DateUtil, NumberUtil, runInTransaction, toDocumentView } from '../../common';
+import { DateUtil, NumberUtil, ObjectIdUtil, PaginationUtil, runInTransaction, toDocumentView } from '../../common';
+import { PurchaseQueryDto } from './dto/supplier-query.dto';
 import { SequenceService } from '../sequence/sequence.service';
 
 @Injectable()
@@ -30,21 +31,15 @@ export class PurchaseInwardService {
    * written in one transaction where supported.
    */
   async createPurchaseInward(tenantId: string, dto: CreatePurchaseDto, outletIdHint?: string) {
-    const tenantObjectId = new Types.ObjectId(tenantId);
+    const tenantObjectId = ObjectIdUtil.toObjectId(tenantId, 'tenant');
 
-    if (!Types.ObjectId.isValid(dto.supplierId)) throw new NotFoundException('Supplier not found.');
     const supplier = await this.supplierModel.findOne({
-      _id: new Types.ObjectId(dto.supplierId),
+      _id: ObjectIdUtil.toObjectId(dto.supplierId, 'supplier'),
       tenantId: tenantObjectId,
     });
     if (!supplier) throw new NotFoundException('Supplier not found.');
 
-    const productIds = dto.items.map((item) => {
-      if (!Types.ObjectId.isValid(item.productId)) {
-        throw new BadRequestException(`Invalid product ${item.productId}.`);
-      }
-      return new Types.ObjectId(item.productId);
-    });
+    const productIds = dto.items.map((item) => ObjectIdUtil.toObjectId(item.productId, 'product'));
     const products = await this.productModel.find({ _id: { $in: productIds }, tenantId: tenantObjectId }).lean();
     const productsById = new Map(products.map((p) => [p._id.toString(), p]));
 
@@ -76,8 +71,9 @@ export class PurchaseInwardService {
     const paymentStatus = balanceDue === 0 ? 'PAID' : amountPaid > 0 ? 'PARTIAL' : 'UNPAID';
 
     let outletId: Types.ObjectId;
-    if (outletIdHint && Types.ObjectId.isValid(outletIdHint)) {
-      outletId = new Types.ObjectId(outletIdHint);
+    const hinted = ObjectIdUtil.toObjectIdOrNull(outletIdHint);
+    if (hinted) {
+      outletId = hinted;
     } else {
       const primaryOutlet = await this.outletModel.findOne({ tenantId: tenantObjectId, isPrimary: true }).select('_id').lean();
       if (!primaryOutlet) throw new BadRequestException('This shop has no outlet configured.');
@@ -158,25 +154,27 @@ export class PurchaseInwardService {
     return toDocumentView(purchase.toObject());
   }
 
-  async getPurchases(tenantId: string, supplierId?: string, limit: number = 50) {
-    if (!Types.ObjectId.isValid(tenantId)) throw new BadRequestException('Invalid Tenant ID');
-    const filter: any = { tenantId: new Types.ObjectId(tenantId) };
-    if (supplierId && Types.ObjectId.isValid(supplierId)) {
-      filter.supplierId = new Types.ObjectId(supplierId);
-    }
-    const purchases = await this.purchaseModel.find(filter).sort({ receivedDate: -1 }).limit(limit).lean();
-    return purchases.map(toDocumentView);
+  async getPurchases(tenantId: string, query: PurchaseQueryDto) {
+    const filter: FilterQuery<PurchaseDocument> = { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') };
+    const supplierId = ObjectIdUtil.toObjectIdOrNull(query.supplierId);
+    if (supplierId) filter.supplierId = supplierId;
+
+    const result = await PaginationUtil.paginate(this.purchaseModel, filter, {
+      page: query.page,
+      limit: query.limit,
+      sort: { receivedDate: -1 },
+    });
+    return { ...result, data: result.data.map(toDocumentView) };
   }
 
   async getPurchaseById(tenantId: string, purchaseId: string) {
-    if (!Types.ObjectId.isValid(purchaseId) || !Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid ID');
-    }
     const purchase = await this.purchaseModel
-      .findOne({ _id: new Types.ObjectId(purchaseId), tenantId: new Types.ObjectId(tenantId) })
+      .findOne({
+        _id: ObjectIdUtil.toObjectId(purchaseId, 'purchase'),
+        tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'),
+      })
       .lean();
-    if (!purchase) throw new NotFoundException(`Purchase shipment not found.`);
+    if (!purchase) throw new NotFoundException('Purchase shipment not found.');
     return toDocumentView(purchase);
   }
 }
-

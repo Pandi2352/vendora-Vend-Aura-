@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt');
   await db.collection('tenants').insertOne({ _id: tenantId, shopId: 'smoke', businessName: 'Smoke Store', ownerName: 'Owner', email: 'o@x.in', phone: '9999999999', businessType: 'GROCERY', status: 'TRIAL', primaryOutletId: outletId, settings: { timezone: 'Asia/Kolkata', gstin: '33ABCDE1234F1Z5', address: { city: 'Chennai', state: 'TN', pincode: '600001' } }, isActive: true });
   await db.collection('outlets').insertOne({ _id: outletId, tenantId, name: 'Main', code: 'OUT-01', isPrimary: true, address: { city: 'Chennai', pincode: '600001', state: 'TN' }, isActive: true });
   await db.collection('users').insertOne({ tenantId, outletIds: [outletId], username: 'smoke_admin', email: 'o@x.in', fullName: 'Owner', passwordHash: await bcrypt.hash('TempPass1!', 10), role: 'OWNER', isTemporaryPassword: true, isActive: true });
+  await db.collection('users').insertOne({ tenantId, outletIds: [outletId], username: 'smoke_cashier', email: 'c@x.in', fullName: 'Cashier', passwordHash: await bcrypt.hash('Cashier123!', 10), role: 'CASHIER', isTemporaryPassword: false, isActive: true });
   const other = new mongoose.Types.ObjectId();
   await db.collection('tenants').insertOne({ _id: other, shopId: 'other', businessName: 'Other', ownerName: 'X', email: 'x@x.in', phone: '1', businessType: 'GROCERY', status: 'TRIAL', isActive: true });
   const r = await db.collection('products').insertMany([

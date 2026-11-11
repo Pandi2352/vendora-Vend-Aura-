@@ -49,4 +49,15 @@ export class StringUtil {
     if (clean.length < 4) return phone;
     return `******${clean.slice(-4)}`;
   }
+
+  /** Escapes user input for safe use inside a RegExp (prevents regex injection / ReDoS). */
+  static escapeRegex(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /** Case-insensitive "contains" regex from user search text, or null when empty. */
+  static searchRegex(search?: string | null, maxLength = 100): RegExp | null {
+    const term = search?.trim().slice(0, maxLength);
+    return term ? new RegExp(StringUtil.escapeRegex(term), 'i') : null;
+  }
 }

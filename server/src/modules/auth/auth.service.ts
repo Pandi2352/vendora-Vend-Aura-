@@ -5,16 +5,16 @@ import {
   NotFoundException 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { createHash, randomUUID, timingSafeEqual } from 'crypto';
+import { randomUUID } from 'crypto';
 import { User, UserDocument } from '../user/schemas/user.schema';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { TenantStatus } from '../../shared';
-import { DateUtil } from '../../common';
+import { CryptoUtil, DateUtil, ObjectIdUtil } from '../../common';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -98,9 +98,8 @@ export class AuthService {
       throw new UnauthorizedException('Session expired. Please log in again.');
     }
 
-    const user = decoded.sub && Types.ObjectId.isValid(decoded.sub)
-      ? await this.userModel.findById(decoded.sub)
-      : null;
+    const userId = ObjectIdUtil.toObjectIdOrNull(decoded.sub);
+    const user = userId ? await this.userModel.findById(userId) : null;
     if (!user || !user.isActive || !user.refreshTokenHash) {
       throw new UnauthorizedException('Invalid or expired refresh token session.');
     }
@@ -159,13 +158,17 @@ export class AuthService {
    * shares its first 72 bytes, so bcrypt would accept any old refresh token.
    */
   private hashRefreshToken(token: string): string {
-    return createHash('sha256').update(token).digest('hex');
+    return CryptoUtil.hash(token);
   }
 
   private matchesRefreshHash(token: string, storedHash: string): boolean {
-    const candidate = Buffer.from(this.hashRefreshToken(token), 'hex');
-    const stored = Buffer.from(storedHash, 'hex');
-    return stored.length === candidate.length && timingSafeEqual(stored, candidate);
+    return CryptoUtil.constantTimeCompare(this.hashRefreshToken(token), storedHash);
+  }
+
+  /** Revokes the refresh token so the session cannot be renewed. */
+  async logout(userId: string) {
+    await this.userModel.updateOne({ _id: ObjectIdUtil.toObjectId(userId, 'user') }, { $unset: { refreshTokenHash: 1 } });
+    return { message: 'Logged out' };
   }
 
   private async resolveOutlet(tenant: TenantDocument, user: UserDocument) {

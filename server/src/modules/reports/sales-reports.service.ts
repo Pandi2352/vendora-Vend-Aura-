@@ -1,3 +1,4 @@
+import { ObjectIdUtil } from '../../common';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -55,10 +56,7 @@ export class SalesReportsService {
     tenantId: string,
     query: ReportsQueryDto,
   ): Promise<ExecutiveOverviewResult> {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-    const tid = new Types.ObjectId(tenantId);
+    const tid = ObjectIdUtil.toObjectId(tenantId, 'tenant');
     const { startDate, endDate } = resolveReportDateRange(query);
 
     // Fetch orders & returns in window

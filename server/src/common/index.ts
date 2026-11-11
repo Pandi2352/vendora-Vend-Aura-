@@ -4,6 +4,14 @@ export * from './interfaces/base-document.interface';
 
 // Constants
 export * from './constants/error-codes.constant';
+export * from './constants/app.constant';
+
+// Config
+export * from './config/env.validation';
+
+// Validators & Pipes
+export * from './validators/business-validators';
+export * from './pipes/parse-object-id.pipe';
 
 // Schemas
 export * from './schemas/base.schema';
@@ -13,6 +21,7 @@ export * from './dto/pagination.dto';
 export * from './dto/search-query.dto';
 export * from './dto/date-range.dto';
 export * from './dto/id-param.dto';
+export * from './dto/address.dto';
 
 // Decorators
 export * from './decorators/public.decorator';
@@ -33,6 +42,7 @@ export * from './utils/array.util';
 export * from './utils/pagination.util';
 export * from './utils/transaction.util';
 export * from './utils/document-view.util';
+export * from './utils/object-id.util';
 
 // Interceptors & Filters
 export * from './interceptors/transform-response.interceptor';

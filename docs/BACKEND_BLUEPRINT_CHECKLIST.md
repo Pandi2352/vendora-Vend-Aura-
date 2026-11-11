@@ -67,14 +67,14 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 
 ### 1. Project Setup & Architecture
 - [x] Project initialization and configuration
-- [x] TypeScript strict configuration
+- [ ] TypeScript strict configuration — _strictNullChecks is off in server/tsconfig.json_
 - [x] NestJS application bootstrap
 - [x] Standard folder structure
 - [x] Module architecture
 - [x] Naming conventions
-- [x] Import aliases
-- [x] Environment separation (local, development, staging, production)
-- [x] ESLint and Prettier
+- [ ] Import aliases — _only baseUrl; no path aliases configured_
+- [ ] Environment separation (local, development, staging, production) — _only .env.local / .env_
+- [ ] ESLint and Prettier — _no ESLint/Prettier config or dependencies in server/_
 - [x] Package scripts
 - [x] Git configuration and .gitignore
 - [x] README and setup documentation
@@ -91,10 +91,10 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] Database connection module
 - [x] Schema naming conventions
 - [x] Common index conventions
-- [x] ObjectId validation and conversion
+- [x] ObjectId validation and conversion — _`ObjectIdUtil` + `ParseObjectIdPipe`_
 - [x] Database error handling
-- [x] Duplicate-key error handling
-- [x] Database transaction conventions
+- [x] Duplicate-key error handling — _only code 11000 maps to 409; CastError/ValidationError map to 400_
+- [x] Database transaction conventions — _`runInTransaction()` in common/utils_
 
 ### 3. Common Database Patterns
 - [ ] Repository pattern (where useful)
@@ -104,7 +104,7 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] Find by condition
 - [x] Create and update conventions
 - [ ] Soft delete and restore
-- [x] Pagination queries
+- [x] Pagination queries — _`PaginationUtil.paginate` used by every list endpoint_
 - [x] Filtering and sorting queries
 - [x] Database document-to-response mapping
 - [x] Projection and field selection
@@ -114,7 +114,7 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] Standard success response format
 - [x] Standard error response format
 - [x] Common response interfaces
-- [x] Common response DTOs
+- [ ] Common response DTOs — _response shape is an interface + interceptor, no Swagger response DTOs_
 - [x] Global response interceptor
 - [x] Global exception filter
 - [x] Standard error codes
@@ -147,7 +147,7 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] 404 — Not Found
 - [x] 409 — Conflict
 - [x] 422 — Unprocessable Entity
-- [ ] 429 — Too Many Requests
+- [x] 429 — Too Many Requests — _@nestjs/throttler_
 - [x] 500 — Internal Server Error
 - [ ] 503 — Service Unavailable
 
@@ -185,19 +185,19 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [ ] `@Permissions()`
 - [ ] `@ApiPaginatedResponse()`
 - [x] `@RequestId()`
-- [x] Custom validation decorators
-- [x] Reusable Swagger decorators
+- [x] Custom validation decorators — _`@IsIndianMobile()`, `@IsGstin()`, `@IsPincode()`_
+- [ ] Reusable Swagger decorators — _none created yet_
 
 ### 9. Common Guards, Pipes & Interceptors
 - [x] JWT authentication guard
-- [ ] Authorization guard
+- [x] Authorization guard — _`PlatformAdminGuard`, `@TenantId()` tenant scoping_
 - [x] Roles guard
 - [ ] Permissions guard
 - [x] Global validation pipe
 - [x] Response interceptor
 - [x] Logging interceptor
 - [ ] Request timeout handling
-- [ ] Rate-limit guard (where required)
+- [x] Rate-limit guard (where required) — _global ThrottlerGuard + stricter `@Throttle` on login/OTP_
 - [x] Global exception filter
 
 ### 10. Common Utility Functions
@@ -214,7 +214,7 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] ISO date formatting
 - [x] Date parsing and validation
 - [x] Add/subtract days, hours and minutes
-- [x] Start/end of day with explicit timezone
+- [x] Start/end of day with explicit timezone — _`DateUtil.startOfDay(date, timeZone)`_
 - [x] Date comparison
 - [x] Expiry calculation
 - [x] Duration calculation
@@ -243,12 +243,12 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [ ] MIME type validation
 - [x] Query parameter parsing
 - [x] Pagination calculation
-- [ ] Search/filter parsing
+- [x] Search/filter parsing — _`StringUtil.searchRegex` (escaped), `PaginationUtil.resolveSort` (whitelisted)_
 - [x] Sensitive-data masking
 
 ### 11. Configuration Management
 - [x] Centralized ConfigModule
-- [ ] Environment variable validation
+- [x] Environment variable validation — _`validateEnv` in common/config_
 - [x] Typed configuration
 - [x] .env.example
 - [ ] Environment-specific settings
@@ -283,20 +283,20 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [ ] Pagination documentation
 - [ ] File upload documentation
 - [x] API tags and grouping
-- [ ] Production access restrictions
+- [x] Production access restrictions — _Swagger disabled in production unless SWAGGER_ENABLED=true_
 
 ### 14. Authentication Foundation
 - [x] Registration
 - [x] Login
-- [ ] Logout
+- [x] Logout — _POST /auth/logout revokes the refresh token_
 - [x] Password hashing
 - [x] JWT access token
-- [ ] Refresh token
+- [x] Refresh token — _separate secret, rotation, SHA-256 hash_
 - [x] Token verification
 - [x] Token expiry handling
 - [x] Authentication guards
 - [x] Current user decorator
-- [x] Password reset
+- [ ] Password reset — _change-password only; no forgot/reset-by-email flow_
 - [x] Email verification
 - [x] Basic role-based authorization
 
@@ -310,7 +310,7 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] Dynamic template variables
 - [x] Welcome email
 - [x] Email verification template
-- [x] Password reset template
+- [ ] Password reset template — _mail service has OTP + welcome templates only_
 - [ ] Invitation template
 - [x] Email error handling
 - [ ] Provider timeout and retry conventions
@@ -319,13 +319,13 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] Global validation pipe
 - [x] DTO validation using class-validator
 - [ ] Input sanitization where appropriate
-- [ ] Request body limits
+- [x] Request body limits — _1 MB JSON / urlencoded_
 - [x] CORS configuration
-- [ ] Helmet security headers
+- [x] Helmet security headers
 - [x] Password security
 - [x] Secure environment variables
-- [ ] Basic rate limiting
-- [ ] NoSQL injection protection
+- [x] Basic rate limiting
+- [x] NoSQL injection protection — _whitelisted DTOs, escaped search regex, validated ObjectIds_
 - [x] Sensitive field exclusion
 - [x] Secure error responses
 
@@ -337,8 +337,8 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [ ] Database integration tests
 - [ ] Mock service patterns
 - [ ] Test data factories
-- [ ] Authentication tests
-- [ ] API response contract tests
+- [x] Authentication tests — _API smoke suite in server/test/smoke_
+- [x] API response contract tests — _API smoke suite in server/test/smoke_
 - [ ] Error handling tests
 - [ ] Environment-specific test configuration
 
@@ -347,10 +347,10 @@ This blueprint is designed for multiple enterprise-grade backend projects. It is
 - [x] Liveness endpoint
 - [x] Readiness endpoint
 - [x] Database connectivity check
-- [ ] Graceful shutdown
-- [ ] Connection cleanup
-- [ ] Process signal handling
-- [ ] Startup validation
+- [x] Graceful shutdown — _`app.enableShutdownHooks()`_
+- [x] Connection cleanup — _Mongoose connection closed by Nest on shutdown_
+- [x] Process signal handling — _SIGTERM / SIGINT via shutdown hooks_
+- [x] Startup validation — _env validation fails fast_
 
 ### 19. DevOps & Deployment Basics
 - [ ] Dockerfile
@@ -406,7 +406,7 @@ users/
 - [x] Tenant isolation
 - [ ] Advanced indexing
 - [x] Compound indexes
-- [x] Database transactions
+- [x] Database transactions — _billing, returns, GRNs, payments (replica set required)_
 - [ ] Aggregation pipelines
 - [ ] Read/write optimization
 - [ ] Data archival
@@ -777,3 +777,27 @@ Start here:
 2. **Domain Isolation**: Business-specific schemas, services, permissions, and workflows must remain inside their respective feature modules (`modules/`).
 3. **Progressive Delivery**: Don't build all 42 sections before your first feature. Finish **Level 1**, validate the foundation with a real business module, and progressively introduce **Level 2** capabilities as project scale and complexity demand.
 
+---
+
+## ✅ Audit Notes (Nov 2026)
+
+Reusable building blocks every module must use (all exported from `server/src/common`):
+
+| Need | Use | Never |
+| :--- | :--- | :--- |
+| Tenant of the request | `@TenantId()` | `?tenantId=` / `body.tenantId` |
+| Validate / convert IDs | `ObjectIdUtil.toObjectId(id, 'label')`, `@Param('id', ParseObjectIdPipe)` | `new Types.ObjectId(...)` / `Types.ObjectId.isValid` in services |
+| List endpoints | `PaginationDto` / `SearchQueryDto` + `PaginationUtil.paginate()` → return `{ data, meta }` | unbounded `find()` |
+| Sorting by client field | `PaginationUtil.resolveSort(sortBy, dir, ALLOWED, fallback)` | passing `sortBy` straight to Mongo |
+| Search boxes | `StringUtil.searchRegex(search)` | `new RegExp(userInput)` |
+| Multi-document writes | `runInTransaction(connection, session => ...)` | separate unrelated writes |
+| Document numbers | `SequenceService.next({ prefix: 'INV' \| 'RET' \| 'SHIFT' \| 'GRN' })` | `countDocuments() + 1` |
+| Phone / GSTIN / PIN / address | `@IsIndianMobile()`, `@IsGstin()`, `@IsPincode()`, `AddressDto` | ad-hoc regex or untyped objects |
+| Role checks | `@Roles(...ROLE_GROUPS.MANAGEMENT \| FINANCE)` | inline role `if`s |
+| Hashing / tokens / OTP | `CryptoUtil.hash`, `constantTimeCompare`, `generateRandomToken`, `generateNumericCode` | `Math.random`, bcrypt on JWTs |
+| Dates | `DateUtil` (timezone-aware day/FY boundaries, `yearIn`) | `new Date().getFullYear()`, server-local `setHours` |
+| Response ids | `withId()` / `toDocumentView()` | hand-written field mapping |
+| Controller return | `{ data }` or `{ message, data }` (interceptor adds the envelope) | `success: true`, `statusCode` |
+
+Known exceptions: `GET /catalog/products` is intentionally unpaginated (the POS keeps the full catalog in memory);
+`GET /saas-admin/tenants` returns all tenants (batched queries) because the admin UI filters client-side.

@@ -58,7 +58,9 @@ function check(name, cond, extra) {
   check('old refresh token revoked after rotation', r.status === 401, r);
 
   r = await call('GET', `/catalog/products?tenantId=${ids.other}`, null, accessToken);
-  check('tenantId query ignored (only own products)', r.status === 200 && r.json.data.length === 2 && r.json.data.every((p) => p.name !== 'Foreign'), r.json?.data);
+  check('tenantId query param rejected', r.status === 400, r.json);
+  r = await call('GET', '/catalog/products', null, accessToken);
+  check('catalog returns only own products', r.status === 200 && r.json.data.length === 2 && r.json.data.every((p) => p.name !== 'Foreign'), r.json?.data);
 
   r = await call('POST', '/orders', { items: [{ productId: ids.soap, quantity: 1 }], paymentMode: 'CASH' }, accessToken);
   check('billing without open shift -> 400', r.status === 400 && /shift/i.test(r.json.message), r.json);
@@ -119,6 +121,58 @@ function check(name, cond, extra) {
   r = await call('POST', '/orders/shifts/close', { shiftId: String(shift._id), actualCashCounted: shift.expectedCash }, accessToken);
   check('close shift', r.status === 201 && r.json.data.status === 'CLOSED' && r.json.data.variance === 0, r.json);
 
+  // ---- reusable foundation checks ----
+  r = await call('GET', '/orders?limit=2&page=1', null, accessToken);
+  check('paginated orders: meta present', r.status === 200 && r.json.data.length === 2 && r.json.meta && r.json.meta.total === 7 && r.json.meta.hasNextPage, r.json?.meta);
+  r = await call('GET', '/orders?limit=500', null, accessToken);
+  check('page size above 100 rejected', r.status === 400, r.json);
+  r = await call('GET', '/orders/not-an-id', null, accessToken);
+  check('invalid :id -> 400', r.status === 400, r.json);
+  r = await call('GET', '/customers?search=' + encodeURIComponent('(a+)+$'), null, accessToken);
+  check('regex special chars in search are safe', r.status === 200 && Array.isArray(r.json.data), r.json);
+  r = await call('POST', '/customers', { name: 'Bad Phone', phone: '12345' }, accessToken);
+  check('invalid mobile rejected', r.status === 400, r.json);
+  r = await call('POST', '/customers', { name: 'Kumar', phone: '+91 9876500000', gstin: '33abcde1234f1z5' }, accessToken);
+  check('customer created (phone normalised, GSTIN uppercased)', r.status === 201 && r.json.data.phone === '9876500000' && r.json.data.gstin === '33ABCDE1234F1Z5' && r.json.data.id, r.json);
+  r = await call('POST', `/customers/${ids.customer}/payment`, { amount: 100000, paymentMode: 'CASH' }, accessToken);
+  check('khata over-payment rejected', r.status === 400, r.json);
+  r = await call('POST', `/customers/${ids.customer}/payment`, { amount: 10, paymentMode: 'UPI' }, accessToken);
+  check('khata payment ok', r.status === 201 && r.json.data.balanceAfter >= 0, r.json);
+  r = await call('GET', `/customers/${ids.customer}/statement`, null, accessToken);
+  check('statement paginated', r.status === 200 && r.json.meta && r.json.data.length >= 2, r.json?.meta);
+
+  r = await call('POST', '/suppliers', { name: 'Meenakshi Traders', phone: '9840122334' }, accessToken);
+  check('supplier created', r.status === 201, r.json);
+  const supplierId = r.json?.data?.id;
+  r = await call('POST', '/suppliers/inward', { supplierId, items: [{ productId: ids.rice, name: 'Rice', barcode: 'R1', quantityReceived: 10, unitCostPrice: 80, taxRatePercent: 5 }], paymentStatus: 'UNPAID', amountPaid: 0 }, accessToken);
+  check('GRN recorded, totals recomputed', r.status === 201 && r.json.data.grandTotal === 840 && /^GRN-\d{4}-00001$/.test(r.json.data.grnNumber), r.json);
+  r = await call('POST', `/suppliers/${supplierId}/pay`, { amount: 900, paymentMode: 'UPI' }, accessToken);
+  check('supplier over-payment rejected', r.status === 400, r.json);
+  r = await call('POST', `/suppliers/${supplierId}/pay`, { amount: 400, paymentMode: 'UPI' }, accessToken);
+  check('supplier payment ok', r.status === 201 && r.json.data.balanceDue === 440, r.json);
+  r = await call('GET', `/suppliers/${supplierId}/payments`, null, accessToken);
+  check('supplier payment ledger', r.status === 200 && r.json.data.length === 1 && r.json.data[0].balanceAfter === 440, r.json);
+
+  // roles: cashier can bill but not manage suppliers / see reports
+  r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
+  const cashierToken = r.json?.data?.accessToken;
+  r = await call('GET', '/suppliers', null, cashierToken);
+  check('cashier blocked from suppliers', r.status === 403, r.json);
+  r = await call('GET', '/reports/executive?period=today', null, cashierToken);
+  check('cashier blocked from reports', r.status === 403, r.json);
+  r = await call('PUT', `/customers/${ids.customer}`, { creditLimit: 999999 }, cashierToken);
+  check('cashier cannot raise credit limit', r.status === 403, r.json);
+  r = await call('GET', '/catalog/products', null, cashierToken);
+  check('cashier can read catalog', r.status === 200, r.json);
+  r = await call('POST', '/auth/logout', null, cashierToken);
+  check('logout ok', r.status === 200, r.json);
+
+  // onboarding shop ID rules shared between check + registration
+  r = await call('GET', '/onboarding/check-subdomain?shopId=admin');
+  check('reserved shop id rejected', r.status === 200 && r.json.data.isAvailable === false, r.json);
+  r = await call('POST', '/onboarding/complete-registration', { sessionId: 'x', businessName: 'Shop', ownerName: 'Owner', phone: '9876543210', businessType: 'GROCERY', preferredShopId: 'my-shop-long', address: { city: 'Chennai' } });
+  check('registration rejects invalid shop id format', r.status === 400, r.json);
+
   // suspend tenant -> existing access token stops working
   const tenants = await call('GET', '/saas-admin/tenants', null, adminToken);
   check('admin tenants list', tenants.status === 200, tenants.json);
@@ -133,6 +187,10 @@ function check(name, cond, extra) {
 
   r = await call('POST', '/onboarding/request-otp', { email: 'new@shop.in', plan: 'GROWTH' });
   check("request-otp with old 'plan' field -> 400", r.status === 400, r.json);
+
+  // rate limit on admin login (5 / minute)
+  const attempts = await Promise.all([...Array(7)].map(() => call('POST', '/saas-admin/login', { username: 'x', password: 'y' })));
+  check('admin login rate-limited -> 429', attempts.some((a) => a.status === 429), attempts.map((a) => a.status));
 
   console.log(`\n${pass} passed, ${fail} failed`);
 })().catch((e) => { console.error(e); process.exit(1); });

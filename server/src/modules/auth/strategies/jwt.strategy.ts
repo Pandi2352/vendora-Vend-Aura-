@@ -3,10 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { Tenant, TenantDocument } from '../../tenant/schemas/tenant.schema';
-import { AuthenticatedUser } from '../../../common';
+import { AuthenticatedUser, ObjectIdUtil } from '../../../common';
 import { TenantStatus, UserRole } from '../../../shared';
 
 export const PLATFORM_ADMIN_SUBJECT = 'platform-super-admin';
@@ -45,7 +45,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       };
     }
 
-    if (!payload.sub || !Types.ObjectId.isValid(payload.sub)) {
+    if (!ObjectIdUtil.isValid(payload.sub)) {
       throw new UnauthorizedException('Invalid session token.');
     }
 

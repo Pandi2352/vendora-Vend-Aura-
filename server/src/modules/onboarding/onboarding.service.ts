@@ -27,7 +27,9 @@ import {
   TenantStatus, 
   UserRole 
 } from '../../shared';
-import { UuidUtil, DateUtil } from '../../common';
+import { CryptoUtil, UuidUtil, DateUtil } from '../../common';
+
+const RESERVED_SHOP_IDS = ['admin', 'api', 'app', 'www', 'mail', 'billing', 'pos', 'vendora', 'root', 'support'];
 
 @Injectable()
 export class OnboardingService {
@@ -52,7 +54,7 @@ export class OnboardingService {
   // 2. Request Email Verification OTP
   async requestOtp(dto: RequestOtpDto) {
     const email = dto.email.toLowerCase().trim();
-    const otp = UuidUtil.generateNumericOtp(6);
+    const otp = CryptoUtil.generateNumericCode(6);
     const otpHash = await bcrypt.hash(otp, 10);
     const otpExpiresAt = DateUtil.addMinutes(new Date(), 5); // 5 mins TTL
     const sessionId = UuidUtil.generatePublicId('reg_');
@@ -113,40 +115,22 @@ export class OnboardingService {
   }
 
   // 4. Check Subdomain / Shop ID Availability
+  /** Shop ID rules shared by the availability check and registration. Returns a reason when invalid. */
+  private shopIdProblem(slug: string): string | null {
+    if (!slug) return 'Customer ID is required.';
+    if (slug.length < 3 || slug.length > 6) return 'Customer ID must be between 3 and 6 letters or numbers.';
+    if (!/^[a-z0-9]+$/.test(slug)) return 'Only alphanumeric characters (letters and numbers) are allowed.';
+    if (RESERVED_SHOP_IDS.includes(slug)) {
+      return `Customer ID "${slug}" is a reserved system identifier. Please choose another.`;
+    }
+    return null;
+  }
+
   async checkSubdomain(shopId: string) {
     const slug = (shopId || '').toLowerCase().trim();
-    if (!slug) {
-      return {
-        shopId: '',
-        isAvailable: false,
-        reason: 'Customer ID is required.',
-      };
-    }
-
-    if (slug.length < 3 || slug.length > 6) {
-      return {
-        shopId: slug,
-        isAvailable: false,
-        reason: 'Customer ID must be between 3 and 6 letters or numbers.',
-      };
-    }
-
-    if (!/^[a-z0-9]+$/.test(slug)) {
-      return {
-        shopId: slug,
-        isAvailable: false,
-        reason: 'Only alphanumeric characters (letters and numbers) are allowed.',
-      };
-    }
-
-    const reserved = ['admin', 'api', 'app', 'www', 'mail', 'billing', 'pos', 'vendora', 'root', 'support'];
-    
-    if (reserved.includes(slug)) {
-      return {
-        shopId: slug,
-        isAvailable: false,
-        reason: `Customer ID "${slug}" is a reserved system identifier. Please choose another.`,
-      };
+    const problem = this.shopIdProblem(slug);
+    if (problem) {
+      return { shopId: slug, isAvailable: false, reason: problem };
     }
 
     const existing = await this.tenantModel.findOne({ shopId: slug });
@@ -178,6 +162,10 @@ export class OnboardingService {
     }
 
     const shopId = dto.preferredShopId.toLowerCase().trim();
+    const shopIdProblem = this.shopIdProblem(shopId);
+    if (shopIdProblem) {
+      throw new BadRequestException(shopIdProblem);
+    }
 
     // Check uniqueness
     const existing = await this.tenantModel.findOne({ shopId });
@@ -225,7 +213,7 @@ export class OnboardingService {
       });
 
       // Generate Secure Temporary Password (e.g. "Vn7#kM9q!")
-      tempPassword = `Vn${UuidUtil.generateToken(4)}!`;
+      tempPassword = `Vn${CryptoUtil.generateRandomToken(4)}!`;
       const passwordHash = await bcrypt.hash(tempPassword, 10);
       username = `${shopId}_admin`;
 

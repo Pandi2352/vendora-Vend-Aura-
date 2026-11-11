@@ -1,3 +1,4 @@
+import { canManageSuppliers, canViewReports } from '../lib/permissions';
 import { useState, useEffect } from 'react';
 import {
   SignOut,
@@ -114,29 +115,33 @@ export function PosHeader({
           <span>Customers & Khata</span>
         </button>
 
-        <button
-          onClick={() => onTabChange('suppliers')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'suppliers'
-              ? 'bg-red-600 text-white shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
-          }`}
-        >
-          <Truck weight={activeTab === 'suppliers' ? 'bold' : 'regular'} className="w-3.5 h-3.5" />
-          <span>Suppliers</span>
-        </button>
+        {canManageSuppliers(currentUser?.role) && (
+          <button
+            onClick={() => onTabChange('suppliers')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'suppliers'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+            }`}
+          >
+            <Truck weight={activeTab === 'suppliers' ? 'bold' : 'regular'} className="w-3.5 h-3.5" />
+            <span>Suppliers</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => onTabChange('reports')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'reports'
-              ? 'bg-red-600 text-white shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
-          }`}
-        >
-          <ChartLineUp weight={activeTab === 'reports' ? 'bold' : 'regular'} className="w-3.5 h-3.5" />
-          <span>Reports & GST</span>
-        </button>
+        {canViewReports(currentUser?.role) && (
+          <button
+            onClick={() => onTabChange('reports')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'reports'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+            }`}
+          >
+            <ChartLineUp weight={activeTab === 'reports' ? 'bold' : 'regular'} className="w-3.5 h-3.5" />
+            <span>Reports & GST</span>
+          </button>
+        )}
       </nav>
 
       {/* Terminal & Quick Actions & Cashier Info & Sign Out */}

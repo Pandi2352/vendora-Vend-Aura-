@@ -1,29 +1,24 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AddressDto, IsGstin, IsIndianMobile } from '../../../common';
 
 export class CreateSupplierDto {
-
   @ApiProperty({ example: 'Sri Meenakshi Traders', description: 'Supplier / Distributor Trading Name' })
   @IsString()
   @MinLength(2)
+  @MaxLength(150)
   @IsNotEmpty()
   name: string;
 
   @ApiPropertyOptional({ example: 'Murugan K', description: 'Representative / Contact Person Name' })
   @IsString()
+  @MaxLength(120)
   @IsOptional()
   contactPerson?: string;
 
-  @ApiProperty({ example: '+919840122334', description: 'Phone / WhatsApp Number' })
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ example: '9840122334', description: 'Phone / WhatsApp Number' })
+  @IsIndianMobile()
   phone: string;
 
   @ApiPropertyOptional({ example: 'orders@meenakshitraders.in', description: 'Email Address' })
@@ -32,29 +27,26 @@ export class CreateSupplierDto {
   email?: string;
 
   @ApiPropertyOptional({ example: '33AAAAA1234A1Z5', description: 'GSTIN Registration Number' })
-  @IsString()
+  @IsGstin()
   @IsOptional()
   gstin?: string;
 
   @ApiPropertyOptional({ example: 30, description: 'Payment credit terms in days' })
-  @IsNumber()
+  @IsInt()
+  @Min(0)
+  @Max(365)
   @IsOptional()
   creditDays?: number;
 
   @ApiPropertyOptional({ example: 'FMCG & Groceries' })
   @IsString()
+  @MaxLength(80)
   @IsOptional()
   category?: string;
 
-  @ApiPropertyOptional({
-    example: { street: '14 Wholesale Market Road', city: 'Madurai', state: 'Tamil Nadu', pincode: '625001' },
-  })
+  @ApiPropertyOptional({ type: AddressDto })
   @IsOptional()
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
-  };
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address?: AddressDto;
 }
-

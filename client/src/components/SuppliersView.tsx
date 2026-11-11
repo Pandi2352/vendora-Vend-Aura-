@@ -31,8 +31,8 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
     setLoading(true);
     setLoadError('');
     const [supRes, purRes] = await Promise.allSettled([
-      api.get('/suppliers'),
-      api.get('/suppliers/inward/history'),
+      api.get('/suppliers', { params: { limit: 100 } }),
+      api.get('/suppliers/inward/history', { params: { limit: 100 } }),
     ]);
     const errors: string[] = [];
 

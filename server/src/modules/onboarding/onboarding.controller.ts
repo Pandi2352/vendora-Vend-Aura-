@@ -1,3 +1,4 @@
+import { Throttle } from '@nestjs/throttler';
 import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { OnboardingService } from './onboarding.service';
@@ -16,12 +17,12 @@ export class OnboardingController {
   @ApiOperation({ summary: 'Get available SaaS subscription pricing plans' })
   getPlans() {
     return {
-      success: true,
       data: this.onboardingService.getPlans(),
     };
   }
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @Post('request-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request 6-digit email OTP for tenant registration' })
@@ -29,13 +30,13 @@ export class OnboardingController {
   async requestOtp(@Body() dto: RequestOtpDto) {
     const data = await this.onboardingService.requestOtp(dto);
     return {
-      success: true,
       message: 'OTP dispatched successfully',
       data,
     };
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify email ownership using 6-digit OTP' })
@@ -43,7 +44,6 @@ export class OnboardingController {
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     const data = await this.onboardingService.verifyOtp(dto);
     return {
-      success: true,
       message: 'Email verified successfully',
       data,
     };
@@ -56,12 +56,12 @@ export class OnboardingController {
   async checkSubdomain(@Query('shopId') shopId: string) {
     const data = await this.onboardingService.checkSubdomain(shopId || '');
     return {
-      success: true,
       data,
     };
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('complete-registration')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Submit store profile and auto-provision tenant workspace' })
@@ -69,7 +69,6 @@ export class OnboardingController {
   async completeRegistration(@Body() dto: CompleteRegistrationDto) {
     const data = await this.onboardingService.completeRegistration(dto);
     return {
-      success: true,
       message: 'Tenant workspace successfully created! Welcome credentials sent via email.',
       data,
     };

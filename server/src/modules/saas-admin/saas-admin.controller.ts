@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SaasAdminService } from './saas-admin.service';
 import { SaasAdminAnalyticsService } from './saas-admin-analytics.service';
 import { PlatformAdminLoginDto } from './dto/platform-admin-login.dto';
 import { UpdateTenantPlanDto, UpdateTenantStatusDto } from './dto/update-tenant.dto';
-import { Public } from '../../common';
+import { TenantQueryDto } from './dto/tenant-query.dto';
+import { ParseObjectIdPipe, Public } from '../../common';
+import { Throttle } from '@nestjs/throttler';
 import { PlatformAdminGuard } from '../auth/guards/platform-admin.guard';
 
 @ApiTags('SaaS Super Admin Platform Operations')
@@ -18,6 +20,7 @@ export class SaasAdminController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Platform Super Admin Authentication (from .env)' })
@@ -26,7 +29,6 @@ export class SaasAdminController {
   async login(@Body() dto: PlatformAdminLoginDto) {
     const result = await this.saasAdminService.login(dto);
     return {
-      success: true,
       message: 'Platform Admin login successful',
       data: result,
     };
@@ -37,34 +39,24 @@ export class SaasAdminController {
   async getOverview() {
     const data = await this.saasAdminAnalyticsService.getOverviewStats();
     return {
-      success: true,
       data,
     };
   }
 
   @Get('tenants')
   @ApiOperation({ summary: 'List all registered tenants with optional search and filters' })
-  @ApiQuery({ name: 'search', required: false })
-  @ApiQuery({ name: 'status', required: false })
-  @ApiQuery({ name: 'sector', required: false })
-  async getTenants(
-    @Query('search') search?: string,
-    @Query('status') status?: string,
-    @Query('sector') sector?: string,
-  ) {
-    const data = await this.saasAdminService.getAllTenants({ search, status, sector });
+  async getTenants(@Query() query: TenantQueryDto) {
+    const data = await this.saasAdminService.getAllTenants(query);
     return {
-      success: true,
       data,
     };
   }
 
   @Get('tenants/:id')
   @ApiOperation({ summary: 'Get single tenant deep details including outlets and users' })
-  async getTenantById(@Param('id') id: string) {
+  async getTenantById(@Param('id', ParseObjectIdPipe) id: string) {
     const data = await this.saasAdminService.getTenantById(id);
     return {
-      success: true,
       data,
     };
   }
@@ -72,12 +64,11 @@ export class SaasAdminController {
   @Patch('tenants/:id/status')
   @ApiOperation({ summary: 'Update tenant account status (ACTIVE, SUSPENDED, TRIAL)' })
   async updateStatus(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateTenantStatusDto,
   ) {
     const data = await this.saasAdminService.updateTenantStatus(id, dto.status);
     return {
-      success: true,
       message: 'Tenant status successfully updated',
       data,
     };
@@ -86,12 +77,11 @@ export class SaasAdminController {
   @Patch('tenants/:id/plan')
   @ApiOperation({ summary: 'Update tenant subscription plan (FREE_TRIAL, STARTER, GROWTH, BUSINESS)' })
   async updatePlan(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateTenantPlanDto,
   ) {
     const data = await this.saasAdminService.updateTenantPlan(id, dto.plan);
     return {
-      success: true,
       message: 'Tenant subscription plan successfully updated',
       data,
     };
@@ -102,7 +92,6 @@ export class SaasAdminController {
   async getContacts() {
     const data = await this.saasAdminAnalyticsService.getAllContacts();
     return {
-      success: true,
       data,
     };
   }
@@ -112,7 +101,6 @@ export class SaasAdminController {
   async getReports() {
     const data = await this.saasAdminAnalyticsService.getReportsData();
     return {
-      success: true,
       data,
     };
   }

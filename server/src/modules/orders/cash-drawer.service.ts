@@ -8,7 +8,7 @@ import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { OpenShiftDto } from './dto/open-shift.dto';
 import { CloseShiftDto } from './dto/close-shift.dto';
-import { AuthenticatedUser, DateUtil, NumberUtil } from '../../common';
+import { AuthenticatedUser, DateUtil, NumberUtil, ObjectIdUtil, PaginationDto, PaginationUtil } from '../../common';
 import { SequenceService } from '../sequence/sequence.service';
 
 export interface CurrentShiftSummary {
@@ -48,19 +48,19 @@ export class CashDrawerService {
   ) {}
 
   async openShift(tenantIdStr: string, dto: OpenShiftDto, user: AuthenticatedUser) {
-    const tenantId = new Types.ObjectId(tenantIdStr);
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
 
     // Check if an open shift already exists
     const activeShift = await this.shiftModel.findOne({ tenantId, status: 'OPEN' });
     if (activeShift) {
-      return { success: true, isExisting: true, shift: activeShift };
+      return { isExisting: true, shift: activeShift };
     }
 
     const tenant = await this.tenantModel.findById(tenantId).select('primaryOutletId settings').lean();
     let outletId: Types.ObjectId | null = null;
-    const userOutlet = user.outletIds?.[0];
-    if (userOutlet && Types.ObjectId.isValid(userOutlet)) {
-      outletId = new Types.ObjectId(userOutlet);
+    const userOutlet = ObjectIdUtil.toObjectIdOrNull(user.outletIds?.[0]);
+    if (userOutlet) {
+      outletId = userOutlet;
     } else if (tenant?.primaryOutletId) {
       outletId = tenant.primaryOutletId as Types.ObjectId;
     } else {
@@ -106,14 +106,11 @@ export class CashDrawerService {
     });
 
     this.logger.log(`Opened drawer shift ${shiftNumber} with float ₹${dto.openingFloat} for ${cashierName}`);
-    return { success: true, isExisting: false, shift };
+    return { isExisting: false, shift };
   }
 
   async getCurrentShift(tenantId: string): Promise<CurrentShiftSummary | null> {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-    const tid = new Types.ObjectId(tenantId);
+    const tid = ObjectIdUtil.toObjectId(tenantId, 'tenant');
     const shift = await this.shiftModel.findOne({ tenantId: tid, status: 'OPEN' }).lean();
     if (!shift) {
       return null;
@@ -168,10 +165,10 @@ export class CashDrawerService {
   }
 
   async closeShift(tenantIdStr: string, dto: CloseShiftDto) {
-    const tenantId = new Types.ObjectId(tenantIdStr);
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
 
     const shift = await this.shiftModel.findOne({
-      _id: new Types.ObjectId(dto.shiftId),
+      _id: ObjectIdUtil.toObjectId(dto.shiftId, 'shift'),
       tenantId,
       status: 'OPEN',
     });
@@ -201,17 +198,14 @@ export class CashDrawerService {
 
     await shift.save();
     this.logger.log(`Shift ${shift.shiftNumber} CLOSED. Expected: ₹${expectedCash}, Actual: ₹${dto.actualCashCounted}, Variance: ₹${variance}`);
-    return { success: true, shift };
+    return { shift };
   }
 
-  async getShiftHistory(tenantId: string, limit: number = 30) {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-    return this.shiftModel
-      .find({ tenantId: new Types.ObjectId(tenantId) })
-      .sort({ openedAt: -1 })
-      .limit(Math.min(Math.max(limit, 1), 200))
-      .lean();
+  async getShiftHistory(tenantId: string, query: PaginationDto) {
+    return PaginationUtil.paginate(
+      this.shiftModel,
+      { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') },
+      { page: query.page, limit: query.limit, sort: { openedAt: -1 } },
+    );
   }
 }

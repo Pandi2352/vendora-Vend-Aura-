@@ -1,3 +1,4 @@
+import { Throttle } from '@nestjs/throttler';
 import {
   Controller,
   Post,
@@ -19,6 +20,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Store Staff / Cashier Login with Shop ID' })
@@ -27,13 +29,13 @@ export class AuthController {
   async login(@Body() dto: LoginDto) {
     const result = await this.authService.login(dto);
     return {
-      statusCode: HttpStatus.OK,
       message: 'Login successful',
       data: result,
     };
   }
 
   @Public()
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Issue new JWT access token using refresh token' })
@@ -41,7 +43,6 @@ export class AuthController {
   async refresh(@Body() dto: RefreshTokenDto) {
     const result = await this.authService.refreshToken(dto);
     return {
-      statusCode: HttpStatus.OK,
       message: 'Access token refreshed',
       data: result,
     };
@@ -59,7 +60,6 @@ export class AuthController {
   ) {
     const result = await this.authService.changePassword(userId, dto);
     return {
-      statusCode: HttpStatus.OK,
       message: result.message,
     };
   }
@@ -72,8 +72,16 @@ export class AuthController {
   async getProfile(@CurrentUser('userId') userId: string) {
     const profile = await this.authService.getProfile(userId);
     return {
-      statusCode: HttpStatus.OK,
       data: profile,
     };
+  }
+
+  @Post('logout')
+  @AllowTemporaryPassword()
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Log out: revokes the refresh token' })
+  async logout(@CurrentUser('userId') userId: string) {
+    return this.authService.logout(userId);
   }
 }

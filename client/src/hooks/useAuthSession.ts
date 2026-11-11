@@ -155,6 +155,12 @@ export function useAuthSession() {
   }, [currentPassword, newPassword, confirmPassword]);
 
   const handleSignOut = useCallback(() => {
+    // Revoke the refresh token server-side (best effort), then clear locally.
+    // The token is captured now because the request interceptor runs after clearSession().
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      api.post('/auth/logout', null, { headers: { Authorization: `Bearer ${token}` } }).catch(() => undefined);
+    }
     clearSession();
     resetState();
   }, [resetState]);

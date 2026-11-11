@@ -1,24 +1,22 @@
-import { randomUUID, randomBytes } from 'crypto';
+import { randomUUID } from 'crypto';
+import { CryptoUtil } from './crypto.util';
 
 export class UuidUtil {
   static generate(): string {
     return randomUUID();
   }
 
+  /** @deprecated use CryptoUtil.generateRandomToken */
   static generateToken(byteLength: number = 32): string {
-    return randomBytes(byteLength).toString('hex');
+    return CryptoUtil.generateRandomToken(byteLength);
   }
 
+  /** @deprecated use CryptoUtil.generateNumericCode */
   static generateNumericOtp(digits: number = 6): string {
-    const min = Math.pow(10, digits - 1);
-    const max = Math.pow(10, digits) - 1;
-    return Math.floor(min + Math.random() * (max - min + 1)).toString();
+    return CryptoUtil.generateNumericCode(digits);
   }
 
   static generatePublicId(prefix: string = 'id'): string {
-    const timestamp = Date.now().toString(36);
-    const random = randomBytes(4).toString('hex');
-    return `${prefix}_${timestamp}${random}`;
+    return `${prefix}_${Date.now().toString(36)}${CryptoUtil.generateRandomToken(4)}`;
   }
 }
-

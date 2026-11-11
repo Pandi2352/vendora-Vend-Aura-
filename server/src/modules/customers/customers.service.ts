@@ -1,264 +1,185 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  ConflictException,
-  Logger,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, FilterQuery, Model } from 'mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { CustomerLedger, CustomerLedgerDocument } from './schemas/customer-ledger.schema';
 import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { RecordCustomerPaymentDto } from './dto/record-customer-payment.dto';
-import { StringUtil, UuidUtil, NumberUtil } from '../../common';
+import { CustomerQueryDto } from './dto/customer-query.dto';
+import {
+  NumberUtil,
+  ObjectIdUtil,
+  PaginationDto,
+  PaginationUtil,
+  StringUtil,
+  UuidUtil,
+  runInTransaction,
+  withId,
+} from '../../common';
+
+const SORTABLE_FIELDS = ['name', 'currentCreditBalance', 'totalSpent', 'createdAt'] as const;
 
 @Injectable()
 export class CustomersService {
   private readonly logger = new Logger(CustomersService.name);
 
   constructor(
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(Customer.name) private readonly customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerLedger.name) private readonly ledgerModel: Model<CustomerLedgerDocument>,
   ) {}
 
   async createCustomer(tenantId: string, dto: CreateCustomerDto) {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
+    const tenantObjectId = ObjectIdUtil.toObjectId(tenantId, 'tenant');
+    const phone = this.normalizePhone(dto.phone);
 
-    const tenantObjectId = new Types.ObjectId(tenantId);
-    const cleanPhone = StringUtil.sanitizeAlphanumeric(dto.phone).slice(-10);
-
-    const existing = await this.customerModel.findOne({
-      tenantId: tenantObjectId,
-      phone: cleanPhone,
-    });
-
-    if (existing) {
-      throw new ConflictException(`Customer with phone number ${cleanPhone} already exists.`);
+    if (await this.customerModel.exists({ tenantId: tenantObjectId, phone })) {
+      throw new ConflictException(`Customer with phone number ${phone} already exists.`);
     }
 
     const customer = await this.customerModel.create({
       tenantId: tenantObjectId,
       name: dto.name.trim(),
-      phone: cleanPhone,
+      phone,
       email: dto.email?.toLowerCase().trim(),
-      gstin: dto.gstin?.toUpperCase().trim(),
+      gstin: dto.gstin,
       creditLimit: dto.creditLimit ?? 5000,
-      currentCreditBalance: 0,
-      totalPurchasesCount: 0,
-      totalSpent: 0,
-      address: dto.address || {},
+      address: dto.address ?? {},
       notes: dto.notes?.trim(),
-      isActive: true,
     });
 
-    this.logger.log(`Created customer: ${customer.name} (${customer.phone}) for tenant: ${tenantId}`);
-    return customer;
+    this.logger.log(`Created customer ${customer.name} (${StringUtil.maskPhone(phone)}) for tenant ${tenantId}`);
+    return withId(customer.toObject());
   }
 
-  async getCustomers(tenantId: string, search?: string) {
-    if (!Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid Tenant ID');
-    }
-
-    const filter: any = { tenantId: new Types.ObjectId(tenantId) };
-
-    if (search && search.trim()) {
-      const regex = new RegExp(search.trim(), 'i');
+  async getCustomers(tenantId: string, query: CustomerQueryDto) {
+    const filter: FilterQuery<CustomerDocument> = { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') };
+    const regex = StringUtil.searchRegex(query.search);
+    if (regex) {
       filter.$or = [{ name: regex }, { phone: regex }, { gstin: regex }];
     }
 
-    const customers = await this.customerModel
-      .find(filter)
-      .sort({ currentCreditBalance: -1, name: 1 })
-      .lean();
-
-    return customers.map((c) => ({
-      id: c._id.toString(),
-      name: c.name,
-      phone: c.phone,
-      email: c.email,
-      gstin: c.gstin,
-      creditLimit: c.creditLimit,
-      currentCreditBalance: c.currentCreditBalance,
-      totalPurchasesCount: c.totalPurchasesCount,
-      totalSpent: c.totalSpent,
-      address: c.address,
-      notes: c.notes,
-      isActive: c.isActive,
-      createdAt: c.createdAt,
-    }));
+    const result = await PaginationUtil.paginate(this.customerModel, filter, {
+      page: query.page,
+      limit: query.limit,
+      sort: PaginationUtil.resolveSort(query.sortBy, query.sortDirection, SORTABLE_FIELDS, {
+        currentCreditBalance: -1,
+        name: 1,
+      }),
+    });
+    return { ...result, data: result.data.map(withId) };
   }
 
   async getCustomerById(tenantId: string, id: string) {
-    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid ID');
-    }
-
     const customer = await this.customerModel
-      .findOne({
-        _id: new Types.ObjectId(id),
-        tenantId: new Types.ObjectId(tenantId),
-      })
+      .findOne({ _id: ObjectIdUtil.toObjectId(id, 'customer'), tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') })
       .lean();
-
     if (!customer) {
-      throw new NotFoundException(`Customer not found.`);
+      throw new NotFoundException('Customer not found.');
     }
-
-    return customer;
+    return withId(customer);
   }
 
-  async updateCustomer(tenantId: string, id: string, dto: Partial<CreateCustomerDto>) {
-    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid ID');
-    }
+  async updateCustomer(tenantId: string, id: string, dto: UpdateCustomerDto) {
+    const tenantObjectId = ObjectIdUtil.toObjectId(tenantId, 'tenant');
+    const customerId = ObjectIdUtil.toObjectId(id, 'customer');
+    const update: Partial<Customer> = { ...dto } as Partial<Customer>;
 
-    const updateData: any = { ...dto };
     if (dto.phone) {
-      updateData.phone = StringUtil.sanitizeAlphanumeric(dto.phone).slice(-10);
+      update.phone = this.normalizePhone(dto.phone);
+      const clash = await this.customerModel.exists({ tenantId: tenantObjectId, phone: update.phone, _id: { $ne: customerId } });
+      if (clash) {
+        throw new ConflictException(`Customer with phone number ${update.phone} already exists.`);
+      }
     }
+    if (dto.email) update.email = dto.email.toLowerCase().trim();
+    if (dto.name) update.name = dto.name.trim();
 
-    const updated = await this.customerModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(id), tenantId: new Types.ObjectId(tenantId) },
-      { $set: updateData },
-      { new: true },
-    );
-
+    const updated = await this.customerModel
+      .findOneAndUpdate({ _id: customerId, tenantId: tenantObjectId }, { $set: update }, { new: true })
+      .lean();
     if (!updated) {
-      throw new NotFoundException(`Customer not found.`);
+      throw new NotFoundException('Customer not found.');
     }
-
-    return updated;
+    return withId(updated);
   }
 
-  async recordCreditSale(
-    tenantId: Types.ObjectId,
-    customerId: Types.ObjectId,
-    amount: number,
-    invoiceNumber: string,
-  ) {
-    const customer = await this.customerModel.findOne({ _id: customerId, tenantId });
-    if (!customer) {
-      throw new NotFoundException(`Customer not found.`);
-    }
-
-    const newBalance = NumberUtil.round(customer.currentCreditBalance + amount, 2);
-
-    await this.customerModel.updateOne(
-      { _id: customer._id },
-      {
-        $inc: {
-          currentCreditBalance: amount,
-          totalPurchasesCount: 1,
-          totalSpent: amount,
-        },
-      },
-    );
-
-    await this.ledgerModel.create({
-      tenantId,
-      customerId: customer._id,
-      transactionType: 'DEBIT_SALE',
-      amount,
-      balanceAfter: newBalance,
-      referenceType: 'ORDER',
-      referenceId: invoiceNumber,
-      remarks: `Credit Sale Invoice: ${invoiceNumber}`,
-    });
-
-    return { customerId: customer._id, newBalance };
-  }
-
-  async recordCashSale(tenantId: Types.ObjectId, customerId: Types.ObjectId, amount: number) {
-    await this.customerModel.updateOne(
-      { _id: customerId, tenantId },
-      {
-        $inc: {
-          totalPurchasesCount: 1,
-          totalSpent: amount,
-        },
-      },
-    );
-  }
-
+  /** Khata repayment. Atomic: concurrent payments can't overwrite each other or over-collect. */
   async recordPayment(tenantId: string, customerId: string, dto: RecordCustomerPaymentDto) {
-    if (!Types.ObjectId.isValid(customerId) || !Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid ID');
-    }
+    const tenantObjectId = ObjectIdUtil.toObjectId(tenantId, 'tenant');
+    const customerObjectId = ObjectIdUtil.toObjectId(customerId, 'customer');
+    const amount = NumberUtil.round(dto.amount, 2);
 
-    const tenantObjectId = new Types.ObjectId(tenantId);
-    const customerObjectId = new Types.ObjectId(customerId);
-
-    const customer = await this.customerModel.findOne({
-      _id: customerObjectId,
-      tenantId: tenantObjectId,
-    });
-
+    const customer = await this.customerModel.findOne({ _id: customerObjectId, tenantId: tenantObjectId }).lean();
     if (!customer) {
-      throw new NotFoundException(`Customer not found.`);
+      throw new NotFoundException('Customer not found.');
+    }
+    if (amount > NumberUtil.round(customer.currentCreditBalance, 2)) {
+      throw new BadRequestException(
+        `Payment ₹${amount} is more than the outstanding khata balance ₹${customer.currentCreditBalance}.`,
+      );
     }
 
-    const newBalance = Math.max(0, NumberUtil.round(customer.currentCreditBalance - dto.amount, 2));
+    const referenceId = dto.referenceNumber?.trim() || UuidUtil.generatePublicId('RCP');
 
-    await this.customerModel.updateOne(
-      { _id: customer._id },
-      { $set: { currentCreditBalance: newBalance } },
-    );
+    const { updated, ledgerEntry } = await runInTransaction(this.connection, async (session) => {
+      const updatedCustomer = await this.customerModel.findOneAndUpdate(
+        { _id: customerObjectId, tenantId: tenantObjectId, currentCreditBalance: { $gte: amount } },
+        { $inc: { currentCreditBalance: -amount } },
+        { new: true, session },
+      );
+      if (!updatedCustomer) {
+        throw new BadRequestException('Outstanding balance changed. Please refresh and try again.');
+      }
 
-    const refId = dto.referenceNumber || UuidUtil.generatePublicId('RCP-');
-
-    const ledgerEntry = await this.ledgerModel.create({
-      tenantId: tenantObjectId,
-      customerId: customer._id,
-      transactionType: 'CREDIT_PAYMENT',
-      amount: dto.amount,
-      balanceAfter: newBalance,
-      referenceType: 'PAYMENT',
-      referenceId: refId,
-      paymentMode: dto.paymentMode,
-      remarks: dto.remarks || `Khata Repayment via ${dto.paymentMode}`,
+      const [entry] = await this.ledgerModel.create(
+        [
+          {
+            tenantId: tenantObjectId,
+            customerId: customerObjectId,
+            transactionType: 'CREDIT_PAYMENT',
+            amount,
+            balanceAfter: NumberUtil.round(updatedCustomer.currentCreditBalance, 2),
+            referenceType: 'PAYMENT',
+            referenceId,
+            paymentMode: dto.paymentMode,
+            remarks: dto.remarks || `Khata Repayment via ${dto.paymentMode}`,
+          },
+        ],
+        { session },
+      );
+      return { updated: updatedCustomer, ledgerEntry: entry };
     });
 
-    this.logger.log(`Customer ${customer.name} repaid ₹${dto.amount}. Remaining Khata: ₹${newBalance}`);
+    const balanceAfter = NumberUtil.round(updated.currentCreditBalance, 2);
+    this.logger.log(`Customer ${updated.name} repaid ₹${amount}. Remaining khata: ₹${balanceAfter}`);
 
     return {
-      success: true,
-      customerId: customer._id.toString(),
-      customerName: customer.name,
-      amountPaid: dto.amount,
-      balanceAfter: newBalance,
-      receiptNumber: refId,
-      ledgerEntry,
+      customerId: updated._id.toString(),
+      customerName: updated.name,
+      amountPaid: amount,
+      balanceAfter,
+      receiptNumber: referenceId,
+      ledgerEntry: withId(ledgerEntry.toObject()),
     };
   }
 
-  async getCustomerLedger(tenantId: string, customerId: string, limit: number = 50) {
-    if (!Types.ObjectId.isValid(customerId) || !Types.ObjectId.isValid(tenantId)) {
-      throw new BadRequestException('Invalid ID');
-    }
+  async getCustomerLedger(tenantId: string, customerId: string, query: PaginationDto) {
+    const filter = {
+      tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'),
+      customerId: ObjectIdUtil.toObjectId(customerId, 'customer'),
+    };
+    const result = await PaginationUtil.paginate(this.ledgerModel, filter, {
+      page: query.page,
+      limit: query.limit,
+      sort: { createdAt: -1 },
+    });
+    return { ...result, data: result.data.map(withId) };
+  }
 
-    const statement = await this.ledgerModel
-      .find({
-        tenantId: new Types.ObjectId(tenantId),
-        customerId: new Types.ObjectId(customerId),
-      })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
-
-    return statement.map((s) => ({
-      id: s._id.toString(),
-      transactionType: s.transactionType,
-      amount: s.amount,
-      balanceAfter: s.balanceAfter,
-      referenceType: s.referenceType,
-      referenceId: s.referenceId,
-      paymentMode: s.paymentMode,
-      remarks: s.remarks,
-      createdAt: s.createdAt,
-    }));
+  /** Stores the 10-digit national number only (drops +91 / leading 0). */
+  private normalizePhone(phone: string): string {
+    return phone.replace(/\D/g, '').slice(-10);
   }
 }

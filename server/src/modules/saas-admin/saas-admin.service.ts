@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
@@ -9,7 +9,8 @@ import { Subscription, SubscriptionDocument } from '../subscription/schemas/subs
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { TenantStatus, SubscriptionPlanCode, SUBSCRIPTION_PLANS } from '../../shared';
 import { PlatformAdminLoginDto } from './dto/platform-admin-login.dto';
-import { DateUtil } from '../../common';
+import { ArrayUtil, CryptoUtil, DateUtil, ObjectIdUtil, StringUtil } from '../../common';
+import { TenantQueryDto } from './dto/tenant-query.dto';
 import { PLATFORM_ADMIN_SUBJECT, PLATFORM_ADMIN_TOKEN_ROLE } from '../auth/strategies/jwt.strategy';
 
 @Injectable()
@@ -33,8 +34,8 @@ export class SaasAdminService {
 
     const inputUser = dto.username.toLowerCase().trim();
     const targetUser = configuredUser.toLowerCase().trim();
-    const isUserMatch = inputUser === targetUser;
-    const isPassMatch = dto.password === configuredPass;
+    const isUserMatch = CryptoUtil.constantTimeCompare(inputUser, targetUser);
+    const isPassMatch = CryptoUtil.constantTimeCompare(dto.password, configuredPass);
 
     if (!isUserMatch || !isPassMatch) {
       throw new UnauthorizedException('Invalid Platform Admin username or password.');
@@ -56,58 +57,59 @@ export class SaasAdminService {
     };
   }
 
-  async getAllTenants(query?: { search?: string; status?: string; plan?: string; sector?: string }) {
-    const filter: any = {};
-
-    if (query?.status && query.status !== 'ALL') filter.status = query.status;
-    if (query?.sector && query.sector !== 'ALL') filter.businessType = query.sector;
-    if (query?.search) {
-      const regex = new RegExp(query.search.trim(), 'i');
-      filter.$or = [
-        { shopId: regex },
-        { businessName: regex },
-        { ownerName: regex },
-        { email: regex },
-        { phone: regex },
-      ];
+  async getAllTenants(query: TenantQueryDto) {
+    const filter: FilterQuery<TenantDocument> = {};
+    if (query.status) filter.status = query.status;
+    if (query.sector) filter.businessType = query.sector;
+    const regex = StringUtil.searchRegex(query.search);
+    if (regex) {
+      filter.$or = [{ shopId: regex }, { businessName: regex }, { ownerName: regex }, { email: regex }, { phone: regex }];
     }
 
     const tenants = await this.tenantModel.find(filter).sort({ createdAt: -1 }).lean();
+    const tenantIds = tenants.map((t) => t._id);
+    const subscriptionIds = tenants.map((t) => t.subscriptionId).filter(Boolean);
 
-    return Promise.all(
-      tenants.map(async (t) => {
-        const [users, outlets, subscription] = await Promise.all([
-          this.userModel.find({ tenantId: t._id }).select('username email role').lean(),
-          this.outletModel.find({ tenantId: t._id }).lean(),
-          t.subscriptionId ? this.subscriptionModel.findById(t.subscriptionId).lean() : null,
-        ]);
+    // Three batched queries instead of three queries per tenant.
+    const [users, outletCounts, subscriptions] = await Promise.all([
+      this.userModel.find({ tenantId: { $in: tenantIds } }).select('tenantId username email role').lean(),
+      this.outletModel.aggregate<{ _id: unknown; count: number }>([
+        { $match: { tenantId: { $in: tenantIds } } },
+        { $group: { _id: '$tenantId', count: { $sum: 1 } } },
+      ]),
+      this.subscriptionModel.find({ _id: { $in: subscriptionIds } }).lean(),
+    ]);
+    const usersByTenant = ArrayUtil.groupBy(users, (u) => String(u.tenantId));
+    const outletsByTenant = new Map(outletCounts.map((o) => [String(o._id), o.count]));
+    const subscriptionById = new Map(subscriptions.map((sub) => [String(sub._id), sub]));
+    const toDate = (d?: Date) => (d ? DateUtil.toIso(d).split('T')[0] : '');
 
-        return {
-          id: t._id.toString(),
-          shopId: t.shopId,
-          businessName: t.businessName,
-          ownerName: t.ownerName,
-          email: t.email,
-          phone: t.phone,
-          businessType: t.businessType,
-          status: t.status,
-          plan: subscription?.planCode || SubscriptionPlanCode.FREE_TRIAL,
-          billsCount: subscription?.billsGeneratedThisMonth || 0,
-          maxBills: subscription?.maxBillsPerMonth || 1000,
-          trialExpiresAt: subscription?.expiresAt ? DateUtil.toIso(subscription.expiresAt).split('T')[0] : '',
-          createdAt: t.createdAt ? DateUtil.toIso(t.createdAt).split('T')[0] : '',
-          address: t.settings?.address,
-          gstin: t.settings?.gstin,
-          outletsCount: outlets.length,
-          users: users.map((u) => ({ username: u.username, role: u.role, email: u.email })),
-        };
-      }),
-    );
+    return tenants.map((t) => {
+      const subscription = t.subscriptionId ? subscriptionById.get(String(t.subscriptionId)) : undefined;
+      return {
+        id: t._id.toString(),
+        shopId: t.shopId,
+        businessName: t.businessName,
+        ownerName: t.ownerName,
+        email: t.email,
+        phone: t.phone,
+        businessType: t.businessType,
+        status: t.status,
+        plan: subscription?.planCode || SubscriptionPlanCode.FREE_TRIAL,
+        billsCount: subscription?.billsGeneratedThisMonth || 0,
+        maxBills: subscription?.maxBillsPerMonth || 1000,
+        trialExpiresAt: toDate(subscription?.expiresAt),
+        createdAt: toDate(t.createdAt),
+        address: t.settings?.address,
+        gstin: t.settings?.gstin,
+        outletsCount: outletsByTenant.get(String(t._id)) ?? 0,
+        users: (usersByTenant[String(t._id)] ?? []).map((u) => ({ username: u.username, role: u.role, email: u.email })),
+      };
+    });
   }
 
   async getTenantById(id: string) {
-    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Tenant not found');
-    const tenant = await this.tenantModel.findById(id).lean();
+    const tenant = await this.tenantModel.findById(ObjectIdUtil.toObjectId(id, 'tenant')).lean();
     if (!tenant) throw new NotFoundException('Tenant not found');
 
     const [users, outlets, subscription] = await Promise.all([
@@ -141,8 +143,7 @@ export class SaasAdminService {
   }
 
   async updateTenantStatus(id: string, status: TenantStatus) {
-    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Tenant not found');
-    const tenant = await this.tenantModel.findByIdAndUpdate(id, { $set: { status } }, { new: true });
+    const tenant = await this.tenantModel.findByIdAndUpdate(ObjectIdUtil.toObjectId(id, 'tenant'), { $set: { status } }, { new: true });
     if (!tenant) throw new NotFoundException('Tenant not found');
     if (status === TenantStatus.SUSPENDED || status === TenantStatus.EXPIRED) {
       // Force every store session to end: refresh tokens stop working immediately.
@@ -152,8 +153,7 @@ export class SaasAdminService {
   }
 
   async updateTenantPlan(id: string, planCode: SubscriptionPlanCode) {
-    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Tenant not found');
-    const tenant = await this.tenantModel.findById(id);
+    const tenant = await this.tenantModel.findById(ObjectIdUtil.toObjectId(id, 'tenant'));
     if (!tenant) throw new NotFoundException('Tenant not found');
 
     const planDetails = SUBSCRIPTION_PLANS[planCode] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.FREE_TRIAL];

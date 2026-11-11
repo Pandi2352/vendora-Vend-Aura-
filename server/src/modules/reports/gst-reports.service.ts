@@ -5,7 +5,7 @@ import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { Purchase, PurchaseDocument } from '../suppliers/schemas/purchase.schema';
 import { ReportsQueryDto } from './dto/reports-query.dto';
 import { resolveReportDateRange } from './reports.utils';
-import { NumberUtil } from '../../common';
+import { NumberUtil, ObjectIdUtil } from '../../common';
 
 export interface Gstr1SummaryResult {
   startDate: string;
@@ -68,8 +68,7 @@ export class GstReportsService {
   ) {}
 
   async getGstr1Summary(tenantId: string, query: ReportsQueryDto): Promise<Gstr1SummaryResult> {
-    if (!Types.ObjectId.isValid(tenantId)) throw new BadRequestException('Invalid Tenant ID');
-    const tid = new Types.ObjectId(tenantId);
+    const tid = ObjectIdUtil.toObjectId(tenantId, 'tenant');
     const { startDate, endDate } = resolveReportDateRange(query);
 
     const orders = await this.orderModel
@@ -158,8 +157,7 @@ export class GstReportsService {
   }
 
   async getGstr3bSummary(tenantId: string, query: ReportsQueryDto): Promise<Gstr3bSummaryResult> {
-    if (!Types.ObjectId.isValid(tenantId)) throw new BadRequestException('Invalid Tenant ID');
-    const tid = new Types.ObjectId(tenantId);
+    const tid = ObjectIdUtil.toObjectId(tenantId, 'tenant');
     const { startDate, endDate } = resolveReportDateRange(query);
 
     const [orders, purchases] = await Promise.all([

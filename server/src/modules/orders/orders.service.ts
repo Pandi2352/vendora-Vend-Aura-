@@ -12,7 +12,15 @@ import { Customer, CustomerDocument } from '../customers/schemas/customer.schema
 import { CustomerLedger, CustomerLedgerDocument } from '../customers/schemas/customer-ledger.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { SequenceService } from '../sequence/sequence.service';
-import { AuthenticatedUser, NumberUtil, runInTransaction, toDocumentView } from '../../common';
+import {
+  AuthenticatedUser,
+  NumberUtil,
+  ObjectIdUtil,
+  PaginationDto,
+  PaginationUtil,
+  runInTransaction,
+  toDocumentView,
+} from '../../common';
 
 const round2 = (value: number) => NumberUtil.round(value, 2);
 
@@ -51,7 +59,7 @@ export class OrdersService {
    * transaction (when the MongoDB deployment supports it).
    */
   async createOrder(tenantIdStr: string, dto: CreateOrderDto, user: AuthenticatedUser) {
-    const tenantId = new Types.ObjectId(tenantIdStr);
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
     const tenant = await this.tenantModel.findById(tenantId);
     if (!tenant) {
       throw new NotFoundException('Shop not found.');
@@ -139,30 +147,31 @@ export class OrdersService {
     return toDocumentView(order.toObject());
   }
 
-  async getOrders(tenantId: string, limit = 50) {
-    const orders = await this.orderModel
-      .find({ tenantId: new Types.ObjectId(tenantId) })
-      .sort({ createdAt: -1 })
-      .limit(Math.min(Math.max(limit, 1), 500))
-      .lean();
-    return orders.map(toDocumentView);
+  async getOrders(tenantId: string, query: PaginationDto) {
+    const result = await PaginationUtil.paginate(
+      this.orderModel,
+      { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') },
+      { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
+    );
+    return { ...result, data: result.data.map(toDocumentView) };
   }
 
-  async getLedger(tenantId: string, limit = 100) {
-    return this.stockLedgerModel
-      .find({ tenantId: new Types.ObjectId(tenantId) })
-      .sort({ createdAt: -1 })
-      .limit(Math.min(Math.max(limit, 1), 500))
-      .populate('productId', 'name barcode category')
-      .lean();
+  async getLedger(tenantId: string, query: PaginationDto) {
+    return PaginationUtil.paginate(
+      this.stockLedgerModel,
+      { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') },
+      {
+        page: query.page,
+        limit: query.limit,
+        sort: { createdAt: -1 },
+        populate: { path: 'productId', select: 'name barcode category' },
+      },
+    );
   }
 
   async getOrderById(tenantId: string, orderId: string) {
-    if (!Types.ObjectId.isValid(orderId)) {
-      throw new NotFoundException(`Order ${orderId} not found.`);
-    }
     const order = await this.orderModel
-      .findOne({ _id: new Types.ObjectId(orderId), tenantId: new Types.ObjectId(tenantId) })
+      .findOne({ _id: ObjectIdUtil.toObjectId(orderId, 'order'), tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') })
       .lean();
     if (!order) {
       throw new NotFoundException(`Order ${orderId} not found.`);
@@ -178,7 +187,7 @@ export class OrdersService {
     }
 
     const products = await this.productModel
-      .find({ tenantId, _id: { $in: [...quantities.keys()].map((id) => new Types.ObjectId(id)) } })
+      .find({ tenantId, _id: { $in: [...quantities.keys()].map((id) => ObjectIdUtil.toObjectId(id, 'product')) } })
       .lean();
     const byId = new Map(products.map((p) => [p._id.toString(), p]));
 
@@ -215,7 +224,7 @@ export class OrdersService {
       return null;
     }
 
-    const customer = await this.customerModel.findOne({ _id: new Types.ObjectId(dto.customerId), tenantId }).lean();
+    const customer = await this.customerModel.findOne({ _id: ObjectIdUtil.toObjectId(dto.customerId, 'customer'), tenantId }).lean();
     if (!customer) {
       throw new BadRequestException('Selected customer was not found in this shop.');
     }
@@ -318,9 +327,9 @@ export class OrdersService {
   }
 
   private async resolveOutletId(tenant: TenantDocument, user: AuthenticatedUser): Promise<Types.ObjectId> {
-    const userOutlet = user.outletIds?.[0];
-    if (userOutlet && Types.ObjectId.isValid(userOutlet)) {
-      return new Types.ObjectId(userOutlet);
+    const userOutlet = ObjectIdUtil.toObjectIdOrNull(user.outletIds?.[0]);
+    if (userOutlet) {
+      return userOutlet;
     }
     if (tenant.primaryOutletId) {
       return tenant.primaryOutletId as Types.ObjectId;
