@@ -111,21 +111,54 @@ export class OnboardingService {
 
   // 4. Check Subdomain / Shop ID Availability
   async checkSubdomain(shopId: string) {
-    const slug = shopId.toLowerCase().trim();
+    const slug = (shopId || '').toLowerCase().trim();
+    if (!slug) {
+      return {
+        shopId: '',
+        isAvailable: false,
+        reason: 'Customer ID is required.',
+      };
+    }
+
+    if (slug.length < 3 || slug.length > 6) {
+      return {
+        shopId: slug,
+        isAvailable: false,
+        reason: 'Customer ID must be between 3 and 6 letters or numbers.',
+      };
+    }
+
+    if (!/^[a-z0-9]+$/.test(slug)) {
+      return {
+        shopId: slug,
+        isAvailable: false,
+        reason: 'Only alphanumeric characters (letters and numbers) are allowed.',
+      };
+    }
+
     const reserved = ['admin', 'api', 'app', 'www', 'mail', 'billing', 'pos', 'vendora', 'root', 'support'];
     
     if (reserved.includes(slug)) {
       return {
         shopId: slug,
         isAvailable: false,
-        reason: 'This shop identifier is reserved.',
+        reason: `Customer ID "${slug}" is a reserved system identifier. Please choose another.`,
       };
     }
 
     const existing = await this.tenantModel.findOne({ shopId: slug });
+    if (existing) {
+      return {
+        shopId: slug,
+        isAvailable: false,
+        reason: `Customer ID "${slug}" is already taken. Please choose another.`,
+      };
+    }
+
     return {
       shopId: slug,
-      isAvailable: !existing,
+      isAvailable: true,
+      message: `"${slug}" is available!`,
       fullSubdomainUrl: `https://${slug}.vendora.com`,
     };
   }

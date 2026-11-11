@@ -4,6 +4,8 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { Order, OrderSchema } from './schemas/order.schema';
 import { StockLedger, StockLedgerSchema } from './schemas/stock-ledger.schema';
+import { OrderReturn, OrderReturnSchema } from './schemas/order-return.schema';
+import { CashDrawerShift, CashDrawerShiftSchema } from './schemas/cash-drawer-shift.schema';
 import { Product, ProductSchema } from '../catalog/schemas/product.schema';
 import { Tenant, TenantSchema } from '../tenant/schemas/tenant.schema';
 import { Subscription, SubscriptionSchema } from '../subscription/schemas/subscription.schema';
@@ -16,6 +18,8 @@ import { CustomerLedger, CustomerLedgerSchema } from '../customers/schemas/custo
     MongooseModule.forFeature([
       { name: Order.name, schema: OrderSchema },
       { name: StockLedger.name, schema: StockLedgerSchema },
+      { name: OrderReturn.name, schema: OrderReturnSchema },
+      { name: CashDrawerShift.name, schema: CashDrawerShiftSchema },
       { name: Product.name, schema: ProductSchema },
       { name: Tenant.name, schema: TenantSchema },
       { name: Subscription.name, schema: SubscriptionSchema },

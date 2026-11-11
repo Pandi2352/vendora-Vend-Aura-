@@ -233,6 +233,60 @@ MILESTONE 1: FROM REGISTRATION TO FIRST BILL (MVP 01 - MVP 06)
 
 ---
 
+### 🔹 MVP 07 – Purchase & Supplier Management (GRN & Payables)
+**Status**: ✅ **COMPLETED**  
+**Primary Goal**: Comprehensive distributor procurement cycle, Goods Receipt Notes (GRN) logging, automated stock additions, unit cost price updates, and vendor debt repayment.
+
+#### Included Modules (13 Modules):
+89. **Supplier Directory (CRUD)**: Name, contact person, phone, email, GSTIN, category, credit terms.
+90. **Supplier Credit & Balance Tracking**: Dynamic balance calculation (`balanceDue = totalPurchased - totalPaid`).
+91. **Goods Receipt Note (GRN) Engine**: Sequential inward numbering (`GRN-YYYY-XXXXX`) on Port `5000`.
+92. **Purchase Inward Item Lines**: Inward qty, purchase cost/unit, GST %, and item line computation.
+93. **Double-Entry Stock Increment**: Direct atomic `$inc: { stock: +qty }` on products and `StockLedger` inward records (`INWARD_PURCHASE`).
+94. **Weighted Cost Updating**: Updates product `costPrice` on each delivery to calculate true margins.
+95. **Supplier Invoice Auditing**: Vendor bill number, receipt timestamp, subtotal, GST tax, and grand total.
+96. **Inward Payment Statusing**: Mark shipments as `UNPAID`, `PARTIAL`, or `PAID` with immediate settlement.
+97. **Supplier Settlement Engine**: Record debt repayments (`POST /api/v1/suppliers/:id/pay`) via Bank Transfer, UPI, or Cash with UTR tracking.
+98. **Modular Procurement Architecture**: Decomposed into [`suppliers/`](file:///d:/mern/vendora/client/src/components/suppliers/) subcomponents (< 250 lines each): [`SuppliersKpiStrip.tsx`](file:///d:/mern/vendora/client/src/components/suppliers/SuppliersKpiStrip.tsx), [`SuppliersTable.tsx`](file:///d:/mern/vendora/client/src/components/suppliers/SuppliersTable.tsx), [`InwardsTable.tsx`](file:///d:/mern/vendora/client/src/components/suppliers/InwardsTable.tsx), [`AddSupplierModal.tsx`](file:///d:/mern/vendora/client/src/components/suppliers/AddSupplierModal.tsx), [`InwardStockModal.tsx`](file:///d:/mern/vendora/client/src/components/suppliers/InwardStockModal.tsx), [`InwardItemsTable.tsx`](file:///d:/mern/vendora/client/src/components/suppliers/InwardItemsTable.tsx), and [`SettleDuesModal.tsx`](file:///d:/mern/vendora/client/src/components/suppliers/SettleDuesModal.tsx).
+99. **Procurement KPI Cards**: Real-time aggregation of total payables owed, procured goods valuation, and active distributor counts.
+100. **Live Multi-Tenant Isolation**: Scoped strictly by `tenantId`.
+101. **Zero Mock Data Guarantee**: Fetched directly from MongoDB via live NestJS API endpoints.
+
+#### Deliverables & Acceptance Criteria:
+- [x] Backend [`SuppliersModule`](file:///d:/mern/vendora/server/src/modules/suppliers/suppliers.module.ts) with `Supplier` and `Purchase` schemas.
+- [x] Inward stock adds stock to catalog atomically and creates `StockLedger` entries.
+- [x] Supplier debt settlement logs payments and recalculates balance dues.
+- [x] Modular UI (< 250 lines per file) in `client/src/components/suppliers/`.
+
+---
+
+### 🔹 MVP 08 – Customer Management & Credit Sales (Khata / Udhar)
+**Status**: ✅ **COMPLETED**  
+**Primary Goal**: End-to-end customer relationship management, credit limit enforcement, Khata/Udhar checkout tender, double-entry passbook statements, and WhatsApp balance reminders.
+
+#### Included Modules (12 Modules):
+102. **Customer Master Registry**: Name, mobile (10 digits), optional email, optional GSTIN, credit limit, and lifetime purchases.
+103. **Instant Mobile Search**: Real-time debounced customer lookup during POS checkout.
+104. **Khata (Udhar) Payment Tender**: Dedicated `CREDIT` tab in [`CheckoutModal.tsx`](file:///d:/mern/vendora/client/src/components/CheckoutModal.tsx) with credit limit balance check.
+105. **Credit Limit Safeguard**: Visual progress bar of credit usage; alerts cashier if bill exceeds credit limit.
+106. **Double-Entry Customer Ledger**: Immutable passbook logging debit transactions (`DEBIT_SALE`) and repayments (`CREDIT_PAYMENT`) with running balances.
+107. **Khata Repayment Engine**: Record customer debt repayments (`POST /api/v1/customers/:id/payment`) via Cash, UPI, or Card with reference ID.
+108. **Digital Passbook Modal**: Complete statement view of customer debits, credits, and invoice numbers.
+109. **WhatsApp Balance Reminder Links**: Pre-formatted WhatsApp reminder URL with store name and due amount for 1-click messaging (`https://wa.me/91...`).
+110. **Modular Customer Architecture**: Decomposed into [`customers/`](file:///d:/mern/vendora/client/src/components/customers/) subcomponents (< 200 lines each): [`CustomersKpiStrip.tsx`](file:///d:/mern/vendora/client/src/components/customers/CustomersKpiStrip.tsx), [`CustomersTable.tsx`](file:///d:/mern/vendora/client/src/components/customers/CustomersTable.tsx), [`AddCustomerModal.tsx`](file:///d:/mern/vendora/client/src/components/customers/AddCustomerModal.tsx), [`RecordRepaymentModal.tsx`](file:///d:/mern/vendora/client/src/components/customers/RecordRepaymentModal.tsx), and [`PassbookModal.tsx`](file:///d:/mern/vendora/client/src/components/customers/PassbookModal.tsx).
+111. **Modular POS Checkout Architecture**: Decomposed into [`checkout/`](file:///d:/mern/vendora/client/src/components/checkout/) subcomponents: [`CustomerTagSelector.tsx`](file:///d:/mern/vendora/client/src/components/checkout/CustomerTagSelector.tsx) and [`PaymentModePanels.tsx`](file:///d:/mern/vendora/client/src/components/checkout/PaymentModePanels.tsx).
+112. **Modular Orders Architecture**: Decomposed into [`orders/`](file:///d:/mern/vendora/client/src/components/orders/) subcomponents: [`OrdersKpiStrip.tsx`](file:///d:/mern/vendora/client/src/components/orders/OrdersKpiStrip.tsx) and [`OrdersTable.tsx`](file:///d:/mern/vendora/client/src/components/orders/OrdersTable.tsx).
+113. **Strict < 300 Lines Rule Enforced**: 100% of files in `client/src/components/` adhere strictly to the max 200 to 300 line limit.
+
+#### Deliverables & Acceptance Criteria:
+- [x] Backend [`CustomersModule`](file:///d:/mern/vendora/server/src/modules/customers/customers.module.ts) with `Customer` and `CustomerLedger` schemas.
+- [x] POS Orders creation records credit sale in Customer record and creates `CustomerLedger` debit entry.
+- [x] Customer repayment endpoint reduces outstanding balance and adds passbook credit entry.
+- [x] WhatsApp payment reminder integration.
+- [x] 100% modular subcomponents (< 200-250 lines per file).
+
+---
+
 ### 🔹 MVP 14 – SaaS Platform Administration & Commercial Launch
 **Status**: ✅ **COMPLETED**  
 **Primary Goal**: Transform Vendora from an internal ERP into a commercially scalable SaaS with automated billing, plan limits, and super-admin monitoring.
