@@ -18,7 +18,7 @@ export function SetupHeroBanner({
     <div className="relative rounded-lg bg-slate-900 border border-slate-800 p-6 text-white overflow-hidden shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         {/* Left Column: Heading and info */}
-        <div className="space-y-3 max-w-2xl">
+        <div className="space-y-3 flex-1 min-w-0">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/10 text-white/90 text-xs font-bold tracking-wide uppercase border border-white/10">
             <RocketLaunch className="w-3.5 h-3.5 text-primary-400" />
             <span>Getting Started</span>

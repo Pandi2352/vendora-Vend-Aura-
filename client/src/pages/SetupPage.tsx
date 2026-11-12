@@ -76,7 +76,7 @@ export function SetupPage() {
   const steps = data?.steps;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium select-none">
         <Link to={ROUTES.DASHBOARD} className="hover:text-zinc-900 transition-colors">

@@ -91,7 +91,7 @@ export function SetupStepItem({
             ) : null}
           </div>
 
-          <p className="text-xs text-zinc-600 leading-relaxed max-w-2xl">{description}</p>
+          <p className="text-xs text-zinc-600 leading-relaxed">{description}</p>
 
           {/* Sub-master Pills (e.g. Department, Category, Brand, UOM, Floor) */}
           {subMasters && subMasters.length > 0 && (

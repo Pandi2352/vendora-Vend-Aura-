@@ -1,4 +1,3 @@
-import { SignOut } from '@phosphor-icons/react';
 import { navigationForRole } from '../../config/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { SidebarNavItem } from './SidebarNavItem';
@@ -31,33 +30,35 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
       <aside
         aria-label="Main navigation"
         className={cn(
-          'fixed lg:static inset-y-0 left-0 z-40 lg:z-auto flex flex-col bg-shell border-r border-shell-border',
-          'transition-[width,transform] duration-200 shrink-0',
+          'fixed lg:relative inset-y-0 left-0 z-40 flex flex-col bg-shell border-r border-shell-border',
+          'transition-[width] duration-200 shrink-0',
           'top-14 lg:top-0',
           showCollapsed ? 'w-16' : 'w-60',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
-        <nav className="flex-1 overflow-y-auto scrollbar-shell px-2.5 py-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto scrollbar-shell p-2.5 space-y-1">
           {items.map((item) => (
             <SidebarNavItem key={item.label} item={item} collapsed={showCollapsed} onNavigate={onCloseMobile} />
           ))}
         </nav>
 
-        <div className="border-t border-shell-border p-2.5">
+        <div className="border-t border-[#1a2a47] p-2.5">
           <button
             type="button"
             onClick={logout}
             title={showCollapsed ? 'Sign out' : undefined}
             aria-label="Sign out"
             className={cn(
-              'w-full flex items-center gap-3 h-10 rounded-md text-sm font-semibold text-shell-text hover:bg-shell-hover transition-colors cursor-pointer',
+              'group w-full flex items-center gap-3 h-9 rounded-lg text-xs font-bold text-[#cbd5e6] hover:bg-[#1a2b4c] hover:text-white transition-colors cursor-pointer',
               showCollapsed ? 'justify-center' : 'px-3',
             )}
           >
-            <SignOut className="w-[18px] h-[18px] shrink-0" />
+            <span className="ms text-[16px] text-[#7b89a3] group-hover:text-white ms-hover-fill shrink-0 transition-colors">
+              logout
+            </span>
             {!showCollapsed && (
-              <span className="truncate">Sign out · {user?.fullName || user?.username}</span>
+              <span className="truncate">Sign out · Administrator</span>
             )}
           </button>
         </div>

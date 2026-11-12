@@ -1,5 +1,4 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { CaretRight } from '@phosphor-icons/react';
 import { isNavItemActive, type NavItem } from '../../config/navigation';
 import { useFlyout } from '../../hooks/useFlyout';
 import { SidebarFlyout } from './SidebarFlyout';
@@ -12,13 +11,15 @@ interface SidebarNavItemProps {
 }
 
 const baseClass =
-  'group w-full flex items-center gap-3 rounded-md text-sm font-semibold transition-colors cursor-pointer h-10';
+  'group relative w-full flex items-center gap-3 rounded-lg text-xs font-bold transition-colors cursor-pointer h-9';
 
 function itemClass(active: boolean, collapsed: boolean) {
   return cn(
     baseClass,
     collapsed ? 'justify-center px-0' : 'px-3',
-    active ? 'bg-primary-600 text-white' : 'text-shell-text hover:bg-shell-hover',
+    active
+      ? 'bg-[#2563eb] text-white font-bold'
+      : 'text-[#cbd5e6] hover:bg-[#1a2b4c] hover:text-white',
   );
 }
 
@@ -37,8 +38,27 @@ export function SidebarNavItem({ item, collapsed, onNavigate }: SidebarNavItemPr
         aria-label={collapsed ? item.label : undefined}
         className={({ isActive }) => itemClass(isActive, collapsed)}
       >
-        <Icon className="w-[18px] h-[18px] shrink-0" />
-        {!collapsed && <span className="truncate">{item.label}</span>}
+        {({ isActive }) => (
+          <>
+            <Icon
+              className={cn(
+                'shrink-0 transition-colors ms-hover-fill',
+                isActive ? 'text-white ms-fill' : 'text-[#7b89a3] group-hover:text-white',
+              )}
+            />
+            {!collapsed && (
+              <>
+                <span className="flex-1 text-left truncate">{item.label}</span>
+                {item.badgeDot && (
+                  <span className="w-2 h-2 rounded-full bg-[#f97316] shrink-0" />
+                )}
+              </>
+            )}
+            {collapsed && item.badgeDot && (
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#f97316]" />
+            )}
+          </>
+        )}
       </NavLink>
     );
   }
@@ -57,14 +77,32 @@ export function SidebarNavItem({ item, collapsed, onNavigate }: SidebarNavItemPr
         onPointerEnter={flyout.open}
         onPointerLeave={flyout.scheduleClose}
         onClick={flyout.toggle}
-        className={cn(itemClass(active, collapsed), flyout.isOpen && !active && 'bg-shell-hover')}
+        className={cn(itemClass(active, collapsed), flyout.isOpen && !active && 'bg-[#1a2b4c]')}
       >
-        <Icon className="w-[18px] h-[18px] shrink-0" />
+        <Icon
+          className={cn(
+            'shrink-0 transition-colors ms-hover-fill',
+            active ? 'text-white ms-fill' : 'text-[#7b89a3] group-hover:text-white',
+          )}
+        />
         {!collapsed && (
           <>
             <span className="flex-1 text-left truncate">{item.label}</span>
-            <CaretRight className="w-3.5 h-3.5 opacity-60" />
+            {item.badgeDot && (
+              <span className="w-2 h-2 rounded-full bg-[#f97316] shrink-0" />
+            )}
+            <span
+              className={cn(
+                'ms text-[16px] shrink-0 transition-colors',
+                active ? 'text-white' : 'text-[#6f7a8d] group-hover:text-white',
+              )}
+            >
+              chevron_right
+            </span>
           </>
+        )}
+        {collapsed && item.badgeDot && (
+          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#f97316]" />
         )}
       </button>
       {flyout.position && (

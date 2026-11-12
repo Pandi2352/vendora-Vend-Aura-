@@ -1,5 +1,5 @@
+import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
-import { CaretRight } from '@phosphor-icons/react';
 import type { NavItem } from '../../config/navigation';
 import { useFlyout } from '../../hooks/useFlyout';
 import { cn } from '../ui/cn';
@@ -14,7 +14,7 @@ interface SidebarFlyoutProps {
   onNavigate: () => void;
 }
 
-/** Floating sub-menu panel. Children with their own children open a nested flyout. */
+/** Floating sub-menu panel rendered with rounded-md and portal stacking above outlet cards. */
 export function SidebarFlyout({
   title,
   items,
@@ -24,7 +24,7 @@ export function SidebarFlyout({
   onPointerLeave,
   onNavigate,
 }: SidebarFlyoutProps) {
-  return (
+  return createPortal(
     <div
       ref={panelRef}
       role="menu"
@@ -32,7 +32,7 @@ export function SidebarFlyout({
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
       style={{ top: position.top, left: position.left }}
-      className="fixed z-50 min-w-[220px] bg-shell-raised border border-shell-border rounded-md p-2"
+      className="fixed z-[100] min-w-[220px] bg-shell border border-shell-border rounded-md p-2 shadow-2xl animate-flyout-in"
     >
       <p className="px-2.5 pt-1 pb-2 text-[10px] font-bold uppercase tracking-wider text-shell-muted">{title}</p>
       {items.map((item) =>
@@ -46,17 +46,27 @@ export function SidebarFlyout({
             onClick={onNavigate}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-semibold transition-colors',
-                isActive ? 'bg-primary-600 text-white' : 'text-shell-text hover:bg-shell-hover',
+                'group flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-bold transition-colors',
+                isActive ? 'bg-[#2563eb] text-white font-bold' : 'text-[#cbd5e6] hover:bg-[#1a2b4c] hover:text-white',
               )
             }
           >
-            <item.icon className="w-4 h-4 shrink-0" />
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <>
+                <item.icon
+                  className={cn(
+                    'shrink-0 transition-colors ms-hover-fill',
+                    isActive ? 'text-white ms-fill' : 'text-[#7b89a3] group-hover:text-white',
+                  )}
+                />
+                <span>{item.label}</span>
+              </>
+            )}
           </NavLink>
         ),
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -75,13 +85,13 @@ function NestedFlyoutItem({ item, onNavigate }: { item: NavItem; onNavigate: () 
         onPointerLeave={flyout.scheduleClose}
         onClick={flyout.toggle}
         className={cn(
-          'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-semibold transition-colors cursor-pointer',
-          flyout.isOpen ? 'bg-shell-hover text-white' : 'text-shell-text hover:bg-shell-hover',
+          'group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-bold transition-colors cursor-pointer',
+          flyout.isOpen ? 'bg-[#1a2b4c] text-white' : 'text-[#cbd5e6] hover:bg-[#1a2b4c] hover:text-white',
         )}
       >
-        <item.icon className="w-4 h-4 shrink-0" />
+        <item.icon className="shrink-0 ms-hover-fill" />
         <span className="flex-1 text-left">{item.label}</span>
-        <CaretRight className="w-3 h-3 text-shell-muted" />
+        <span className="ms text-[16px] text-shell-muted group-hover:text-white">chevron_right</span>
       </button>
       {flyout.position && (
         <SidebarFlyout

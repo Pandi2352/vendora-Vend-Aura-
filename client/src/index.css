@@ -18,22 +18,73 @@
   --color-primary-800: #0e3f8f;
   --color-primary-900: #123873;
 
-  /* App shell (sidebar + top bar): same navy in light and dark mode. */
-  --color-shell: #0f1b2d;
-  --color-shell-raised: #16243a;
-  --color-shell-hover: #1c2d47;
-  --color-shell-border: #22344f;
-  --color-shell-text: #e2e8f0;
-  --color-shell-muted: #8a99b3;
+  /* App shell (sidebar + top bar): exact dark navy palette matching reference UI */
+  --color-shell: #101c33;
+  --color-shell-raised: #162544;
+  --color-shell-hover: #1a2b4c;
+  --color-shell-border: #1a2a47;
+  --color-shell-text: #cbd5e6;
+  --color-shell-muted: #7b89a3;
 
   /* Solid dark surfaces used for dark buttons / chips inside pages. */
   --color-ink: #18181b;
   --color-ink-soft: #27272a;
 }
 
-/* UI size preference scales every rem-based size. */
+/* UI size preference scales every rem-based size. Default is 80%. */
 html {
-  font-size: var(--ui-scale, 100%);
+  font-size: var(--ui-scale, 80%);
+}
+
+/* Local Material Symbols font with font-display: block to prevent FOUT */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url('/fonts/material-symbols-outlined.woff2') format('woff2');
+}
+
+/* Material Symbols Outlined for crisp retail UI navigation icons */
+.ms {
+  font-family: "Material Symbols Outlined";
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  overflow-wrap: normal;
+  direction: ltr;
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizelegibility;
+  user-select: none;
+  white-space: nowrap;
+  transition: font-variation-settings 0.15s ease, color 0.15s ease;
+}
+
+/* Fill icon when active, and smoothly fill on button hover */
+.ms-fill,
+.group:hover .ms-hover-fill,
+.hover-fill:hover {
+  font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+}
+
+/* Clean flyout fade-in animation */
+@keyframes flyoutFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-flyout-in {
+  animation: flyoutFadeIn 0.12s ease-out forwards;
 }
 
 body {
@@ -117,18 +168,22 @@ body {
   width: var(--scrollbar-size);
   height: var(--scrollbar-size);
 }
+
 ::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb);
   border: 2px solid transparent;
   border-radius: 0.375rem;
   background-clip: padding-box;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover);
 }
+
 ::-webkit-scrollbar-corner {
   background: transparent;
 }

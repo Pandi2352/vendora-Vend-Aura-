@@ -97,11 +97,10 @@ export function ReportsView({ tab: activeSubTab, onTabChange }: ReportsViewProps
               <button
                 key={p.key}
                 onClick={() => setPeriod(p.key)}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
-                  period === p.key
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${period === p.key
                     ? 'bg-primary-600 text-white'
                     : 'text-zinc-600 hover:text-zinc-900'
-                }`}
+                  }`}
               >
                 {p.label}
               </button>
@@ -125,7 +124,7 @@ export function ReportsView({ tab: activeSubTab, onTabChange }: ReportsViewProps
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="space-y-6">
           {loadError && (
             <div className="mb-4 p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
               {loadError}
