@@ -38,7 +38,11 @@ export function useFlyout<T extends HTMLElement = HTMLElement>() {
     cancelOpen();
     cancelClose();
     const rect = triggerRef.current?.getBoundingClientRect();
-    if (rect) setPosition({ top: rect.top, left: rect.right + 6 });
+    if (rect) {
+      const aside = triggerRef.current?.closest('aside');
+      const baseLeft = aside ? aside.getBoundingClientRect().right + 3 : rect.right + 3;
+      setPosition({ top: Math.max(8, rect.top - 2), left: baseLeft });
+    }
   }, [cancelOpen, cancelClose]);
 
   const scheduleOpen = useCallback(() => {

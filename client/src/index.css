@@ -206,3 +206,10 @@ body {
   --scrollbar-thumb: var(--color-shell-border);
   --scrollbar-thumb-hover: #34496a;
 }
+/* Side-scrolling strips (tab rails) that should not show a scrollbar. */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

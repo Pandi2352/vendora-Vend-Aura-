@@ -22,6 +22,7 @@ export { Spinner, PageLoader } from './Spinner';
 export { StatTile } from './StatTile';
 export { Switch } from './Switch';
 export { Tabs, type TabItem } from './Tabs';
+export { SegmentedTabs, RailTabs, TabBadge, tabId, tabPanelId, type TabOption } from './tab-nav';
 export { Textarea } from './Textarea';
 export { Toggle } from './Toggle';
 export { UsageMeter } from './UsageMeter';

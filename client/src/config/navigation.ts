@@ -23,11 +23,13 @@ export const NAVIGATION: NavItem[] = [
     label: 'General Master',
     icon: ms('folder_special'),
     roles: ROLE_GROUPS.MANAGEMENT,
-    sectionTitle: 'General Master',
+    sectionTitle: 'GENERAL MASTER',
     children: [
-      { label: 'Shop Details', path: ROUTES.SETTINGS, icon: ms('storefront') },
-      { label: 'Branches & Outlets', path: `${ROUTES.SETTINGS}?tab=outlets`, icon: ms('store') },
-      { label: 'Store Profiles', path: `${ROUTES.SETTINGS}?tab=store`, icon: ms('settings') },
+      { label: 'Master', path: ROUTES.MASTER, icon: ms('folder_special') },
+      { label: 'Inventory', path: `${ROUTES.DASHBOARD}?tab=catalog`, icon: ms('category') },
+      { label: 'Customer', path: ROUTES.CUSTOMERS, icon: ms('group') },
+      { label: 'Sales', path: ROUTES.ORDERS, icon: ms('sell') },
+      { label: 'Purchase', path: ROUTES.SUPPLIERS, icon: ms('receipt_long') },
     ],
   },
   {

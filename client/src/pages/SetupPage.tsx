@@ -115,7 +115,7 @@ export function SetupPage() {
             count={steps.shopDetails.count}
             completed={steps.shopDetails.completed}
             actionLabel="View"
-            onAction={() => navigate(ROUTES.SETTINGS)}
+            onAction={() => navigate(ROUTES.MASTER)}
           />
 
           {/* Step 2: First outlet */}
@@ -126,7 +126,7 @@ export function SetupPage() {
             count={steps.outlet.count}
             completed={steps.outlet.completed}
             actionLabel="View"
-            onAction={() => navigate(ROUTES.SETTINGS)}
+            onAction={() => navigate(ROUTES.MASTER)}
           />
 
           {/* Step 3: Item masters */}

@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import { Checkbox } from '../ui/Checkbox';
 import { Switch } from '../ui/Switch';
+import { cn } from '../ui/cn';
 import { FormField } from './FormField';
 import { useFieldBinding } from './useFormFieldController';
 import { splitFieldProps, type FieldCommonProps } from './types';
@@ -9,6 +10,11 @@ interface ToggleFieldProps extends FieldCommonProps {
   /** Second line under the label. */
   checkboxDescription?: ReactNode;
   onValueChange?: (checked: boolean) => void;
+}
+
+interface SwitchFieldProps extends ToggleFieldProps {
+  /** row: plain label + switch (settings lists). card: bordered tile, click anywhere, tinted when on (form grids). */
+  variant?: 'row' | 'card';
 }
 
 /** Single checkbox (boolean). The label sits next to the box. */
@@ -50,36 +56,48 @@ export function CheckboxField(props: ToggleFieldProps) {
 }
 
 /** On/off setting row: label + description on the left, switch on the right. */
-export function SwitchField(props: ToggleFieldProps) {
+export function SwitchField(props: SwitchFieldProps) {
   const [common, own] = splitFieldProps(props);
   const { field, disabled, readOnly, shell, ids } = useFieldBinding(common);
   const labelId = useId();
   const { label, ...shellWithoutLabel } = shell;
+  const checked = !!field.value;
+  const card = own.variant === 'card';
 
   return (
     <FormField {...shellWithoutLabel}>
-      <div className="flex items-center justify-between gap-4 min-h-10">
-        <div className="min-w-0">
-          <p id={labelId} className="text-sm font-semibold text-zinc-900">
+      <label
+        htmlFor={ids.id}
+        className={cn(
+          'flex items-center justify-between gap-3 min-h-10',
+          card && 'px-3 py-1.5 rounded-md border transition-colors',
+          card && !disabled && 'cursor-pointer',
+          card && (checked ? 'bg-primary-50 border-primary-200' : 'bg-white border-zinc-200 hover:border-zinc-300'),
+        )}
+      >
+        <span className="min-w-0">
+          <span id={labelId} className="block text-sm font-semibold text-zinc-900 leading-tight">
             {label}
-          </p>
-          {own.checkboxDescription && <p className="text-xs text-zinc-500 mt-0.5">{own.checkboxDescription}</p>}
-        </div>
+          </span>
+          {own.checkboxDescription && (
+            <span className="block text-xs text-zinc-500 mt-0.5 leading-tight">{own.checkboxDescription}</span>
+          )}
+        </span>
         <Switch
           id={ids.id}
           ref={field.ref}
-          checked={!!field.value}
-          onChange={(checked) => {
+          checked={checked}
+          onChange={(next) => {
             if (readOnly) return;
-            field.onChange(checked);
-            own.onValueChange?.(checked);
+            field.onChange(next);
+            own.onValueChange?.(next);
           }}
           onBlur={field.onBlur}
           disabled={disabled}
           aria-labelledby={labelId}
           aria-describedby={ids.describedBy}
         />
-      </div>
+      </label>
     </FormField>
   );
 }

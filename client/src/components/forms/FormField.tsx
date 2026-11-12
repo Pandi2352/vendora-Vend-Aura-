@@ -79,10 +79,10 @@ export function FormField({
   const horizontal = layout === 'horizontal';
 
   const labelRow = label ? (
-    <div className={cn('flex items-center justify-between gap-2 mb-1.5', hideLabel && 'sr-only', horizontal && 'sm:mb-0 sm:pt-2.5')}>
+    <div className={cn('flex items-center justify-between gap-2 mb-1', hideLabel && 'sr-only', horizontal && 'sm:mb-0 sm:pt-2.5')}>
       <span className="flex items-center gap-1 min-w-0">
         {labelAsText ? (
-          <span id={labelId ?? autoLabelId} className="text-xs font-semibold text-zinc-700">
+          <span id={labelId ?? autoLabelId} className="text-xs font-semibold text-zinc-700 leading-none">
             {label}
             {required && (
               <span className="text-red-600 ml-0.5" aria-hidden>
@@ -91,7 +91,7 @@ export function FormField({
             )}
           </span>
         ) : (
-          <Label id={labelId} htmlFor={ids.id} required={required} className="mb-0">
+          <Label id={labelId} htmlFor={ids.id} required={required} className="mb-0 leading-none">
             {label}
           </Label>
         )}
@@ -101,7 +101,7 @@ export function FormField({
             <button
               type="button"
               aria-label="More information"
-              className="inline-flex items-center justify-center w-5 h-5 rounded-md text-zinc-400 hover:text-zinc-600 cursor-help"
+              className="inline-flex items-center justify-center w-3.5 h-3.5 -my-1 rounded-md text-zinc-400 hover:text-zinc-600 cursor-help"
             >
               <Info className="w-3.5 h-3.5" />
             </button>

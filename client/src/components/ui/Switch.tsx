@@ -1,4 +1,5 @@
 import type { Ref } from 'react';
+import { Check } from '@phosphor-icons/react';
 import { cn } from './cn';
 
 export interface SwitchProps {
@@ -13,7 +14,10 @@ export interface SwitchProps {
   ref?: Ref<HTMLButtonElement>;
 }
 
-/** On/off switch (role="switch"); Space / Enter toggle. */
+/**
+ * On/off switch (role="switch"); Space / Enter toggle. Sized in rem so it
+ * follows the UI size setting. The knob shows a check mark when on.
+ */
 export function Switch({ checked, onChange, onBlur, disabled, id, ref, ...aria }: SwitchProps) {
   return (
     <button
@@ -26,19 +30,25 @@ export function Switch({ checked, onChange, onBlur, disabled, id, ref, ...aria }
       onClick={() => onChange(!checked)}
       onBlur={onBlur}
       className={cn(
-        'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors cursor-pointer',
+        'group relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border p-0.5 transition-colors cursor-pointer',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600',
         'disabled:opacity-50 disabled:cursor-not-allowed',
-        checked ? 'bg-primary-600 border-primary-600' : 'bg-zinc-200 border-zinc-300',
+        checked ? 'bg-primary-600 border-primary-600' : 'bg-zinc-200 border-zinc-300 hover:bg-zinc-300',
       )}
       {...aria}
     >
       <span
         className={cn(
-          'inline-block h-[18px] w-[18px] rounded-full bg-white transition-transform motion-reduce:transition-none',
-          checked ? 'translate-x-[22px]' : 'translate-x-0.5',
+          'inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white transition-transform duration-200 ease-out motion-reduce:transition-none',
+          checked ? 'translate-x-4' : 'translate-x-0',
         )}
-      />
+      >
+        <Check
+          weight="bold"
+          aria-hidden
+          className={cn('h-2.5 w-2.5 text-primary-600 transition-opacity', checked ? 'opacity-100' : 'opacity-0')}
+        />
+      </span>
     </button>
   );
 }

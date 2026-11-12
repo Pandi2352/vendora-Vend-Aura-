@@ -7,13 +7,34 @@ import { cn } from '../ui/cn';
  * Responsive field grid. No vertical gap: each FormField reserves its own
  * message line, which provides the spacing and keeps rows aligned.
  */
-export function FormGrid({ columns = 2, children, className }: { columns?: 1 | 2 | 3; children: ReactNode; className?: string }) {
-  const cols = { 1: 'grid-cols-1', 2: 'grid-cols-1 sm:grid-cols-2', 3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' }[columns];
+export function FormGrid({
+  columns = 2,
+  children,
+  className,
+}: {
+  columns?: 1 | 2 | 3 | 4;
+  children: ReactNode;
+  className?: string;
+}) {
+  const cols = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-1 sm:grid-cols-2',
+    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4',
+  }[columns];
   return <div className={cn('grid gap-x-4 gap-y-1', cols, className)}>{children}</div>;
 }
 
 /** Titled group of fields inside a larger form. */
-export function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
   return (
     <fieldset className="border-t border-zinc-100 pt-4 first:border-t-0 first:pt-0">
       <legend className="sr-only">{title}</legend>
@@ -54,13 +75,21 @@ export function FormActions({
   const { isSubmitting, isDirty } = formState;
 
   return (
-    <div className={cn('flex items-center justify-end gap-2 pt-2', fullWidth && 'flex-col-reverse sm:flex-row', className)}>
+    <div
+      className={cn('flex items-center justify-end gap-2 pt-2', fullWidth && 'flex-col-reverse sm:flex-row', className)}
+    >
       {onCancel && (
         <Button variant="secondary" onClick={onCancel} disabled={isSubmitting} fullWidth={fullWidth}>
           {cancelLabel}
         </Button>
       )}
-      <Button type="submit" loading={isSubmitting} disabled={requireChanges && !isDirty} icon={submitIcon} fullWidth={fullWidth}>
+      <Button
+        type="submit"
+        loading={isSubmitting}
+        disabled={requireChanges && !isDirty}
+        icon={submitIcon}
+        fullWidth={fullWidth}
+      >
         {isSubmitting && submittingLabel ? submittingLabel : submitLabel}
       </Button>
     </div>
