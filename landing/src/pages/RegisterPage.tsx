@@ -1,28 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useWatch } from 'react-hook-form';
 import { ShieldCheck, ArrowLeft } from '@phosphor-icons/react';
-import axios from 'axios';
 import { RetailPosLogo } from '../components/RetailPosLogo';
 import { RegistrationHeroColumn } from '../components/register/RegistrationHeroColumn';
 import { RegistrationSuccessScreen } from '../components/register/RegistrationSuccessScreen';
 import { RegistrationFormFields } from '../components/register/RegistrationFormFields';
-import {
-  EMAIL_REGEX,
-  EMPTY_REGISTRATION_FORM,
-  validateRegistrationForm,
-} from '../components/register/registrationForm';
-import type { FieldChangeHandler, RegistrationFormValues } from '../components/register/registrationForm';
-import { SUBSCRIPTION_PLANS, SubscriptionPlanCode } from '../shared';
-import type {
-  CompleteRegistrationDto,
-  CompleteRegistrationResult,
-  RequestEmailOtpDto,
-  VerifyEmailOtpDto,
-} from '../shared';
-import { API_BASE, posLoginUrl } from '../lib/config';
+import { PlanSwitcher } from '../components/register/PlanSwitcher';
+import { EMPTY_REGISTRATION_FORM, registrationSchema } from '../components/register/registrationSchema';
+import { useCustomerIdCheck } from '../components/register/useCustomerIdCheck';
+import { useEmailOtp } from '../components/register/useEmailOtp';
+import { useRegistrationSubmit } from '../components/register/useRegistrationSubmit';
+import { Form, useAppForm } from '../components/forms';
+import { Spinner } from '../components/ui/Spinner';
+import { alphanumericLower } from '../lib/string';
 import { getApiErrorMessage } from '../lib/apiError';
-
-const OTP_RESEND_SECONDS = 60;
+import { SUBSCRIPTION_PLANS, SubscriptionPlanCode } from '../shared';
 
 const isPlanCode = (value: string | null): value is SubscriptionPlanCode =>
   !!value && (Object.values(SubscriptionPlanCode) as string[]).includes(value);
@@ -30,233 +23,68 @@ const isPlanCode = (value: string | null): value is SubscriptionPlanCode =>
 export function RegisterPage() {
   const [searchParams] = useSearchParams();
   const queryPlan = searchParams.get('plan');
-
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanCode>(
-    isPlanCode(queryPlan) ? queryPlan : SubscriptionPlanCode.GROWTH
-  );
-
-  const [form, setForm] = useState<RegistrationFormValues>(EMPTY_REGISTRATION_FORM);
-  const [isCheckingId, setIsCheckingId] = useState(false);
-  const [idCheckStatus, setIdCheckStatus] = useState<{ available: boolean; message: string } | null>(null);
-
-  // Field validation error state
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = useState('');
-
-  // OTP state
-  const [otpSent, setOtpSent] = useState(false);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [resendTimer, setResendTimer] = useState(OTP_RESEND_SECONDS);
-  const [sessionId, setSessionId] = useState('');
-
-  // Submission & Success state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdData, setCreatedData] = useState<CompleteRegistrationResult | null>(null);
-
+  const [plan, setPlan] = useState<SubscriptionPlanCode>(isPlanCode(queryPlan) ? queryPlan : SubscriptionPlanCode.GROWTH);
   useEffect(() => {
-    if (isPlanCode(queryPlan)) {
-      setSelectedPlan(queryPlan);
-    }
+    if (isPlanCode(queryPlan)) setPlan(queryPlan);
   }, [queryPlan]);
+  const planInfo = SUBSCRIPTION_PLANS[plan] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.GROWTH];
 
+  const form = useAppForm(registrationSchema, { defaultValues: EMPTY_REGISTRATION_FORM });
+  const customerId = useWatch({ control: form.control, name: 'customerId' });
+  const idCheck = useCustomerIdCheck(customerId);
+  const otp = useEmailOtp();
+  const registration = useRegistrationSubmit({ form, plan, sessionId: otp.sessionId, ensureIdAvailable: idCheck.ensure });
+
+  // A taken / unchecked ID is a blocking error; the next keystroke re-validates and clears it.
+  const { status: idStatus } = idCheck;
   useEffect(() => {
-    if (!otpSent || resendTimer <= 0) return;
-    const interval = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
-    return () => clearInterval(interval);
-  }, [otpSent, resendTimer]);
+    if (idStatus && !idStatus.available) form.setError('customerId', { type: 'server', message: idStatus.message });
+  }, [idStatus, form]);
 
-  const planInfo = SUBSCRIPTION_PLANS[selectedPlan] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.GROWTH];
-
-  const setFieldError = (field: string, message: string) =>
-    setFieldErrors((prev) => ({ ...prev, [field]: message }));
-
-  const clearFieldError = (...fields: string[]) => {
-    setFieldErrors((prev) => {
-      if (!fields.some((f) => prev[f])) return prev;
-      const next = { ...prev };
-      fields.forEach((f) => delete next[f]);
-      return next;
-    });
+  // Suggest a Customer ID from the shop name until the user types their own (clearing it re-enables suggestions).
+  const idTypedByUser = useRef(false);
+  const suggestCustomerId = (companyName: string) => {
+    if (idTypedByUser.current) return;
+    const suggested = alphanumericLower(companyName, 6);
+    form.setValue('customerId', suggested.length >= 3 ? suggested : '', { shouldValidate: suggested.length >= 3 });
   };
 
-  const handleFieldChange: FieldChangeHandler = (field, value) => {
-    setForm((prev) => {
-      const next = { ...prev, [field]: value };
-      // Suggest a Customer ID from the shop name until the user types one.
-      if (field === 'companyName' && !prev.customerId) {
-        const suggested = String(value).toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 6);
-        if (suggested.length >= 3) next.customerId = suggested;
-      }
-      // A new email address needs a fresh OTP.
-      if (field === 'email') next.otp = '';
-      return next;
-    });
-    clearFieldError(field);
-
-    if (field === 'customerId' || (field === 'companyName' && !form.customerId)) {
-      setIdCheckStatus(null);
-      clearFieldError('customerId');
-    }
-    if (field === 'email') {
-      setOtpSent(false);
-      setSessionId('');
-      clearFieldError('otp');
-    }
+  // A different email needs a fresh code.
+  const resetOtp = () => {
+    if (!form.getValues('otpSent')) return;
+    otp.reset();
+    form.setValue('otpSent', false);
+    form.setValue('otp', '');
+    form.clearErrors('otp');
   };
 
-  // Check Customer ID availability via live API on blur or check button
-  const checkCustomerIdValidity = async (): Promise<boolean> => {
-    const cleanId = form.customerId.trim().toLowerCase();
-    if (!cleanId) {
-      setFieldError('customerId', 'Customer ID is required (3 to 6 characters).');
-      setIdCheckStatus(null);
-      return false;
-    }
-
-    if (cleanId.length < 3 || cleanId.length > 6) {
-      setFieldError('customerId', 'Customer ID must be between 3 and 6 letters or numbers.');
-      setIdCheckStatus({ available: false, message: 'Must be 3 to 6 characters' });
-      return false;
-    }
-
-    if (!/^[a-z0-9]+$/i.test(cleanId)) {
-      setFieldError('customerId', 'Only letters and numbers are allowed.');
-      setIdCheckStatus({ available: false, message: 'Only alphanumeric characters allowed' });
-      return false;
-    }
-
-    clearFieldError('customerId');
-    setIsCheckingId(true);
-
+  const sendOtp = async () => {
+    if (!(await form.trigger('email', { shouldFocus: true }))) return;
     try {
-      const res = await axios.get(`${API_BASE}/onboarding/check-subdomain`, { params: { shopId: cleanId } });
-      if (res.data?.success && res.data?.data?.isAvailable) {
-        clearFieldError('customerId');
-        setIdCheckStatus({
-          available: true,
-          message: res.data?.data?.message || `"${cleanId}" is available!`,
-        });
-        return true;
-      }
-      const reason = res.data?.data?.reason || `Customer ID "${cleanId}" is already taken. Please choose another.`;
-      setFieldError('customerId', reason);
-      setIdCheckStatus({ available: false, message: reason });
-      return false;
+      await otp.send(form.getValues('email').trim(), plan);
+      form.setValue('otpSent', true);
+      form.setValue('otp', '');
+      form.clearErrors('otp');
     } catch (err) {
-      const errMsg = getApiErrorMessage(err, 'Unable to check this Customer ID right now. Please try again.');
-      setFieldError('customerId', errMsg);
-      setIdCheckStatus({ available: false, message: errMsg });
-      return false;
-    } finally {
-      setIsCheckingId(false);
-    }
-  };
-
-  const handleSendOtp = async () => {
-    const cleanEmail = form.email.trim();
-    if (!cleanEmail) {
-      setFieldError('email', 'Email address is required to receive OTP.');
-      return;
-    }
-    if (!EMAIL_REGEX.test(cleanEmail)) {
-      setFieldError('email', 'Please enter a valid email address.');
-      return;
-    }
-
-    clearFieldError('email', 'otp');
-    setIsSendingOtp(true);
-    try {
-      const body: RequestEmailOtpDto = { email: cleanEmail, selectedPlanCode: selectedPlan };
-      const res = await axios.post(`${API_BASE}/onboarding/request-otp`, body);
-      if (res.data?.data?.sessionId) {
-        setSessionId(res.data.data.sessionId);
-      }
-      setOtpSent(true);
-      setResendTimer(OTP_RESEND_SECONDS);
-    } catch (err) {
-      setFieldError(
-        'email',
-        getApiErrorMessage(err, "We couldn't send the verification email. Please check the address and try again shortly."),
-      );
-    } finally {
-      setIsSendingOtp(false);
-    }
-  };
-
-  const handleCreateAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError('');
-
-    const errors = validateRegistrationForm(form, otpSent);
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-
-    const isIdValid = await checkCustomerIdValidity();
-    if (!isIdValid) return;
-
-    setIsSubmitting(true);
-    const cleanId = form.customerId.trim().toLowerCase();
-
-    try {
-      const verifyBody: VerifyEmailOtpDto = { sessionId, otp: form.otp.trim() };
-      await axios.post(`${API_BASE}/onboarding/verify-otp`, verifyBody);
-
-      const registrationBody: CompleteRegistrationDto = {
-        sessionId,
-        businessName: form.companyName.trim(),
-        ownerName: form.contactPerson.trim(),
-        phone: form.mobileNumber,
-        businessType: form.businessType,
-        preferredShopId: cleanId,
-        selectedPlanCode: selectedPlan,
-        address: {
-          city: form.city.trim(),
-          state: form.state.trim(),
-          pincode: form.pincode.trim(),
-          country: 'India',
-        },
-      };
-      const res = await axios.post(`${API_BASE}/onboarding/complete-registration`, registrationBody);
-      const result: Partial<CompleteRegistrationResult> = res.data?.data ?? {};
-      const shopId = result.shopId || cleanId;
-
-      setCreatedData({
-        shopId,
-        username: result.username || `${cleanId}_admin`,
-        loginUrl: result.loginUrl || posLoginUrl(shopId),
-        temporaryPassword: result.temporaryPassword,
+      form.setError('email', {
+        type: 'server',
+        message: getApiErrorMessage(err, "We couldn't send the code. Check the address and try again shortly."),
       });
-    } catch (err) {
-      const msg = getApiErrorMessage(err, 'Registration failed. Please check your details and try again.');
-      setSubmitError(msg);
-      const lower = msg.toLowerCase();
-      if (lower.includes('otp')) {
-        setFieldError('otp', msg);
-      } else if (lower.includes('shop id') || lower.includes('customer id')) {
-        setFieldError('customerId', msg);
-        setIdCheckStatus({ available: false, message: msg });
-      }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleRegisterAnother = () => {
-    setCreatedData(null);
-    setForm(EMPTY_REGISTRATION_FORM);
-    setSessionId('');
-    setOtpSent(false);
-    setResendTimer(OTP_RESEND_SECONDS);
-    setFieldErrors({});
-    setSubmitError('');
-    setIdCheckStatus(null);
+  const registerAnother = () => {
+    registration.clearCreated();
+    otp.reset();
+    idCheck.reset();
+    idTypedByUser.current = false;
+    form.reset(EMPTY_REGISTRATION_FORM);
   };
+
+  const submitting = form.formState.isSubmitting;
 
   return (
-    <div className="min-h-screen bg-[#070b19] flex flex-col font-sans select-none text-zinc-100">
-      {/* Top Navbar */}
+    <div className="min-h-screen bg-[#070b19] flex flex-col font-sans text-zinc-100">
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200">
         <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16 py-3.5 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -273,40 +101,48 @@ export function RegisterPage() {
         </div>
       </header>
 
-      {/* Main Registration Content */}
       <main className="flex-1 w-full max-w-[1680px] mx-auto px-4 sm:px-8 lg:px-14 xl:px-16 py-12 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-start">
           <RegistrationHeroColumn />
 
           <div className="lg:col-span-7">
             <div className="bg-white text-zinc-950 p-6 sm:p-9 rounded-md border border-zinc-200">
-              {createdData ? (
+              {registration.created ? (
                 <RegistrationSuccessScreen
-                  data={{ ...createdData, planName: planInfo.name }}
-                  onRegisterAnother={handleRegisterAnother}
+                  data={{ ...registration.created, planName: planInfo.name }}
+                  onRegisterAnother={registerAnother}
                 />
               ) : (
-                <RegistrationFormFields
-                  values={form}
-                  onFieldChange={handleFieldChange}
-                  selectedPlan={selectedPlan}
-                  planInfo={planInfo}
-                  onSelectPlan={setSelectedPlan}
-                  onCustomerIdBlur={() => {
-                    if (form.customerId.trim()) checkCustomerIdValidity();
-                  }}
-                  onManualCheckId={checkCustomerIdValidity}
-                  isCheckingId={isCheckingId}
-                  idCheckStatus={idCheckStatus}
-                  otpSent={otpSent}
-                  isSendingOtp={isSendingOtp}
-                  resendTimer={resendTimer}
-                  onSendOtp={handleSendOtp}
-                  fieldErrors={fieldErrors}
-                  submitError={submitError}
-                  isSubmitting={isSubmitting}
-                  onSubmit={handleCreateAccount}
-                />
+                <Form form={form} onSubmit={registration.submit} errorSummary className="space-y-5 text-left">
+                  <div>
+                    <h2 className="text-2xl font-black text-zinc-950 tracking-tight">Create your Vendora RetailPOS account</h2>
+                    <p className="text-xs sm:text-sm text-zinc-500 mt-1">
+                      Your login details are emailed to you as soon as the account is ready.
+                    </p>
+                  </div>
+
+                  <PlanSwitcher selected={plan} planInfo={planInfo} onSelect={setPlan} />
+
+                  <RegistrationFormFields
+                    idStatus={idCheck.status}
+                    checkingId={idCheck.checking}
+                    sendingOtp={otp.sending}
+                    resendIn={otp.resendIn}
+                    onSendOtp={sendOtp}
+                    onCompanyNameChange={suggestCustomerId}
+                    onCustomerIdChange={(value) => (idTypedByUser.current = value !== '')}
+                    onEmailChange={resetOtp}
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-3.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {submitting && <Spinner size="md" />}
+                    <span>{submitting ? 'Setting up your store…' : 'Create account'}</span>
+                  </button>
+                </Form>
               )}
             </div>
           </div>

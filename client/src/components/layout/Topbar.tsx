@@ -8,6 +8,7 @@ import {
   Sun,
   CornersOut,
   CornersIn,
+  MagnifyingGlass,
 } from '@phosphor-icons/react';
 import { useAuth } from '../../hooks/useAuth';
 import { usePreferences } from '../../hooks/usePreferences';
@@ -19,12 +20,15 @@ import { ShiftStatusChip } from './ShiftStatusChip';
 import { TopbarIconButton } from './TopbarIconButton';
 import { UserMenu } from './UserMenu';
 import { cn } from '../ui/cn';
+import { CommandHotkeyHint } from '../ui/command/Kbd';
 
 interface TopbarProps {
   onOpenMobileNav: () => void;
+  /** Opens the command palette. */
+  onOpenSearch: () => void;
 }
 
-export function Topbar({ onOpenMobileNav }: TopbarProps) {
+export function Topbar({ onOpenMobileNav, onOpenSearch }: TopbarProps) {
   const { user } = useAuth();
   const { theme, toggleTheme, sidebarCollapsed, toggleSidebar } = usePreferences();
   const fullscreen = useFullscreen();
@@ -52,6 +56,20 @@ export function Topbar({ onOpenMobileNav }: TopbarProps) {
         className="hidden lg:inline-flex"
       >
         <SidebarSimple />
+      </TopbarIconButton>
+
+      <button
+        type="button"
+        onClick={onOpenSearch}
+        aria-keyshortcuts="Control+K Meta+K"
+        className="hidden sm:inline-flex items-center gap-2 h-9 w-44 lg:w-60 px-3 rounded-md border border-shell-border text-shell-muted text-sm hover:bg-shell-hover hover:text-shell-text transition-colors cursor-pointer"
+      >
+        <MagnifyingGlass className="w-4 h-4 shrink-0" />
+        <span className="flex-1 text-left">Search…</span>
+        <CommandHotkeyHint className="border-shell-border bg-shell-raised text-shell-muted" />
+      </button>
+      <TopbarIconButton label="Search" onClick={onOpenSearch} className="sm:hidden">
+        <MagnifyingGlass />
       </TopbarIconButton>
 
       <div className="flex-1" />

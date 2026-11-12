@@ -148,14 +148,14 @@ All in `components/ui/` (exported from `components/ui/index.ts`).
 | Alert Dialog | ✅ | `ConfirmProvider` + `useConfirm()` (danger variant) |
 | Dropdown Menu (actions) | ✅ | `ui/menu/DropdownMenu` (APG menu button) + `tables/RowActionsMenu` |
 | Tabs | ✅ | |
-| Accordion | ❌ | |
+| Accordion | ✅ | `ui/accordion/` (Accordion, AccordionItem, useAccordion) — APG accordion: single / multiple, collapsible, controlled / uncontrolled, bordered / flush, arrows + Home/End, inert collapsed panels |
 | Breadcrumb | ✅ | `PageHeader`, generated from `config/navigation.ts` |
 | Pagination | ✅ | `components/tables/TablePagination` |
 | Skeleton | ✅ | |
 | Spinner / PageLoader | ✅ | |
 | Progress | ✅ | `UsageMeter` |
 | Calendar / Date Picker | ✅ | `ui/calendar/Calendar` + `DateField`, `DateRangeField`, `TimeField` (APG date picker keyboard) |
-| Command Menu | ❌ | Level 2 |
+| Command Menu | ✅ | `ui/command/` (CommandPalette, CommandList, useCommandPalette, useCommandPaletteHotkey, Kbd) — combobox + listbox in a modal; mounted as `layout/AppCommandPalette.tsx` in `AppLayout` (Ctrl/Cmd+K, Topbar search button) |
 
 ### 5. Common Layout Components
 - [x] Main application layout — _`layouts/AppLayout.tsx`_
@@ -431,7 +431,7 @@ Introduce when the product needs it. Done items are marked.
 - [ ] CSRF integration (bearer tokens, not cookies) · [ ] Secure file download · [x] Authentication timeout handling
 
 ### 23. Advanced UI/UX Features
-- [ ] Global command palette · [ ] Global search · [ ] Notification center · [ ] Notification preferences · [ ] Context menus
+- [x] Global command palette — _`ui/command/CommandPalette`, `layout/AppCommandPalette.tsx` (Ctrl+K)_ · [ ] Global search · [ ] Notification center · [ ] Notification preferences · [ ] Context menus
 - [ ] Drag-and-drop · [ ] Multi-select · [ ] Keyboard shortcuts (POS hotkeys) · [x] Keyboard navigation (dropdown, dialogs, tables)
 - [ ] Undo / redo · [ ] Onboarding walkthrough · [x] User preference management (Settings) · [ ] Recently viewed · [ ] Saved filters · [ ] Dashboard widgets
 
@@ -508,7 +508,7 @@ Introduce when the product needs it. Done items are marked.
 | Tables | ✅ DataTable · ✅ TablePagination · ✅ RowActions |
 | Dashboard | ✅ StatTile · ✅ KpiCard (admin) · ✅ ChartCard (admin) |
 | Files | ✅ FileField / FileDropzone (upload, preview, list) |
-| Advanced | ❌ CommandPalette · ✅ DateRangePicker · ✅ MultiSelect · ✅ Calendar · ✅ OTP · ✅ Slider · ✅ SearchInput |
+| Advanced | ✅ CommandPalette · ✅ Accordion · ✅ DateRangePicker · ✅ MultiSelect · ✅ Calendar · ✅ OTP · ✅ Slider · ✅ SearchInput |
 
 ---
 
