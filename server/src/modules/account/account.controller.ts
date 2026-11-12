@@ -5,7 +5,7 @@ import { AuthenticatedUser, CurrentUser, TenantId } from '../../common';
 
 @ApiTags('Store Account & Plan')
 @ApiBearerAuth()
-@Controller('account')
+@Controller(['account', 'setup'])
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
@@ -15,7 +15,7 @@ export class AccountController {
     return { data: await this.accountService.getOverview(tenantId, user) };
   }
 
-  @Get('setup-checklist')
+  @Get(['setup-checklist', 'checklist'])
   @ApiOperation({ summary: 'Live onboarding checklist status across the 8 store setup milestones' })
   async getSetupChecklist(@TenantId() tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     return { data: await this.accountService.getSetupChecklist(tenantId, user) };

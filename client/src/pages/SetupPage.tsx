@@ -37,25 +37,31 @@ interface SetupChecklistData {
   };
 }
 
+/**
+ * Tenant Setup Wizard Page:
+ * Displays store onboarding progress in a single high-contrast master card,
+ * with real live database checks and calibrated slate/emerald styling matching
+ * the reference screenshot.
+ */
 export function SetupPage() {
   const navigate = useNavigate();
   const [data, setData] = useState<SetupChecklistData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState('');
 
-  const fetchChecklist = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setIsRefreshing(true);
-    else setIsLoading(true);
-    setError('');
-
+  const fetchChecklist = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
+      setError(null);
       const res = await api.get('/account/setup-checklist');
-      setData(unwrap<SetupChecklistData>(res));
-    } catch {
-      setError('Unable to load setup checklist. Please try again.');
+      const payload = unwrap<SetupChecklistData>(res);
+      setData(payload);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load setup progress';
+      setError(msg);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
       setIsRefreshing(false);
     }
   }, []);
@@ -64,11 +70,11 @@ export function SetupPage() {
     fetchChecklist();
   }, [fetchChecklist]);
 
-  if (isLoading) {
+  if (loading && !data) {
     return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-[400px]">
+      <div className="min-h-[400px] flex flex-col items-center justify-center gap-3">
         <Spinner size="lg" />
-        <p className="text-xs text-zinc-500 mt-3 font-medium">Inspecting store setup milestones…</p>
+        <p className="text-sm text-slate-500 font-medium">Checking your store setup progress…</p>
       </div>
     );
   }
@@ -76,14 +82,14 @@ export function SetupPage() {
   const steps = data?.steps;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      {/* Breadcrumb Navigation */}
-      <nav className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium select-none">
-        <Link to={ROUTES.DASHBOARD} className="hover:text-zinc-900 transition-colors">
+    <div className="w-full px-4 sm:px-6 lg:px-7 pt-4 sm:pt-5 pb-12 space-y-4 sm:space-y-5 animate-fade-in">
+      {/* Breadcrumb Navigation matching reference */}
+      <nav className="flex items-center gap-1.5 text-xs text-slate-400 font-medium select-none">
+        <Link to={ROUTES.DASHBOARD} className="hover:text-slate-700 transition-colors">
           Home
         </Link>
-        <CaretRight className="w-3.5 h-3.5 text-zinc-400" />
-        <span className="text-zinc-950 font-semibold">Setup</span>
+        <CaretRight className="w-3.5 h-3.5 text-slate-400" />
+        <span className="text-slate-600 font-semibold">Setup</span>
       </nav>
 
       {error && <Alert tone="error">{error}</Alert>}
@@ -98,9 +104,9 @@ export function SetupPage() {
         />
       )}
 
-      {/* 8 Setup Steps Timeline */}
+      {/* 8 Setup Steps in Single Enclosing Card Container (Zero Shadows, Clean Borders) */}
       {steps && (
-        <div className="space-y-4 pt-2">
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 space-y-0 shadow-none">
           {/* Step 1: Shop details */}
           <SetupStepItem
             stepNumber={1}
@@ -194,13 +200,13 @@ export function SetupPage() {
       )}
 
       {/* Live Data Footer Bar */}
-      <div className="pt-4 border-t border-zinc-200 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500">
+      <div className="pt-4 border-t border-slate-200/90 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
         <p>The list reads straight from your data — it updates itself as you go.</p>
         <button
           type="button"
           onClick={() => fetchChecklist(true)}
           disabled={isRefreshing}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-100 text-zinc-800 font-semibold cursor-pointer transition-colors"
+          className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium cursor-pointer transition-colors"
         >
           <ArrowsClockwise className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>{isRefreshing ? 'Checking…' : 'Re-check'}</span>
@@ -209,4 +215,3 @@ export function SetupPage() {
     </div>
   );
 }
-
