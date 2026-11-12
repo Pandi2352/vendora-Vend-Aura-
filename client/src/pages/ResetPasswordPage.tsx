@@ -9,6 +9,7 @@ import { AuthLayout, authLinkClass } from '@/components/auth';
 import { Form, FormActions, PasswordField, useAppForm } from '@/components/forms';
 import { Alert } from '@/components/ui';
 import { normalizeShopId, resetPasswordSchema, type ResetPasswordValues } from '@/validations/auth';
+import { currentShopId } from '@/lib/tenant';
 
 const lockIcon = <LockKey aria-hidden className="w-4 h-4 text-zinc-400" />;
 
@@ -49,7 +50,7 @@ function InvalidLink({ shopId }: { shopId: string }) {
 export function ResetPasswordPage() {
   const [params] = useSearchParams();
   const token = (params.get('token') || '').trim();
-  const shopId = normalizeShopId(params.get('shopId') || '');
+  const shopId = currentShopId() || normalizeShopId(params.get('shopId') || '');
   const navigate = useNavigate();
   const toast = useToast();
   const [linkInvalid, setLinkInvalid] = useState(!token);

@@ -59,10 +59,13 @@ docker build -t vendora/server:1.4.0 server
 docker build -t vendora/client:1.4.0 --build-context nginx=docker/nginx \
   --build-arg VITE_API_URL=https://api.example.com/api/v1 \
   --build-arg VITE_LANDING_URL=https://example.com \
+  --build-arg VITE_APP_URL=https://app.example.com \
+  --build-arg 'VITE_TENANT_APP_URL=https://{shopId}.example.com' \
   --build-arg VITE_SUPPORT_EMAIL=support@example.com client
 docker build -t vendora/landing:1.4.0 --build-context nginx=docker/nginx \
   --build-arg VITE_API_URL=https://api.example.com/api/v1 \
-  --build-arg VITE_POS_URL=https://pos.example.com landing
+  --build-arg VITE_POS_URL=https://app.example.com \
+  --build-arg 'VITE_TENANT_APP_URL=https://{shopId}.example.com' landing
 ```
 
 ---
@@ -87,8 +90,8 @@ Optional, read by individual modules:
 | :--- | :--- | :--- |
 | `JWT_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN` | `15m` / `7d` | Token lifetimes |
 | `PLATFORM_ADMIN_USERNAME` / `PLATFORM_ADMIN_PASSWORD` | unset | Super admin console login. Login is rejected while unset |
-| `CORS_ORIGINS` | unset (= allow any origin) | Comma-separated browser origins (landing + POS). **Always set this in production** |
-| `CLIENT_BASE_URL` | – | Public POS URL included in welcome/credentials emails. Must be the real production URL |
+| `CORS_ORIGINS` | unset (= allow any origin) | Comma-separated fixed browser origins (landing + POS store finder). Store subdomains from `TENANT_APP_URL` are added automatically. **Always set this in production** |
+| `TENANT_APP_URL` | `http://{shopId}.localhost:4001` | Each store's own address; `{shopId}` becomes the Shop ID (production `https://{shopId}.vendora.com`). Used in welcome and password-reset emails, in CORS, and to refuse sign-ins sent from another store's address |
 | `SWAGGER_ENABLED` | – | `true` exposes `/docs` even in production |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (or `MAIL_FROM`) | port 587 | Outgoing mail. With no user/pass, mail is only logged. Port 465 uses implicit TLS |
 
@@ -98,6 +101,8 @@ Optional, read by individual modules:
 | :--- | :--- |
 | `VITE_API_URL` | `https://api.example.com/api/v1` |
 | `VITE_LANDING_URL` | `https://example.com` |
+| `VITE_APP_URL` | `https://app.example.com` ("find your store" page) |
+| `VITE_TENANT_APP_URL` | `https://{shopId}.example.com` (must match the server's `TENANT_APP_URL`) |
 | `VITE_SUPPORT_EMAIL` | `support@example.com` |
 
 ### Landing (build time)
@@ -105,9 +110,10 @@ Optional, read by individual modules:
 | Variable | Example |
 | :--- | :--- |
 | `VITE_API_URL` | `https://api.example.com/api/v1` |
-| `VITE_POS_URL` | `https://pos.example.com` |
+| `VITE_POS_URL` | `https://app.example.com` ("find your store" page) |
+| `VITE_TENANT_APP_URL` | `https://{shopId}.example.com` |
 
-`VITE_*` values are compiled into the JavaScript bundle. They are public, so never put secrets in them. Changing one requires rebuilding the image. In Compose they come from `PUBLIC_API_URL`, `PUBLIC_LANDING_URL`, `PUBLIC_POS_URL` and `PUBLIC_SUPPORT_EMAIL`.
+`VITE_*` values are compiled into the JavaScript bundle. They are public, so never put secrets in them. Changing one requires rebuilding the image. In Compose they come from `PUBLIC_API_URL`, `PUBLIC_LANDING_URL`, `PUBLIC_POS_URL`, `PUBLIC_TENANT_APP_URL` and `PUBLIC_SUPPORT_EMAIL`.
 
 ---
 
@@ -119,7 +125,12 @@ Optional, read by individual modules:
   - Swagger (`/docs`) is not mounted unless `SWAGGER_ENABLED=true`.
   - Helmet's Content-Security-Policy is enabled. It is relaxed only outside production, for the Swagger UI.
 - **CORS:** set `CORS_ORIGINS` to the exact landing and POS origins. If it is empty, the API reflects any origin.
-- **Emails:** set `CLIENT_BASE_URL` to the public POS URL. It appears in the credentials email new tenants receive.
+- **Store addresses (one subdomain per store):** every store is served at `https://<shopId>.vendora.com`. For that you need:
+  - a wildcard DNS record `*.vendora.com` pointing at the proxy that serves the POS container (plus `app.vendora.com` for the store finder);
+  - a wildcard TLS certificate for `*.vendora.com` (Let's Encrypt issues these with a DNS-01 challenge);
+  - `TENANT_APP_URL=https://{shopId}.vendora.com` on the server and the same value as `VITE_TENANT_APP_URL` in both frontends.
+  The POS container serves every store from one build (nginx `server_name _`); the page reads the Shop ID from its address. Reserved names such as `www`, `app`, `api` and `admin` can never be Shop IDs.
+- **Local development:** browsers resolve any `*.localhost` name to this machine, so `http://kmart.localhost:4001` works with the normal `npm run dev`, with no hosts-file changes. `http://localhost:4001` is the store finder.
 - **TLS / reverse proxy:** the containers speak plain HTTP. Put a TLS-terminating proxy or load balancer in front, route the API host to `server:5000` and the two web hosts to the SPA containers, and update the `VITE_*` build args and `CORS_ORIGINS` to the HTTPS URLs.
 - **SPA hosting (`docker/nginx/spa.conf`):**
   - Unknown paths fall back to `/index.html` (`try_files $uri $uri/ /index.html`), so deep links such as `/admin` work on reload.

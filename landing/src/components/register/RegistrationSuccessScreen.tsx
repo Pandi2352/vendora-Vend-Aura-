@@ -33,6 +33,18 @@ export function RegistrationSuccessScreen({
           <span className="font-mono font-bold text-zinc-950 text-base">{data.shopId}</span>
         </div>
 
+        <div className="flex justify-between items-center gap-3 text-sm border-b border-zinc-200 pb-2.5">
+          <span className="text-zinc-500 font-medium shrink-0">Store Address:</span>
+          <a
+            href={data.loginUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono font-bold text-blue-700 hover:underline truncate"
+          >
+            {new URL(data.loginUrl).host}
+          </a>
+        </div>
+
         <div className="flex justify-between items-center text-sm border-b border-zinc-200 pb-2.5">
           <span className="text-zinc-500 font-medium">Login Username:</span>
           <span className="font-mono font-bold text-zinc-950 text-base">{data.username}</span>

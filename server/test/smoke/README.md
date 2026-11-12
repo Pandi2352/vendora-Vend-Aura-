@@ -44,6 +44,10 @@ between back-to-back runs against the same server.
 
 ## Registration flow (OTP -> credentials -> login -> password change -> dashboard data)
 
+Also checks store addresses: the welcome link is `TENANT_APP_URL/login`, store lookup returns `exists`,
+CORS allows store subdomains but not other sites or look-alike hosts, and sign-in / forgot-password sent
+from another store's address is refused. Set `TENANT_APP_URL` for the script if the server uses a non-default one.
+
 Start the test server **without SMTP** so the OTP and welcome credentials are written to the log
 instead of being emailed, and capture the log:
 

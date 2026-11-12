@@ -19,8 +19,10 @@ RUN npm ci
 
 ARG VITE_API_URL=http://localhost:5000/api/v1
 ARG VITE_POS_URL=http://localhost:4001
+ARG VITE_TENANT_APP_URL=http://{shopId}.localhost:4001
 ENV VITE_API_URL=${VITE_API_URL} \
-    VITE_POS_URL=${VITE_POS_URL}
+    VITE_POS_URL=${VITE_POS_URL} \
+    VITE_TENANT_APP_URL=${VITE_TENANT_APP_URL}
 
 COPY . .
 RUN npm run build

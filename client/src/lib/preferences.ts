@@ -26,7 +26,7 @@ export const CUSTOM_SCALE_RANGE = { min: 80, max: 140, step: 2.5 };
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'light',
-  uiSize: 'default',
+  uiSize: 'compact',
   customScale: 100,
   sidebarCollapsed: false,
   kioskMode: false,

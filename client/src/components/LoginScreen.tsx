@@ -6,21 +6,25 @@ import { ROUTES } from '@/config/routes';
 import { AuthLayout, authLinkClass } from '@/components/auth';
 import { Form, FormActions, PasswordField, TextField, useAppForm } from '@/components/forms';
 import { loginSchema, normalizeShopId, type LoginValues } from '@/validations/auth';
+import { ROOT_APP_URL, tenantHostSuffix } from '@/lib/tenant';
 
 interface LoginScreenProps {
   /** Prefilled Shop ID (from the welcome email link). */
   initialShopId?: string;
+  /** The store whose address this page is on (kmart.vendora.com): the Shop ID is fixed. */
+  storeShopId?: string | null;
   /** Signs in; throw to show the server error on the form. */
   onLogin: (values: LoginValues) => Promise<unknown>;
 }
 
 const icon = (Icon: typeof User) => <Icon aria-hidden className="w-4 h-4 text-zinc-400" />;
 
-export function LoginScreen({ initialShopId = '', onLogin }: LoginScreenProps) {
+export function LoginScreen({ initialShopId = '', storeShopId, onLogin }: LoginScreenProps) {
+  const startShopId = storeShopId || initialShopId;
   const form = useAppForm(loginSchema, {
     defaultValues: {
-      shopId: initialShopId,
-      username: initialShopId ? `${initialShopId}_admin` : '',
+      shopId: startShopId,
+      username: startShopId ? `${startShopId}_admin` : '',
       password: '',
     },
   });
@@ -66,8 +70,17 @@ export function LoginScreen({ initialShopId = '', onLogin }: LoginScreenProps) {
           autoComplete="organization"
           spellCheck={false}
           normalize={normalizeShopId}
+          readOnly={!!storeShopId}
           leftAddon={icon(Storefront)}
-          rightAddon={<span className="pr-2 text-[11px] font-mono text-zinc-400">.vendora.com</span>}
+          rightAddon={<span className="pr-2 text-[11px] font-mono text-zinc-400">{tenantHostSuffix()}</span>}
+          hint={storeShopId ? 'This sign-in page belongs to your store. Bookmark it for next time.' : undefined}
+          labelAction={
+            storeShopId ? (
+              <a href={`${ROOT_APP_URL}/login`} className={authLinkClass}>
+                Not your store?
+              </a>
+            ) : undefined
+          }
         />
         <TextField
           name="username"

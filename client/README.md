@@ -49,6 +49,6 @@ Dark mode remaps the neutral palette, so screens need no `dark:` classes.
 ## Sign-up to dashboard flow
 
 1. Landing `/register`: email OTP → verify → complete registration.
-2. Welcome email: username `<shopId>_admin`, temporary password, link `CLIENT_BASE_URL/login?shopId=<shopId>`.
-3. `/login?shopId=…` prefills Shop ID and username → sign in.
+2. Welcome email: username `<shopId>_admin`, temporary password, and the store's own address `TENANT_APP_URL/login` (e.g. `http://kmart.localhost:4001/login`, production `https://kmart.vendora.com/login`).
+3. On the store address the Shop ID is fixed and the username is prefilled → sign in. `localhost:4001` (no store) asks for the Shop ID and forwards to the store address; old `/login?shopId=…` links are forwarded too.
 4. First sign-in → `/change-password` (enforced by the server too) → `/dashboard`.

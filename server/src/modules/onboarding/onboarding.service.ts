@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import {
   Injectable, 
   BadRequestException, 
@@ -27,9 +26,8 @@ import {
   TenantStatus, 
   UserRole 
 } from '../../shared';
-import { CryptoUtil, UuidUtil, DateUtil, OTP_TTL_MINUTES } from '../../common';
+import { CryptoUtil, UuidUtil, DateUtil, OTP_TTL_MINUTES, RESERVED_SHOP_IDS, TenantUrlUtil } from '../../common';
 
-const RESERVED_SHOP_IDS = ['admin', 'api', 'app', 'www', 'mail', 'billing', 'pos', 'vendora', 'root', 'support'];
 
 @Injectable()
 export class OnboardingService {
@@ -43,7 +41,6 @@ export class OnboardingService {
     @InjectModel(RegistrationSession.name) private readonly sessionModel: Model<RegistrationSessionDocument>,
     private readonly mailService: MailService,
     private readonly catalogService: CatalogService,
-    private readonly configService: ConfigService,
   ) {}
 
   // 1. Get SaaS Pricing Plans
@@ -133,7 +130,7 @@ export class OnboardingService {
     const slug = (shopId || '').toLowerCase().trim();
     const problem = this.shopIdProblem(slug);
     if (problem) {
-      return { shopId: slug, isAvailable: false, reason: problem };
+      return { shopId: slug, isAvailable: false, exists: false, reason: problem };
     }
 
     const existing = await this.tenantModel.findOne({ shopId: slug });
@@ -141,6 +138,8 @@ export class OnboardingService {
       return {
         shopId: slug,
         isAvailable: false,
+        exists: true,
+        storeUrl: TenantUrlUtil.build(slug, '/'),
         reason: `Customer ID "${slug}" is already taken. Please choose another.`,
       };
     }
@@ -148,8 +147,9 @@ export class OnboardingService {
     return {
       shopId: slug,
       isAvailable: true,
+      exists: false,
       message: `"${slug}" is available!`,
-      fullSubdomainUrl: `https://${slug}.vendora.com`,
+      storeUrl: TenantUrlUtil.build(slug, '/'),
     };
   }
 
@@ -273,7 +273,7 @@ export class OnboardingService {
     }
 
     // Send Welcome Credentials Email (non-fatal: credentials are also shown on screen)
-    const loginUrl = `${this.clientBaseUrl}/login?shopId=${encodeURIComponent(shopId)}`;
+    const loginUrl = TenantUrlUtil.build(shopId, '/login');
     try {
       await this.mailService.sendWelcomeCredentialsEmail({
         to: session.email,
@@ -304,10 +304,6 @@ export class OnboardingService {
       temporaryPassword: tempPassword,
       trialEndsAt: subscription!.expiresAt,
     };
-  }
-
-  private get clientBaseUrl(): string {
-    return (this.configService.get<string>('CLIENT_BASE_URL') || 'http://localhost:4001').replace(/\/+$/, '');
   }
 
   private async rollbackProvisioning(tenantId: Types.ObjectId) {

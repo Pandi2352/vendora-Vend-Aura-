@@ -7,6 +7,7 @@ import { AuthLayout, authLinkClass } from '@/components/auth';
 import { Form, FormActions, TextField, useAppForm } from '@/components/forms';
 import { Alert } from '@/components/ui';
 import { forgotPasswordSchema, normalizeShopId, type ForgotPasswordValues } from '@/validations/auth';
+import { currentShopId, tenantHostSuffix } from '@/lib/tenant';
 
 const icon = (Icon: typeof User) => <Icon aria-hidden className="w-4 h-4 text-zinc-400" />;
 
@@ -19,7 +20,9 @@ const loginHref = (shopId: string) => (shopId ? `${ROUTES.LOGIN}?shopId=${encode
  */
 export function ForgotPasswordPage() {
   const [params] = useSearchParams();
-  const initialShopId = normalizeShopId(params.get('shopId') || '');
+  // On a store's own address the Shop ID is that store's and cannot be changed.
+  const storeShopId = currentShopId();
+  const initialShopId = storeShopId || normalizeShopId(params.get('shopId') || '');
   const [sentForShop, setSentForShop] = useState<string | null>(null);
 
   const form = useAppForm(forgotPasswordSchema, {
@@ -83,8 +86,9 @@ export function ForgotPasswordPage() {
           autoComplete="organization"
           spellCheck={false}
           normalize={normalizeShopId}
+          readOnly={!!storeShopId}
           leftAddon={icon(Storefront)}
-          rightAddon={<span className="pr-2 text-[11px] font-mono text-zinc-400">.vendora.com</span>}
+          rightAddon={<span className="pr-2 text-[11px] font-mono text-zinc-400">{tenantHostSuffix()}</span>}
         />
         <TextField
           name="identifier"

@@ -6,6 +6,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -28,8 +29,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Store Staff / Cashier Login with Shop ID' })
   @ApiResponse({ status: 200, description: 'Login successful with JWT access & refresh tokens' })
   @ApiResponse({ status: 401, description: 'Invalid shop ID or credentials' })
-  async login(@Body() dto: LoginDto) {
-    const result = await this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Headers('origin') origin?: string) {
+    const result = await this.authService.login(dto, origin);
     return {
       message: 'Login successful',
       data: result,
@@ -60,8 +61,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: 'Generic confirmation (no account enumeration)' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    const result = await this.authService.forgotPassword(dto);
+  async forgotPassword(@Body() dto: ForgotPasswordDto, @Headers('origin') origin?: string) {
+    const result = await this.authService.forgotPassword(dto, origin);
     return {
       message: result.message,
     };

@@ -1,3 +1,5 @@
+import { TenantUrlUtil } from '../utils/tenant-url.util';
+
 /**
  * Fails fast at startup when required configuration is missing or unsafe.
  * Used by ConfigModule.forRoot({ validate }).
@@ -14,6 +16,10 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
   }
   if (config.PORT !== undefined && Number.isNaN(Number(config.PORT))) {
     throw new Error('PORT must be a number.');
+  }
+  if (config.TENANT_APP_URL !== undefined && String(config.TENANT_APP_URL).trim()) {
+    const problem = TenantUrlUtil.templateProblem(String(config.TENANT_APP_URL).trim());
+    if (problem) throw new Error(problem);
   }
   if (config.NODE_ENV === 'production') {
     const weak = ['JWT_SECRET', 'JWT_REFRESH_SECRET'].filter((key) => String(config[key]).length < 32);

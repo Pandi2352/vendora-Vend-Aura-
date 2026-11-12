@@ -3,6 +3,7 @@ import { Buildings, EnvelopeSimple, MapPin, User } from '@phosphor-icons/react';
 import { DropdownField, EmailField, OtpField, PhoneField, TextField } from '../forms';
 import { Spinner } from '../ui/Spinner';
 import { alphanumericLower, digitsOnly } from '../../lib/string';
+import { storeHost, storeHostSuffix } from '../../lib/config';
 import { BUSINESS_TYPE_OPTIONS } from './businessTypeOptions';
 import type { CustomerIdStatus } from './useCustomerIdCheck';
 import type { RegistrationFormInput } from './registrationSchema';
@@ -50,13 +51,13 @@ export function RegistrationFormFields({
         normalize={(v) => alphanumericLower(v, 6)}
         loading={checkingId}
         onValueChange={onCustomerIdChange}
-        rightAddon={<span className="pr-1.5 text-xs text-zinc-400 hidden sm:inline">.vendora.com</span>}
+        rightAddon={<span className="pr-1.5 text-xs text-zinc-400 hidden sm:inline">{storeHostSuffix()}</span>}
         tooltip="You sign in with this ID, and it becomes your store address. It cannot be changed later."
         hint="3 to 6 lower-case letters or numbers"
         success={
           idStatus?.available ? (
             <>
-              {idStatus.message}. Your store: <strong className="font-mono">{customerId}.vendora.com</strong>
+              {idStatus.message}. Your store: <strong className="font-mono">{storeHost(customerId)}</strong>
             </>
           ) : undefined
         }

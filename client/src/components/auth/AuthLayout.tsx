@@ -45,7 +45,7 @@ export function AuthLayout({ title, description, children, cardFooter }: AuthLay
 
         <div className="text-center text-xs text-zinc-500">
           <a href={LANDING_URL} className="hover:text-zinc-300 transition-colors">
-            ← Back to Vendora Platform (Port 4000)
+            ← Back to Vendora
           </a>
         </div>
       </div>

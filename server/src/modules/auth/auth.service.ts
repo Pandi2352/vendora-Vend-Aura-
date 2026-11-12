@@ -15,7 +15,7 @@ import { User, UserDocument } from '../user/schemas/user.schema';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { TenantStatus } from '../../shared';
-import { CryptoUtil, DateUtil, ObjectIdUtil, PASSWORD_RESET_TTL_MINUTES } from '../../common';
+import { CryptoUtil, DateUtil, ObjectIdUtil, PASSWORD_RESET_TTL_MINUTES, TenantUrlUtil } from '../../common';
 import { MailService } from '../mail/mail.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -45,8 +45,9 @@ export class AuthService {
   /**
    * Multi-Tenant Store Staff / Cashier Login
    */
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, origin?: string) {
     const shopId = dto.shopId.toLowerCase().trim();
+    this.assertStoreAddress(shopId, origin);
     const identifier = dto.username.toLowerCase().trim();
 
     const tenant = await this.tenantModel.findOne({ shopId });
@@ -232,8 +233,9 @@ export class AuthService {
    * account exists; the email is sent in the background so response time does
    * not reveal it either. Only the SHA-256 of the token is stored.
    */
-  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+  async forgotPassword(dto: ForgotPasswordDto, origin?: string): Promise<{ message: string }> {
     const shopId = dto.shopId.toLowerCase().trim();
+    this.assertStoreAddress(shopId, origin);
     const identifier = dto.identifier.toLowerCase().trim();
 
     const tenant = await this.tenantModel.findOne({ shopId });
@@ -260,9 +262,7 @@ export class AuthService {
       },
     );
 
-    const resetUrl =
-      `${this.clientBaseUrl}/reset-password?token=${encodeURIComponent(token)}` +
-      `&shopId=${encodeURIComponent(tenant.shopId)}`;
+    const resetUrl = TenantUrlUtil.build(tenant.shopId, `/reset-password?token=${encodeURIComponent(token)}`);
     void this.mailService
       .sendPasswordResetEmail({
         to: user.email,
@@ -321,8 +321,17 @@ export class AuthService {
     return tenant.status === TenantStatus.SUSPENDED || tenant.status === TenantStatus.EXPIRED;
   }
 
-  private get clientBaseUrl(): string {
-    return (this.configService.get<string>('CLIENT_BASE_URL') || 'http://localhost:4001').replace(/\/+$/, '');
+  /**
+   * A request sent from a store's own address (kmart.vendora.com) may only act
+   * on that store, so a page on one store's subdomain can never sign in to another.
+   */
+  private assertStoreAddress(shopId: string, origin?: string) {
+    const storeOfOrigin = TenantUrlUtil.shopIdFromOrigin(origin);
+    if (storeOfOrigin && storeOfOrigin !== shopId) {
+      throw new UnauthorizedException(
+        `This sign-in page belongs to Shop ID "${storeOfOrigin}". Open ${TenantUrlUtil.build(shopId, '/login')} to sign in to "${shopId}".`,
+      );
+    }
   }
 
   /**

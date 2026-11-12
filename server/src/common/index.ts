@@ -43,6 +43,7 @@ export * from './utils/pagination.util';
 export * from './utils/transaction.util';
 export * from './utils/document-view.util';
 export * from './utils/object-id.util';
+export * from './utils/tenant-url.util';
 
 // Interceptors & Filters
 export * from './interceptors/transform-response.interceptor';

@@ -6,14 +6,30 @@
 const fs = require('fs');
 const B = process.env.SMOKE_API_URL || 'http://localhost:5055/api/v1';
 const logPath = process.argv[2];
+// Must match the server's TENANT_APP_URL (default below).
+const TENANT_APP_URL = process.env.TENANT_APP_URL || 'http://{shopId}.localhost:4001';
+const storeUrl = (shopId, path = '') => TENANT_APP_URL.replace('{shopId}', shopId) + path;
+const storeOrigin = (shopId) => new URL(storeUrl(shopId)).origin;
 
-async function call(method, path, body, token) {
+async function call(method, path, body, token, origin) {
   const res = await fetch(B + path, {
     method,
-    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(origin ? { origin } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
-  return { status: res.status, json: await res.json().catch(() => null) };
+  return { status: res.status, json: await res.json().catch(() => null), headers: res.headers };
+}
+/** CORS preflight as a browser on `origin` would send it; returns the allowed origin header. */
+async function preflight(origin) {
+  const res = await fetch(B + '/auth/login', {
+    method: 'OPTIONS',
+    headers: { origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type' },
+  });
+  return res.headers.get('access-control-allow-origin');
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fromLog = (regex) => {
@@ -54,13 +70,28 @@ const step = (name, ok, detail) => {
   });
   const reg = r.json?.data;
   step('3. complete registration', r.status === 201 && reg?.username === `${shopId}_admin`, r.json);
-  step('   login URL points at /login?shopId=', !!reg?.loginUrl && reg.loginUrl.endsWith(`/login?shopId=${shopId}`), reg?.loginUrl);
+  step('   login URL is the store address', reg?.loginUrl === storeUrl(shopId, '/login'), reg?.loginUrl);
   await sleep(200);
   const mailed = fromLog(new RegExp(`Welcome email for ${email.replace('.', '\\.')} \\| shop ${shopId} \\| user (\\S+) \\| temp password (\\S+) \\|`));
   step('   welcome email has username + temp password', mailed?.[1] === reg?.username && mailed?.[2] === reg?.temporaryPassword, mailed?.slice(1));
 
-  r = await call('POST', '/auth/login', { shopId, username: reg.username, password: reg.temporaryPassword });
-  step('4. login with emailed credentials', r.status === 200 && r.json.data.mustChangePassword === true, r.json);
+  r = await call('GET', `/onboarding/check-subdomain?shopId=${shopId}`);
+  step('   store lookup: exists + store URL', r.json?.data?.exists === true && r.json.data.storeUrl === storeUrl(shopId, '/'), r.json?.data);
+  r = await call('GET', '/onboarding/check-subdomain?shopId=zz9q');
+  step('   store lookup: unknown Shop ID does not exist', r.json?.data?.exists === false, r.json?.data);
+
+  step('   CORS allows the store address', (await preflight(storeOrigin(shopId))) === storeOrigin(shopId));
+  step('   CORS allows any other store address too', (await preflight(storeOrigin('abc12'))) === storeOrigin('abc12'));
+  step('   CORS rejects unknown sites', (await preflight('http://evil.example.com')) === null);
+  step('   CORS rejects look-alike hosts', (await preflight(storeOrigin(shopId).replace('localhost', 'localhost.evil.com'))) === null);
+
+  r = await call('POST', '/auth/login', { shopId, username: reg.username, password: reg.temporaryPassword }, null, storeOrigin('other1'));
+  step('   login from another store address refused', r.status === 401 && /belongs to Shop ID "other1"/.test(r.json?.message), r.json);
+  r = await call('POST', '/auth/forgot-password', { shopId, identifier: reg.username }, null, storeOrigin('other1'));
+  step('   forgot-password from another store address refused', r.status === 401, r.json);
+
+  r = await call('POST', '/auth/login', { shopId, username: reg.username, password: reg.temporaryPassword }, null, storeOrigin(shopId));
+  step('4. login with emailed credentials on the store address', r.status === 200 && r.json.data.mustChangePassword === true, r.json);
   const token = r.json?.data?.accessToken;
 
   r = await call('GET', '/account/overview', null, token);

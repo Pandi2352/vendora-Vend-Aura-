@@ -160,8 +160,8 @@ GitHub Actions (`.github/workflows/ci.yml`) type-checks, tests and builds all th
 
 ## 🔐 Environment & Conventions
 
-- **Server** (`server/.env`, see `.env.example`): `MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET` (must differ), `PLATFORM_ADMIN_USERNAME` / `PLATFORM_ADMIN_PASSWORD`, `CLIENT_BASE_URL` (POS URL used in welcome emails), `CORS_ORIGINS`, SMTP settings.
-- **Landing** (`landing/.env`): `VITE_API_URL`, `VITE_POS_URL`. **Client** (`client/.env`): `VITE_API_URL`, `VITE_LANDING_URL`.
+- **Server** (`server/.env`, see `.env.example`): `MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET` (must differ), `PLATFORM_ADMIN_USERNAME` / `PLATFORM_ADMIN_PASSWORD`, `TENANT_APP_URL` (each store's address with a `{shopId}` placeholder; used in emails and CORS), `CORS_ORIGINS`, SMTP settings.
+- **Landing** (`landing/.env`): `VITE_API_URL`, `VITE_POS_URL`, `VITE_TENANT_APP_URL`. **Client** (`client/.env`): `VITE_API_URL`, `VITE_LANDING_URL`, `VITE_APP_URL`, `VITE_TENANT_APP_URL`.
 - **Auth**: every API route needs a Bearer token except login/refresh, onboarding and health. The store (tenant) always comes from the token; never send `tenantId`.
 - **Transactions**: billing, returns, GRNs and invoice numbering run in MongoDB transactions when MongoDB is a replica set. On a standalone dev server they run without one (a warning is logged), so use a replica set in production.
 - **Shared enums**: `server/src/shared/enums` is the source of truth; `landing/src/shared/enums` is a copy and must be kept identical.

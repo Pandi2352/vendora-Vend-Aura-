@@ -8,6 +8,7 @@ import {
   TransformResponseInterceptor,
   GlobalHttpExceptionFilter,
   LoggingInterceptor,
+  TenantUrlUtil,
 } from './common';
 
 async function bootstrap() {
@@ -30,8 +31,11 @@ async function bootstrap() {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  // Fixed origins (landing, admin) from CORS_ORIGINS, plus every store's own
+  // subdomain from TENANT_APP_URL (https://<shopId>.vendora.com).
+  const tenantOrigin = TenantUrlUtil.originRegex();
   app.enableCors({
-    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    origin: corsOrigins.length > 0 ? [...corsOrigins, tenantOrigin] : true,
     credentials: true,
   });
 

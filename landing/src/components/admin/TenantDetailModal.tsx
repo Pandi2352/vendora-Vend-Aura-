@@ -15,7 +15,7 @@ import type { TenantItem } from './types';
 import { TenantStatusBadge } from './TenantStatusBadge';
 import { useTenantDetail } from './useTenantDetail';
 import { BUSINESS_TYPE_LABELS } from '../../shared';
-import { posLoginUrl } from '../../lib/config';
+import { posLoginUrl, storeHost } from '../../lib/config';
 
 interface TenantDetailModalProps {
   tenantId: string;
@@ -72,7 +72,7 @@ export function TenantDetailModal({ tenantId, fallback, onClose }: TenantDetailM
                 </h3>
                 <TenantStatusBadge status={tenant.status} />
               </div>
-              <p className="text-xs text-red-600 font-mono mt-0.5">{tenant.shopId}.vendora.com</p>
+              <p className="text-xs text-red-600 font-mono mt-0.5">{storeHost(tenant.shopId)}</p>
             </div>
           </div>
 

@@ -20,6 +20,11 @@ export const loginSchema = z.object({
 
 export type LoginValues = z.output<typeof loginSchema>;
 
+/** "Find your store" on the POS address without a store subdomain. */
+export const storeFinderSchema = z.object({ shopId: shopIdRule });
+
+export type StoreFinderValues = z.output<typeof storeFinderSchema>;
+
 export const changePasswordSchema = withCrossFieldRules(
   z.object({
     currentPassword: z.string({ error: 'Current password is required' }).min(1, 'Current password is required'),

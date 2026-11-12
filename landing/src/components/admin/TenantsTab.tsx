@@ -6,7 +6,7 @@ import { DataTable, type Column } from './ui/DataTable';
 import { IconAction } from './ui/IconAction';
 import { FilterSelect } from './ui/FilterSelect';
 import { BUSINESS_TYPE_LABELS, SUBSCRIPTION_PLANS, TenantStatus } from '../../shared';
-import { posLoginUrl } from '../../lib/config';
+import { posLoginUrl, storeHost } from '../../lib/config';
 
 const planLabel = (code: keyof typeof SUBSCRIPTION_PLANS) => {
   const plan = SUBSCRIPTION_PLANS[code];
@@ -47,7 +47,7 @@ export function TenantsTab({ tenants, onInspectTenant, onUpdateStatus, updatingT
       render: (t) => (
         <button type="button" onClick={() => onInspectTenant(t.id)} className="text-left cursor-pointer">
           <span className="block font-bold text-blue-700 hover:underline">{t.businessName}</span>
-          <span className="block font-mono text-[11px] text-zinc-400">{t.shopId}.vendora.com</span>
+          <span className="block font-mono text-[11px] text-zinc-400">{storeHost(t.shopId)}</span>
         </button>
       ),
     },
