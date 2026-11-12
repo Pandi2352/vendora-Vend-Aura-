@@ -157,6 +157,8 @@ export class SaasAdminService {
     if (!tenant) throw new NotFoundException('Tenant not found');
 
     const planDetails = SUBSCRIPTION_PLANS[planCode] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.FREE_TRIAL];
+    const newStatus = planCode === SubscriptionPlanCode.FREE_TRIAL ? 'TRIAL' : 'ACTIVE';
+    const newTenantStatus = planCode === SubscriptionPlanCode.FREE_TRIAL ? TenantStatus.TRIAL : TenantStatus.ACTIVE;
 
     let subscription: SubscriptionDocument | null;
     if (tenant.subscriptionId) {
@@ -165,7 +167,7 @@ export class SaasAdminService {
         {
           $set: {
             planCode,
-            status: planCode === SubscriptionPlanCode.FREE_TRIAL ? 'TRIAL' : 'ACTIVE',
+            status: newStatus,
             maxOutlets: planDetails.maxOutlets,
             maxUsers: planDetails.maxUsers,
             maxBillsPerMonth: planDetails.maxBillsPerMonth,
@@ -178,7 +180,7 @@ export class SaasAdminService {
       subscription = await this.subscriptionModel.create({
         tenantId: tenant._id,
         planCode,
-        status: planCode === SubscriptionPlanCode.FREE_TRIAL ? 'TRIAL' : 'ACTIVE',
+        status: newStatus,
         startsAt: DateUtil.nowUtc(),
         expiresAt: DateUtil.addDays(DateUtil.nowUtc(), 30),
         maxOutlets: planDetails.maxOutlets,
@@ -191,6 +193,49 @@ export class SaasAdminService {
       await this.tenantModel.updateOne({ _id: tenant._id }, { $set: { subscriptionId: subscription._id } });
     }
 
+    await this.tenantModel.updateOne({ _id: tenant._id }, { $set: { status: newTenantStatus } });
+    tenant.status = newTenantStatus;
+
     return { tenant, subscription };
+  }
+
+  async extendTenantSubscription(id: string, days = 30) {
+    const tenant = await this.tenantModel.findById(ObjectIdUtil.toObjectId(id, 'tenant'));
+    if (!tenant) throw new NotFoundException('Tenant not found');
+
+    const now = DateUtil.nowUtc();
+    let subscription = tenant.subscriptionId ? await this.subscriptionModel.findById(tenant.subscriptionId) : null;
+
+    if (!subscription) {
+      subscription = await this.subscriptionModel.create({
+        tenantId: tenant._id,
+        planCode: SubscriptionPlanCode.STARTER,
+        status: 'ACTIVE',
+        startsAt: now,
+        expiresAt: DateUtil.addDays(now, days),
+        maxOutlets: 1,
+        maxUsers: 1,
+        maxBillsPerMonth: 10000,
+        billsGeneratedThisMonth: 0,
+        isTrial: false,
+      });
+      await this.tenantModel.updateOne({ _id: tenant._id }, { $set: { subscriptionId: subscription._id, status: TenantStatus.ACTIVE } });
+    } else {
+      const baseDate = subscription.expiresAt && new Date(subscription.expiresAt) > now ? new Date(subscription.expiresAt) : now;
+      const newExpiresAt = DateUtil.addDays(baseDate, days);
+
+      subscription.expiresAt = newExpiresAt;
+      subscription.status = 'ACTIVE';
+      subscription.isTrial = false;
+      await subscription.save();
+
+      await this.tenantModel.updateOne({ _id: tenant._id }, { $set: { status: TenantStatus.ACTIVE } });
+    }
+
+    return {
+      success: true,
+      expiresAt: subscription.expiresAt,
+      message: `Subscription extended by ${days} days until ${subscription.expiresAt.toISOString()}`,
+    };
   }
 }

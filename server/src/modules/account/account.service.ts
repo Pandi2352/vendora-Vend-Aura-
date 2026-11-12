@@ -65,10 +65,17 @@ export class AccountService {
       plan: {
         code: planCode,
         name: plan.name,
+        tagline: plan.tagline,
         status: subscription?.status ?? 'TRIAL',
         isTrial: subscription?.isTrial ?? true,
         startsAt: subscription?.startsAt ?? null,
         expiresAt: subscription?.expiresAt ?? null,
+        monthlyPrice: plan.monthlyPrice,
+        annualPrice: plan.annualPrice,
+        features: plan.features,
+        daysRemaining: subscription?.expiresAt
+          ? Math.max(0, Math.ceil((new Date(subscription.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+          : null,
       },
       usage: {
         users: { used: activeUsers, limit: subscription?.maxUsers ?? plan.maxUsers } as UsageMeter,

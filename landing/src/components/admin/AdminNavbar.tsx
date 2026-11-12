@@ -8,13 +8,14 @@ import {
   ArrowsClockwise,
   SignOut,
   HouseLine,
+  CreditCard,
   type Icon as PhosphorIcon,
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { API_DOCS_URL, POS_URL } from '../../lib/config';
 import { VendoraMark } from '../VendoraMark';
 
-export type AdminTab = 'overview' | 'tenants' | 'contacts' | 'reports';
+export type AdminTab = 'overview' | 'tenants' | 'subscriptions' | 'contacts' | 'reports';
 
 interface AdminNavbarProps {
   activeTab: AdminTab;
@@ -38,6 +39,7 @@ export function AdminNavbar({
   const navTabs: { id: AdminTab; label: string; icon: PhosphorIcon; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: SquaresFour },
     { id: 'tenants', label: 'Store Tenants', icon: Buildings, badge: tenantsCount },
+    { id: 'subscriptions', label: 'Subscriptions & Billing', icon: CreditCard },
     { id: 'contacts', label: 'Contacts & Leads', icon: AddressBook, badge: contactsCount },
     { id: 'reports', label: 'Reports & Revenue', icon: ChartLineUp },
   ];

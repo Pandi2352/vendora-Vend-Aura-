@@ -87,6 +87,19 @@ export class SaasAdminController {
     };
   }
 
+  @Post('tenants/:id/extend-subscription')
+  @ApiOperation({ summary: 'Extend tenant subscription duration by N days' })
+  async extendSubscription(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: { days?: number },
+  ) {
+    const data = await this.saasAdminService.extendTenantSubscription(id, dto.days || 30);
+    return {
+      message: 'Tenant subscription successfully extended',
+      data,
+    };
+  }
+
   @Get('contacts')
   @ApiOperation({ summary: 'Get all tenant contacts, leads, and onboarding requests' })
   async getContacts() {

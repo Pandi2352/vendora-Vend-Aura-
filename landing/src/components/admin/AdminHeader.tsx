@@ -17,6 +17,11 @@ const TAB_TITLES: Record<AdminTab, { title: string; subtitle: string; tag: strin
     subtitle: 'Inspect, manage subscriptions, activate or suspend multi-tenant cloud retail stores.',
     tag: 'Multi-Tenant Workspaces',
   },
+  subscriptions: {
+    title: 'Subscriptions & Billing Management',
+    subtitle: 'Track paid subscriptions, manage Stripe billing cycles, and extend tenant service terms.',
+    tag: 'SaaS Monetization',
+  },
   contacts: {
     title: 'Customer Contacts & Leads',
     subtitle: 'Unified directory of registered store owners, contact details, and onboarding inquiry sessions.',

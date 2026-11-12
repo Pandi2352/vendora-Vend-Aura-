@@ -31,6 +31,11 @@ export interface AccountOverview {
     isTrial: boolean;
     startsAt: string | null;
     expiresAt: string | null;
+    monthlyPrice?: number;
+    annualPrice?: number;
+    features?: string[];
+    daysRemaining?: number | null;
+    tagline?: string;
   };
   usage: {
     users: UsageMeter;

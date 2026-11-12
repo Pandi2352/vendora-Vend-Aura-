@@ -6,6 +6,7 @@ import type { AdminTab } from '../components/admin/AdminNavbar';
 import { AdminHeader } from '../components/admin/AdminHeader';
 import { OverviewTab } from '../components/admin/OverviewTab';
 import { TenantsTab } from '../components/admin/TenantsTab';
+import { SubscriptionsTab } from '../components/admin/SubscriptionsTab';
 import { ContactsTab } from '../components/admin/ContactsTab';
 import { ReportsTab } from '../components/admin/ReportsTab';
 import { TenantDetailModal } from '../components/admin/TenantDetailModal';
@@ -187,6 +188,14 @@ export function SuperAdminDashboard() {
           />
         )}
 
+        {activeTab === 'subscriptions' && (
+          <SubscriptionsTab
+            tenants={tenants}
+            onInspectTenant={setSelectedTenantId}
+            onRefresh={fetchAllData}
+          />
+        )}
+
         {activeTab === 'contacts' && (
           <ContactsTab contacts={contacts} />
         )}
@@ -202,6 +211,7 @@ export function SuperAdminDashboard() {
           tenantId={selectedTenantId}
           fallback={tenants.find((t) => t.id === selectedTenantId)}
           onClose={() => setSelectedTenantId(null)}
+          onUpdated={fetchAllData}
         />
       )}
     </div>
