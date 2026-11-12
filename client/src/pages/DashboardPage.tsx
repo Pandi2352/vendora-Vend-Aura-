@@ -1,8 +1,10 @@
-import { ArrowClockwise } from '@phosphor-icons/react';
+import { ArrowClockwise, RocketLaunch, ArrowRight } from '@phosphor-icons/react';
+import { Link } from 'react-router-dom';
 import { Alert, Button, PageHeader } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { usePosSession } from '../hooks/usePosSession';
 import { canViewReports } from '../lib/permissions';
+import { ROUTES } from '../config/routes';
 import { useDashboardData } from './dashboard/useDashboardData';
 import { TodayStats } from './dashboard/TodayStats';
 import { DrawerCard } from './dashboard/DrawerCard';
@@ -51,6 +53,27 @@ export function DashboardPage() {
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
+
+      {dashboard.recentOrders.length === 0 && (
+        <div className="rounded-lg bg-slate-900 border border-slate-800 p-4 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary-600/20 border border-primary-500/40 text-primary-400 flex items-center justify-center shrink-0">
+              <RocketLaunch className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-white">Store Setup Guide</h3>
+              <p className="text-xs text-slate-400">Complete your initial store setup checklist before your first bill.</p>
+            </div>
+          </div>
+          <Link
+            to={ROUTES.SETUP}
+            className="px-3.5 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shrink-0"
+          >
+            <span>Open Setup Guide</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       {dashboard.failed.length > 0 && (
         <Alert tone="warning">Could not load {dashboard.failed.join(', ')}. Use Refresh to try again.</Alert>

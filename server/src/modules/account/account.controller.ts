@@ -14,4 +14,10 @@ export class AccountController {
   async getOverview(@TenantId() tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     return { data: await this.accountService.getOverview(tenantId, user) };
   }
+
+  @Get('setup-checklist')
+  @ApiOperation({ summary: 'Live onboarding checklist status across the 8 store setup milestones' })
+  async getSetupChecklist(@TenantId() tenantId: string, @CurrentUser() user: AuthenticatedUser) {
+    return { data: await this.accountService.getSetupChecklist(tenantId, user) };
+  }
 }

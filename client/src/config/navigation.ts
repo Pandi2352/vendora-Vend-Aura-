@@ -11,6 +11,7 @@ import {
   Bank,
   Warehouse,
   Wallet,
+  RocketLaunch,
 } from '@phosphor-icons/react';
 import { ROUTES } from './routes';
 import { ROLE_GROUPS, hasRole, type UserRole } from '../lib/permissions';
@@ -28,6 +29,7 @@ export interface NavItem {
 
 /** Single source for the sidebar, flyout menus and breadcrumbs. */
 export const NAVIGATION: NavItem[] = [
+  { label: 'Setup Guide', path: ROUTES.SETUP, icon: RocketLaunch, roles: ROLE_GROUPS.MANAGEMENT },
   { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: SquaresFour },
   { label: 'POS Billing', path: ROUTES.POS, icon: ShoppingCart },
   { label: 'Bills & Returns', path: ROUTES.ORDERS, icon: Receipt },

@@ -21,6 +21,7 @@ const SuppliersPage = lazy(() => import('../pages/SuppliersPage').then((m) => ({
 const FinancePage = lazy(() => import('../pages/FinancePage').then((m) => ({ default: m.FinancePage })));
 const ReportsPage = lazy(() => import('../pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const SetupPage = lazy(() => import('../pages/SetupPage').then((m) => ({ default: m.SetupPage })));
 
 const PageFallback = () => <PageLoader />;
 const lazyPage = (page: ReactNode) => <Suspense fallback={<PageFallback />}>{page}</Suspense>;
@@ -92,6 +93,7 @@ export const router = createBrowserRouter([
             element: <RequireRole roles={ROLE_GROUPS.FINANCE}>{lazyPage(<ReportsPage />)}</RequireRole>,
           },
           { path: ROUTES.SETTINGS, element: lazyPage(<SettingsPage />) },
+          { path: ROUTES.SETUP, element: lazyPage(<SetupPage />) },
           { path: ROUTES.UNAUTHORIZED, element: <UnauthorizedPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
