@@ -17,6 +17,7 @@ import { ROUTES } from '../../config/routes';
 import { SUPPORT_EMAIL } from '../../lib/config';
 import { BrandMark } from './BrandMark';
 import { ShiftStatusChip } from './ShiftStatusChip';
+import { NetworkStatusChip } from './NetworkStatusChip';
 import { TopbarIconButton } from './TopbarIconButton';
 import { UserMenu } from './UserMenu';
 import { cn } from '../ui/cn';
@@ -87,6 +88,7 @@ export function Topbar({ onOpenMobileNav, onOpenSearch }: TopbarProps) {
       </span>
 
       <ShiftStatusChip />
+      <NetworkStatusChip />
 
       <TopbarIconButton label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} onClick={toggleTheme}>
         {theme === 'dark' ? <Sun /> : <Moon />}

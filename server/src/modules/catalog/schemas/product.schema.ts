@@ -32,6 +32,12 @@ export class Product extends TenantBaseEntity {
 
   @Prop({ default: 'pcs' })
   unit: string;
+
+  @Prop({ required: false, trim: true })
+  batchNumber?: string;
+
+  @Prop({ required: false, trim: true })
+  expiryDate?: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

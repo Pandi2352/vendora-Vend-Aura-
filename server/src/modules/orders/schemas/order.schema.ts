@@ -23,6 +23,8 @@ export class Order extends TenantBaseEntity {
         taxRatePercent: { type: Number, default: 0 },
         taxAmount: { type: Number, default: 0 },
         total: { type: Number, required: true },
+        batchNumber: { type: String, trim: true },
+        expiryDate: { type: String, trim: true },
       },
     ],
     default: [],
@@ -36,6 +38,8 @@ export class Order extends TenantBaseEntity {
     taxRatePercent: number;
     taxAmount: number;
     total: number;
+    batchNumber?: string;
+    expiryDate?: string;
   }>;
 
   @Prop({ required: true, min: 0 })
@@ -79,8 +83,15 @@ export class Order extends TenantBaseEntity {
 
   @Prop({ default: 'COMPLETED', enum: ['COMPLETED', 'CANCELLED'] })
   status: string;
+
+  @Prop({ default: false })
+  isOfflineSync: boolean;
+
+  @Prop({ trim: true })
+  offlineRef?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ tenantId: 1, invoiceNumber: 1 }, { unique: true });
+OrderSchema.index({ tenantId: 1, offlineRef: 1 }, { sparse: true });
 OrderSchema.index({ tenantId: 1, createdAt: -1 });

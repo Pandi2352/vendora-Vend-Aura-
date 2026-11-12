@@ -3,8 +3,10 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { OrdersService } from './orders.service';
 import { OrderReturnsService } from './order-returns.service';
 import { CashDrawerService } from './cash-drawer.service';
+import { OfflineSyncService } from './offline-sync.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateReturnDto } from './dto/create-return.dto';
+import { SyncOfflineOrdersDto } from './dto/sync-offline.dto';
 import { OpenShiftDto } from './dto/open-shift.dto';
 import { CloseShiftDto } from './dto/close-shift.dto';
 import {
@@ -25,7 +27,20 @@ export class OrdersController {
     private readonly ordersService: OrdersService,
     private readonly orderReturnsService: OrderReturnsService,
     private readonly cashDrawerService: CashDrawerService,
+    private readonly offlineSyncService: OfflineSyncService,
   ) {}
+
+  @Post('sync-offline')
+  @ApiOperation({ summary: 'Batch sync offline orders recorded locally on the POS counter' })
+  @ApiResponse({ status: 200, description: 'Offline queue processed and synchronized' })
+  async syncOffline(
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SyncOfflineOrdersDto,
+  ) {
+    const data = await this.offlineSyncService.syncOfflineOrders(tenantId, dto, user);
+    return { message: `Synced ${data.synced.length} offline orders`, data };
+  }
 
   @Post()
   @ApiOperation({ summary: 'Finalize POS order: server-priced, stock deducted, sequential invoice' })

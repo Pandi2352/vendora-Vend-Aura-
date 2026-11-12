@@ -18,6 +18,7 @@ import { RouteErrorPage, UnauthorizedPage } from '../pages/StatusPages';
 const OrdersPage = lazy(() => import('../pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
 const CustomersPage = lazy(() => import('../pages/CustomersPage').then((m) => ({ default: m.CustomersPage })));
 const SuppliersPage = lazy(() => import('../pages/SuppliersPage').then((m) => ({ default: m.SuppliersPage })));
+const FinancePage = lazy(() => import('../pages/FinancePage').then((m) => ({ default: m.FinancePage })));
 const ReportsPage = lazy(() => import('../pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
@@ -80,6 +81,10 @@ export const router = createBrowserRouter([
           {
             path: ROUTES.SUPPLIERS,
             element: <RequireRole roles={ROLE_GROUPS.MANAGEMENT}>{lazyPage(<SuppliersPage />)}</RequireRole>,
+          },
+          {
+            path: ROUTES.FINANCE,
+            element: <RequireRole roles={ROLE_GROUPS.MANAGEMENT}>{lazyPage(<FinancePage />)}</RequireRole>,
           },
           { path: ROUTES.REPORTS, element: <Navigate to={ROUTES.REPORTS_OVERVIEW} replace /> },
           {

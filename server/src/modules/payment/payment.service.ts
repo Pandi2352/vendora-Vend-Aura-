@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { Subscription, SubscriptionDocument } from '../subscription/schemas/subscription.schema';
+import { SubscriptionInvoice, SubscriptionInvoiceDocument } from './schemas/subscription-invoice.schema';
 import { StripePaymentProvider } from './providers/stripe.provider';
 import { CreateCheckoutSessionDto, BillingCycle } from './dto/create-checkout.dto';
 import { SUBSCRIPTION_PLANS, SubscriptionPlanCode, TenantStatus } from '../../shared';
@@ -18,6 +19,7 @@ export class PaymentService {
     private readonly configService: ConfigService,
     @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
     @InjectModel(Subscription.name) private readonly subscriptionModel: Model<SubscriptionDocument>,
+    @InjectModel(SubscriptionInvoice.name) private readonly invoiceModel: Model<SubscriptionInvoiceDocument>,
   ) {}
 
   getPublicConfig() {
@@ -106,7 +108,7 @@ export class PaymentService {
 
     const { tenantId, planCode, billingCycle } = session.metadata || {};
     if (tenantId && planCode) {
-      await this.activatePurchasedPlan(tenantId, planCode as SubscriptionPlanCode, billingCycle === 'ANNUAL');
+      await this.activatePurchasedPlan(tenantId, planCode as SubscriptionPlanCode, billingCycle === 'ANNUAL', sessionId);
       return {
         success: true,
         activated: true,
@@ -137,14 +139,19 @@ export class PaymentService {
         return { received: true, ignored: true };
       }
 
-      await this.activatePurchasedPlan(tenantId, planCode as SubscriptionPlanCode, billingCycle === 'ANNUAL');
+      await this.activatePurchasedPlan(tenantId, planCode as SubscriptionPlanCode, billingCycle === 'ANNUAL', session.id);
       return { received: true, activated: true, tenantId, planCode };
     }
 
     return { received: true, unhandledType: event.type };
   }
 
-  private async activatePurchasedPlan(tenantIdStr: string, planCode: SubscriptionPlanCode, isAnnual: boolean) {
+  private async activatePurchasedPlan(
+    tenantIdStr: string,
+    planCode: SubscriptionPlanCode,
+    isAnnual: boolean,
+    sessionId?: string,
+  ) {
     const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
     const plan = SUBSCRIPTION_PLANS[planCode];
     if (!plan) return;
@@ -152,8 +159,9 @@ export class PaymentService {
     const durationDays = isAnnual ? 365 : 30;
     const now = DateUtil.nowUtc();
     const expiresAt = DateUtil.addDays(now, durationDays);
+    const amount = isAnnual ? plan.annualPrice : plan.monthlyPrice;
 
-    await Promise.all([
+    const tasks: Promise<any>[] = [
       this.subscriptionModel.updateOne(
         { tenantId },
         {
@@ -178,9 +186,38 @@ export class PaymentService {
           },
         },
       ),
-    ]);
+    ];
 
+    if (sessionId) {
+      tasks.push(
+        this.invoiceModel.updateOne(
+          { tenantId, sessionId },
+          {
+            $setOnInsert: {
+              tenantId,
+              sessionId,
+              invoiceNumber: `INV-SUB-${new Date().getFullYear()}-${sessionId.slice(-6).toUpperCase()}`,
+              planCode,
+              billingCycle: isAnnual ? 'ANNUAL' : 'MONTHLY',
+              amount,
+              currency: 'INR',
+              status: 'PAID',
+              paymentMethod: 'STRIPE',
+              paidAt: now,
+            },
+          },
+          { upsert: true },
+        ),
+      );
+    }
+
+    await Promise.all(tasks);
     this.logger.log(`Successfully activated ${planCode} plan for tenant ${tenantIdStr} until ${expiresAt.toISOString()}`);
+  }
+
+  async getInvoices(tenantIdStr: string) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    return this.invoiceModel.find({ tenantId }).sort({ paidAt: -1 }).lean();
   }
 }
 

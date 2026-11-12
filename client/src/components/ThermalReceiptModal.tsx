@@ -54,6 +54,11 @@ function ThermalReceipt({
         <div className="p-6 font-mono text-zinc-950 text-xs bg-white space-y-3 leading-tight select-text max-h-[70vh] overflow-y-auto">
           {/* Store Info */}
           <div className="text-center space-y-1">
+            {invoice.isOffline && (
+              <div className="p-1 mb-1 rounded bg-amber-50 border border-amber-300 text-center text-[10px] font-bold text-amber-900 tracking-wide uppercase">
+                *** OFFLINE TILL SALE (QUEUED) ***
+              </div>
+            )}
             <h2 className="font-bold text-base uppercase tracking-tight">{invoice.shopName}</h2>
             {invoice.address && <p className="text-[11px] text-zinc-600">{invoice.address}</p>}
             {invoice.phone && <p className="text-[11px] text-zinc-600">Ph: {invoice.phone}</p>}
@@ -91,11 +96,19 @@ function ThermalReceipt({
           {/* Items List */}
           <div className="space-y-1.5 text-[11px]">
             {invoice.items.map((item, idx) => (
-              <div key={`${item.id}-${idx}`} className="flex justify-between">
-                <span className="w-1/2 truncate font-medium">{item.name}</span>
-                <span className="w-1/6 text-center">{item.quantity}</span>
-                <span className="w-1/6 text-right">₹{item.unitPrice}</span>
-                <span className="w-1/6 text-right font-bold">₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
+              <div key={`${item.id}-${idx}`} className="space-y-0.5">
+                <div className="flex justify-between">
+                  <span className="w-1/2 truncate font-medium">{item.name}</span>
+                  <span className="w-1/6 text-center">{item.quantity}</span>
+                  <span className="w-1/6 text-right">₹{item.unitPrice}</span>
+                  <span className="w-1/6 text-right font-bold">₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
+                </div>
+                {(item.batchNumber || item.expiryDate) && (
+                  <div className="text-[9px] text-zinc-500 pl-1 font-mono">
+                    {item.batchNumber && <span>B:{item.batchNumber} </span>}
+                    {item.expiryDate && <span>Exp:{item.expiryDate}</span>}
+                  </div>
+                )}
               </div>
             ))}
           </div>

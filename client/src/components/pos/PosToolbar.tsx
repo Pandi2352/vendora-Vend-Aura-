@@ -18,7 +18,7 @@ export function PosToolbar() {
         onClick={() => setOpenModal('heldCarts')}
         disabled={heldCarts.length === 0}
       >
-        Held bills ({heldCarts.length})
+        Held bills ({heldCarts.length}) <span className="text-[10px] opacity-60 ml-1">F3</span>
       </Button>
       <Button
         size="sm"
@@ -26,7 +26,7 @@ export function PosToolbar() {
         icon={<Vault className="w-4 h-4" />}
         onClick={() => setOpenModal('drawer')}
       >
-        {isShiftOpen ? 'Cash drawer' : 'Open cash drawer'}
+        {isShiftOpen ? 'Cash drawer' : 'Open drawer'} <span className="text-[10px] opacity-60 ml-1">F4</span>
       </Button>
     </div>
   );

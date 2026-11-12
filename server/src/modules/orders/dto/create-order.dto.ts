@@ -36,6 +36,8 @@ export class OrderItemDto {
   @IsOptional() @IsNumber() taxRatePercent?: number;
   @IsOptional() @IsNumber() taxAmount?: number;
   @IsOptional() @IsNumber() total?: number;
+  @IsOptional() @IsString() batchNumber?: string;
+  @IsOptional() @IsString() expiryDate?: string;
 }
 
 export class CreateOrderDto {
@@ -60,6 +62,16 @@ export class CreateOrderDto {
   @IsNumber()
   @Min(0)
   cashTendered?: number;
+
+  @ApiProperty({ required: false, description: 'Offline client invoice reference ID' })
+  @IsOptional()
+  @IsString()
+  offlineRef?: string;
+
+  @ApiProperty({ required: false, description: 'Local ISO timestamp when offline order was tendered' })
+  @IsOptional()
+  @IsString()
+  offlineCreatedAt?: string;
 
   @IsOptional() @IsString() customerName?: string;
   @IsOptional() @IsString() customerPhone?: string;

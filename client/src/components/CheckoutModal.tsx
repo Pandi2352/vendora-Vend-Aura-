@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui';
 import { round2 } from '@/lib/totals';
 import { formatInr } from '@/utils';
@@ -15,10 +15,10 @@ import type { CustomerItem, PaymentMode } from '../types/pos.types';
 import { CustomerTagSelector } from './checkout/CustomerTagSelector';
 import { PaymentModePanels } from './checkout/PaymentModePanels';
 
-const PAYMENT_TABS: Array<{ id: PaymentMode; label: string; icon: typeof Money }> = [
-  { id: 'CASH', label: 'Cash', icon: Money },
-  { id: 'UPI', label: 'UPI / QR', icon: DeviceMobile },
-  { id: 'CARD', label: 'Card Swipe', icon: CreditCard },
+const PAYMENT_TABS: Array<{ id: PaymentMode; label: string; hotkey?: string; icon: typeof Money }> = [
+  { id: 'CASH', label: 'Cash', hotkey: 'F8', icon: Money },
+  { id: 'UPI', label: 'UPI / QR', hotkey: 'F9', icon: DeviceMobile },
+  { id: 'CARD', label: 'Card Swipe', hotkey: 'F10', icon: CreditCard },
   { id: 'CREDIT', label: 'Khata / Credit', icon: HandCoins },
 ];
 
@@ -54,6 +54,23 @@ export function CheckoutModal({
     paymentMode === 'CREDIT' &&
     !!selectedCustomer &&
     selectedCustomer.currentCreditBalance + grandTotal > selectedCustomer.creditLimit;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F8') {
+        e.preventDefault();
+        setPaymentMode('CASH');
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        setPaymentMode('UPI');
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        setPaymentMode('CARD');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const cashInvalid = paymentMode === 'CASH' && round2(cashTendered) < round2(grandTotal);
   const cashError =
@@ -121,6 +138,11 @@ export function CheckoutModal({
                 >
                   <Icon weight="bold" className="w-4 h-4" />
                   <span className="text-[11px]">{tab.label}</span>
+                  {tab.hotkey && (
+                    <span className="text-[9px] font-mono opacity-60 px-1 rounded bg-black/5 dark:bg-white/10">
+                      {tab.hotkey}
+                    </span>
+                  )}
                 </button>
               );
             })}

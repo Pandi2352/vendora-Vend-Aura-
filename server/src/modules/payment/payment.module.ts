@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Tenant, TenantSchema } from '../tenant/schemas/tenant.schema';
 import { Subscription, SubscriptionSchema } from '../subscription/schemas/subscription.schema';
+import { SubscriptionInvoice, SubscriptionInvoiceSchema } from './schemas/subscription-invoice.schema';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { StripePaymentProvider } from './providers/stripe.provider';
@@ -11,6 +12,7 @@ import { StripePaymentProvider } from './providers/stripe.provider';
     MongooseModule.forFeature([
       { name: Tenant.name, schema: TenantSchema },
       { name: Subscription.name, schema: SubscriptionSchema },
+      { name: SubscriptionInvoice.name, schema: SubscriptionInvoiceSchema },
     ]),
   ],
   controllers: [PaymentController],

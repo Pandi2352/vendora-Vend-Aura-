@@ -10,6 +10,7 @@ import {
   Presentation,
   Bank,
   Warehouse,
+  Wallet,
 } from '@phosphor-icons/react';
 import { ROUTES } from './routes';
 import { ROLE_GROUPS, hasRole, type UserRole } from '../lib/permissions';
@@ -32,6 +33,7 @@ export const NAVIGATION: NavItem[] = [
   { label: 'Bills & Returns', path: ROUTES.ORDERS, icon: Receipt },
   { label: 'Customers & Khata', path: ROUTES.CUSTOMERS, icon: UsersThree },
   { label: 'Suppliers & Purchase', path: ROUTES.SUPPLIERS, icon: Truck, roles: ROLE_GROUPS.MANAGEMENT },
+  { label: 'Accounts & Expenses', path: ROUTES.FINANCE, icon: Wallet, roles: ROLE_GROUPS.MANAGEMENT },
   {
     label: 'Reports',
     icon: ChartLineUp,

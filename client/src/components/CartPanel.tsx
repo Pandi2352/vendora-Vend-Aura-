@@ -86,6 +86,7 @@ export function CartPanel({
                     <span>₹{item.unitPrice} each</span>
                     <span>•</span>
                     <span>GST {item.taxRatePercent}%</span>
+                    {item.batchNumber && <span>• B:{item.batchNumber}</span>}
                   </div>
                 </div>
 
@@ -173,10 +174,11 @@ export function CartPanel({
             <button
               onClick={onHoldCart}
               className="py-2.5 px-3 rounded-md border border-zinc-300 bg-white hover:bg-zinc-100 text-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
-              title="Park cart to serve next customer"
+              title="Park cart to serve next customer (F2)"
             >
               <PauseCircle weight="bold" className="w-4 h-4 text-amber-600" />
               <span>Hold</span>
+              <kbd className="text-[10px] text-zinc-400 font-mono">F2</kbd>
             </button>
           )}
 
@@ -185,7 +187,8 @@ export function CartPanel({
             disabled={cart.length === 0}
             className="flex-1 py-2.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <span>Tender & Complete Bill</span>
+            <span>Tender Bill</span>
+            <kbd className="text-[10px] text-white/70 font-mono">F8</kbd>
             <ArrowRight weight="bold" className="w-4 h-4" />
           </button>
         </div>

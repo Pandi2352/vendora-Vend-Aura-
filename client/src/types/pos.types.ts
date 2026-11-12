@@ -7,6 +7,8 @@ export interface CartItem {
   quantity: number;
   taxRatePercent: number;
   category?: string;
+  batchNumber?: string;
+  expiryDate?: string;
 }
 
 export interface ProductItem {
@@ -19,6 +21,8 @@ export interface ProductItem {
   costPrice?: number;
   taxRatePercent: number;
   stock?: number;
+  batchNumber?: string;
+  expiryDate?: string;
 }
 
 export type PaymentMode = 'CASH' | 'UPI' | 'CARD' | 'CREDIT';
@@ -66,6 +70,8 @@ export interface InvoiceData {
   paymentMode: PaymentMode;
   cashTendered: number;
   changeDue: number;
+  isOffline?: boolean;
+  offlineRef?: string;
 }
 
 export interface OrderItemRecord {

@@ -16,10 +16,11 @@ export function ProductGrid({
 }: ProductGridProps) {
   return (
     <div className="flex-1 flex flex-col p-4 overflow-hidden">
-      {/* Search Bar */}
+      {/* Search Bar with F1 Hotkey Binding */}
       <div className="mb-3 relative">
         <MagnifyingGlass className="w-4 h-4 text-zinc-400 absolute left-3 top-2.5" />
         <input
+          id="pos-product-search"
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -29,7 +30,9 @@ export function ProductGrid({
         />
         <div className="absolute right-3 top-2 flex items-center gap-1 text-[11px] font-mono text-zinc-400">
           <Barcode className="w-3.5 h-3.5" />
-          <span>F2 Scan</span>
+          <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-semibold text-[10px]">
+            F1 Focus
+          </kbd>
         </div>
       </div>
 
@@ -58,6 +61,13 @@ export function ProductGrid({
                 <h4 className="font-bold text-xs sm:text-sm text-zinc-950 line-clamp-2 leading-tight group-hover:text-red-600 transition-colors">
                   {p.name}
                 </h4>
+
+                {(p.batchNumber || p.expiryDate) && (
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-zinc-500 font-mono">
+                    {p.batchNumber && <span className="bg-zinc-100 px-1 rounded">B:{p.batchNumber}</span>}
+                    {p.expiryDate && <span className="text-amber-700">Exp:{p.expiryDate}</span>}
+                  </div>
+                )}
               </div>
 
               <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-end justify-between">
@@ -104,4 +114,3 @@ export function ProductGrid({
     </div>
   );
 }
-

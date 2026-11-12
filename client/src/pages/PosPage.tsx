@@ -3,14 +3,26 @@ import { CategoryBar } from '../components/CategoryBar';
 import { ProductGrid } from '../components/ProductGrid';
 import { CartPanel } from '../components/CartPanel';
 import { PosToolbar } from '../components/pos/PosToolbar';
+import { OfflineBanner } from '../components/pos/OfflineBanner';
 import { Alert } from '../components/ui';
 import { usePosSession } from '../hooks/usePosSession';
+import { usePosHotkeys } from '../hooks/usePosHotkeys';
 
-/** Billing counter: product search + categories on the left, cart on the right. */
+/** Billing counter: product search + categories on the left, cart on the right, offline sync & hotkeys. */
 export function PosPage() {
   const pos = usePosSession();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('ALL');
+
+  // Register physical keyboard shortcuts (F1-F10, Esc)
+  usePosHotkeys({
+    openModal: pos.openModal,
+    setOpenModal: pos.setOpenModal,
+    closeModal: pos.closeModal,
+    cartLength: pos.cart.length,
+    onHoldCart: pos.holdCart,
+    startCheckout: pos.startCheckout,
+  });
 
   const filteredProducts = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -24,6 +36,7 @@ export function PosPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <PosToolbar />
+      <OfflineBanner />
       {pos.catalogError && (
         <Alert tone="error" className="rounded-none border-x-0 border-t-0">
           {pos.catalogError}

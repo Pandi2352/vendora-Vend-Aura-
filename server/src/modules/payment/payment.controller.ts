@@ -26,6 +26,13 @@ export class PaymentController {
   }
 
   @ApiBearerAuth()
+  @Get('invoices')
+  @ApiOperation({ summary: 'List past subscription payment invoices and receipts' })
+  async getInvoices(@TenantId() tenantId: string) {
+    return this.paymentService.getInvoices(tenantId);
+  }
+
+  @ApiBearerAuth()
   @Post('checkout-session')
   @ApiOperation({ summary: 'Create Stripe Checkout Session to purchase or upgrade tenant subscription plan' })
   async createCheckoutSession(

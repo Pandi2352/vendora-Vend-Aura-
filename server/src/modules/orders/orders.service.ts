@@ -33,6 +33,8 @@ interface PricedLine {
   taxRatePercent: number;
   taxAmount: number;
   total: number;
+  batchNumber?: string;
+  expiryDate?: string;
 }
 
 @Injectable()
@@ -65,8 +67,15 @@ export class OrdersService {
       throw new NotFoundException('Shop not found.');
     }
 
+    if (dto.offlineRef) {
+      const existing = await this.orderModel.findOne({ tenantId, offlineRef: dto.offlineRef }).lean();
+      if (existing) {
+        return toDocumentView(existing);
+      }
+    }
+
     const openShift = await this.shiftModel.exists({ tenantId, status: 'OPEN' });
-    if (!openShift) {
+    if (!openShift && !dto.offlineRef) {
       throw new BadRequestException('No open cash drawer shift. Open the drawer before billing.');
     }
 
@@ -128,6 +137,8 @@ export class OrdersService {
             changeDue,
             cashierName,
             status: 'COMPLETED',
+            isOfflineSync: !!dto.offlineRef,
+            offlineRef: dto.offlineRef,
           },
         ],
         { session },
@@ -212,6 +223,8 @@ export class OrdersService {
         taxRatePercent: product.taxRatePercent || 0,
         taxAmount,
         total: round2(base + taxAmount),
+        batchNumber: product.batchNumber,
+        expiryDate: product.expiryDate,
       };
     });
   }

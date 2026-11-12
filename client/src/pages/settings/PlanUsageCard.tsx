@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Medal, Sparkle, CheckCircle, Clock, CreditCard, Check } from '@phosphor-icons/react';
+import { Medal, Sparkle, CheckCircle, Clock, CreditCard, Check, Receipt } from '@phosphor-icons/react';
 import { Card, CardHeader, UsageMeter } from '../../components/ui';
 import { formatDate } from '@/utils';
 import type { AccountOverview } from '../../types/account.types';
 import { PlanUpgradeModal } from './PlanUpgradeModal';
+import { SubscriptionInvoicesModal } from './SubscriptionInvoicesModal';
 
 export function PlanUsageCard({ data }: { data: AccountOverview }) {
-  const { plan, usage } = data;
+  const { plan, usage, store } = data;
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [isInvoicesOpen, setIsInvoicesOpen] = useState(false);
   const isPaidActive = !plan.isTrial && plan.status === 'ACTIVE';
 
   return (
@@ -89,12 +91,16 @@ export function PlanUsageCard({ data }: { data: AccountOverview }) {
         </div>
       )}
 
-      {/* Upgrade CTA */}
-      <div className="pt-3 border-t border-zinc-200 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold text-zinc-900">Need more outlets or bills?</p>
-          <p className="text-[11px] text-zinc-500">Upgrade or switch to Annual (Save 20%)</p>
-        </div>
+      {/* Upgrade CTA & Billing History */}
+      <div className="pt-3 border-t border-zinc-200 flex items-center justify-between gap-2">
+        <button
+          onClick={() => setIsInvoicesOpen(true)}
+          className="px-2.5 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs cursor-pointer transition-colors flex items-center gap-1.5 shrink-0"
+        >
+          <Receipt className="w-3.5 h-3.5 text-zinc-500" />
+          <span>Billing History</span>
+        </button>
+
         <button
           onClick={() => setIsUpgradeOpen(true)}
           className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold text-xs cursor-pointer transition-colors flex items-center gap-1.5 shrink-0"
@@ -108,6 +114,12 @@ export function PlanUsageCard({ data }: { data: AccountOverview }) {
         isOpen={isUpgradeOpen}
         onClose={() => setIsUpgradeOpen(false)}
         currentPlanCode={plan.code}
+      />
+
+      <SubscriptionInvoicesModal
+        isOpen={isInvoicesOpen}
+        onClose={() => setIsInvoicesOpen(false)}
+        shopName={store?.businessName}
       />
     </Card>
   );
