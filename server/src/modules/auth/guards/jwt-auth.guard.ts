@@ -38,7 +38,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return true;
   }
 
-  handleRequest(err: any, user: any) {
+  handleRequest<TUser = AuthenticatedUser>(err: unknown, user: TUser | false | null): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException('Authentication token required or session expired.');
     }

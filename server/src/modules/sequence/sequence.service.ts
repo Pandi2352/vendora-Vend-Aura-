@@ -38,8 +38,8 @@ export class SequenceService {
           { $setOnInsert: { key, seq: existingMax } },
           { upsert: true, session: options.session },
         );
-      } catch (err: any) {
-        if (err?.code !== 11000) throw err; // another request seeded it first
+      } catch (err) {
+        if ((err as { code?: number } | null)?.code !== 11000) throw err; // another request seeded it first
       }
       counter = await this.increment(key, options.session);
     }

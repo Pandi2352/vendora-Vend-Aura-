@@ -12,6 +12,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public, CurrentUser, AllowTemporaryPassword } from '../../common';
 
 @ApiTags('Authentication')
@@ -45,6 +47,37 @@ export class AuthController {
     return {
       message: 'Access token refreshed',
       data: result,
+    };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Request a password reset link by email',
+    description: 'Always returns the same response whether or not the account exists.',
+  })
+  @ApiResponse({ status: 200, description: 'Generic confirmation (no account enumeration)' })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    const result = await this.authService.forgotPassword(dto);
+    return {
+      message: result.message,
+    };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Set a new password using a one-time reset token' })
+  @ApiResponse({ status: 200, description: 'Password reset; other sessions signed out' })
+  @ApiResponse({ status: 400, description: 'This reset link is invalid or has expired.' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    const result = await this.authService.resetPassword(dto);
+    return {
+      message: result.message,
     };
   }
 

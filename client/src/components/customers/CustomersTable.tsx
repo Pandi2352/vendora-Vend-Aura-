@@ -12,7 +12,8 @@ interface CustomersTableProps {
   onOpenStatement: (customer: CustomerItem) => void;
 }
 
-const usedPercent = (c: CustomerItem) => Math.min(100, Math.round((c.currentCreditBalance / (c.creditLimit || 1)) * 100));
+const usedPercent = (c: CustomerItem) =>
+  Math.min(100, Math.round((c.currentCreditBalance / (c.creditLimit || 1)) * 100));
 
 function whatsappReminder(c: CustomerItem, shopName: string) {
   const text = encodeURIComponent(
@@ -76,11 +77,26 @@ export function CustomersTable({ customers, loading, shopName, onRepay, onOpenSt
       align: 'center',
       render: (c) => {
         const actions: RowAction[] = [
-          { label: `Record Khata payment for ${c.name}`, icon: <CurrencyInr weight="bold" />, tone: 'success', onClick: () => onRepay(c) },
-          { label: `View passbook of ${c.name}`, icon: <BookOpen weight="bold" />, tone: 'primary', onClick: () => onOpenStatement(c) },
+          {
+            label: `Record Khata payment for ${c.name}`,
+            icon: <CurrencyInr weight="bold" />,
+            tone: 'success',
+            onClick: () => onRepay(c),
+          },
+          {
+            label: `View passbook of ${c.name}`,
+            icon: <BookOpen weight="bold" />,
+            tone: 'primary',
+            onClick: () => onOpenStatement(c),
+          },
         ];
         if (c.currentCreditBalance > 0) {
-          actions.push({ label: `Send WhatsApp reminder to ${c.name}`, icon: <WhatsappLogo weight="fill" />, href: whatsappReminder(c, shopName), tone: 'success' });
+          actions.push({
+            label: `Send WhatsApp reminder to ${c.name}`,
+            icon: <WhatsappLogo weight="fill" />,
+            href: whatsappReminder(c, shopName),
+            tone: 'success',
+          });
         }
         return <RowActions actions={actions} />;
       },

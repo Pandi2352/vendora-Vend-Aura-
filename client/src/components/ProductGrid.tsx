@@ -23,6 +23,7 @@ export function ProductGrid({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
+          aria-label="Search products"
           placeholder="Scan barcode or type product name / SKU (e.g. Atta, Tea, 890103...)"
           className="w-full pl-9 pr-24 py-2 rounded-md border border-zinc-300 bg-white text-xs sm:text-sm text-zinc-950 focus:border-primary-600 outline-none"
         />
@@ -36,6 +37,8 @@ export function ProductGrid({
       <div className="flex-1 overflow-y-auto pr-1">
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {products.map((p) => (
+            // Whole-card click is a pointer shortcut; the "Add" button inside is the keyboard/AT equivalent.
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
             <div
               key={p.id}
               onClick={() => onAddToCart(p)}
@@ -76,6 +79,7 @@ export function ProductGrid({
 
                 <button
                   type="button"
+                  aria-label={`Add ${p.name} to cart`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onAddToCart(p);

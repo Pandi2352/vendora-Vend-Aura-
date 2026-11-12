@@ -10,7 +10,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { User, UserDocument } from '../user/schemas/user.schema';
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
@@ -269,8 +268,8 @@ export class OnboardingService {
     // Seed initial starter catalog tailored to business sector
     try {
       await this.catalogService.seedTenantCatalog(tenant!._id as Types.ObjectId, tenant!.businessType);
-    } catch (err: any) {
-      this.logger.warn(`Could not seed catalog for tenant ${shopId}: ${err.message}`);
+    } catch (err) {
+      this.logger.warn(`Could not seed catalog for tenant ${shopId}: ${(err as Error).message}`);
     }
 
     // Send Welcome Credentials Email (non-fatal: credentials are also shown on screen)
@@ -285,8 +284,8 @@ export class OnboardingService {
         temporaryPassword: tempPassword,
         shopUrl: loginUrl,
       });
-    } catch (err: any) {
-      this.logger.warn(`Welcome email to ${session.email} failed for shop ${shopId}: ${err?.message}`);
+    } catch (err) {
+      this.logger.warn(`Welcome email to ${session.email} failed for shop ${shopId}: ${(err as Error | undefined)?.message}`);
     }
 
     // Update Session status to ACTIVE

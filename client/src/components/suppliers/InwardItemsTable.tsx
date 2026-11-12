@@ -47,7 +47,12 @@ export function InwardItemsTable({ products }: { products: ProductItem[] }) {
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold text-zinc-900">Products received</p>
-        <Button size="sm" variant="secondary" icon={<Plus weight="bold" className="w-3.5 h-3.5" />} onClick={() => append(EMPTY_INWARD_LINE)}>
+        <Button
+          size="sm"
+          variant="secondary"
+          icon={<Plus weight="bold" className="w-3.5 h-3.5" />}
+          onClick={() => append(EMPTY_INWARD_LINE)}
+        >
           Add line
         </Button>
       </div>
@@ -78,7 +83,7 @@ export function InwardItemsTable({ products }: { products: ProductItem[] }) {
           />
           <NumberField name={`items.${index}.quantityReceived`} label="Qty" required decimals={0} />
           <AmountField name={`items.${index}.unitCostPrice`} label="Cost / unit" required />
-          <NumberField name={`items.${index}.taxRatePercent`} label="GST %" required rightAddon="%" />
+          <NumberField name={`items.${index}.taxRatePercent`} label="GST %" required suffix="%" min={0} max={28} />
           <div className="min-h-10 sm:text-right">
             <p className="text-xs font-semibold text-zinc-700 mb-1.5">Line total</p>
             <p className="h-10 flex items-center sm:justify-end font-mono font-bold text-zinc-950 tabular-nums">

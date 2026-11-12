@@ -17,7 +17,7 @@ export function OpenShiftForm({ defaultOpeningFloat, onSubmit }: OpenShiftFormPr
   return (
     <Form form={form} onSubmit={onSubmit}>
       <AmountField name="openingFloat" label="Opening cash float" required hint="Physical cash in the till right now" />
-      <TextField name="notes" label="Opening notes" placeholder="e.g. Morning shift, clean till" />
+      <TextField name="notes" label="Opening notes" optional placeholder="e.g. Morning shift, clean till" />
       <FormActions
         fullWidth
         submitLabel={`Open shift with ${formatInr(typeof float === 'number' ? float : 0)} float`}
@@ -43,7 +43,7 @@ export function CloseShiftForm({ expectedCash, onSubmit }: CloseShiftFormProps) 
         <AmountField name="actualCashCounted" label="Cash counted" required placeholder={String(expectedCash)} />
         <VarianceBox counted={typeof counted === 'number' ? counted : undefined} expected={expectedCash} />
       </FormGrid>
-      <TextField name="notes" label="Closing notes" placeholder="Reconciliation notes" />
+      <TextField name="notes" label="Closing notes" optional placeholder="Reconciliation notes" />
       <FormActions fullWidth submitLabel="Reconcile & close shift" submittingLabel="Closing shift…" />
     </Form>
   );

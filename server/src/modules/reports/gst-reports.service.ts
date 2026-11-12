@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { Purchase, PurchaseDocument } from '../suppliers/schemas/purchase.schema';
 import { ReportsQueryDto } from './dto/reports-query.dto';

@@ -17,7 +17,7 @@ export class ObjectUtil {
     return result;
   }
 
-  static safeJsonParse<T = any>(str: string, fallback: T): T {
+  static safeJsonParse<T = unknown>(str: string, fallback: T): T {
     try {
       return JSON.parse(str);
     } catch {
@@ -25,7 +25,7 @@ export class ObjectUtil {
     }
   }
 
-  static isNil(val: any): boolean {
+  static isNil(val: unknown): boolean {
     return val === null || val === undefined;
   }
 

@@ -18,9 +18,20 @@ export function InwardPaymentSection() {
   return (
     <div className="p-3 bg-zinc-50 rounded-md border border-zinc-200 flex flex-col sm:flex-row justify-between items-start gap-3">
       <div className="w-full sm:max-w-xs">
-        <RadioGroupField name="paymentStatus" label="Payment status" required inline options={STATUS_OPTIONS} />
+        <RadioGroupField
+          name="paymentStatus"
+          label="Payment status"
+          required
+          variant="segmented"
+          options={STATUS_OPTIONS}
+        />
         {status === 'PARTIAL' && (
-          <AmountField name="amountPaid" label="Amount paid now" required hint={`Bill total ${formatInr(grandTotal)}`} />
+          <AmountField
+            name="amountPaid"
+            label="Amount paid now"
+            required
+            hint={`Bill total ${formatInr(grandTotal)}`}
+          />
         )}
       </div>
 

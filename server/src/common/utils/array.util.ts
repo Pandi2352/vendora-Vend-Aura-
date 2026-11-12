@@ -3,7 +3,7 @@ export class ArrayUtil {
     return Array.from(new Set(arr));
   }
 
-  static dedupeBy<T>(arr: T[], keyFn: (item: T) => any): T[] {
+  static dedupeBy<T>(arr: T[], keyFn: (item: T) => unknown): T[] {
     const seen = new Set();
     return arr.filter((item) => {
       const key = keyFn(item);
@@ -22,7 +22,7 @@ export class ArrayUtil {
     }, {} as Record<string, T[]>);
   }
 
-  static sortBy<T>(arr: T[], keyFn: (item: T) => any, order: 'asc' | 'desc' = 'asc'): T[] {
+  static sortBy<T>(arr: T[], keyFn: (item: T) => string | number | bigint | Date, order: 'asc' | 'desc' = 'asc'): T[] {
     return [...arr].sort((a, b) => {
       const valA = keyFn(a);
       const valB = keyFn(b);

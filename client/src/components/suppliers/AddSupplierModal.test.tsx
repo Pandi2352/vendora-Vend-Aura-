@@ -40,7 +40,9 @@ describe('AddSupplierModal', () => {
     await user.clear(days);
     await user.type(days, '400');
     await user.tab();
-    expect(await screen.findByText('Credit days must be at most 365')).toBeInTheDocument();
+    // The field clamps to its max when left, so an out-of-range value can't be submitted.
+    expect(days).toHaveValue('365');
+    expect(screen.queryByText('Credit days must be at most 365')).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/PIN code/), '0123');
     await user.tab();

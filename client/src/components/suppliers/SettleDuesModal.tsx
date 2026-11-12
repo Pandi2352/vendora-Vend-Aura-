@@ -2,7 +2,15 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import { api } from '@/lib/api';
 import { Dialog } from '@/components/ui';
-import { AmountField, Form, FormActions, RadioGroupField, TextareaField, TextField, useAppForm } from '@/components/forms';
+import {
+  AmountField,
+  Form,
+  FormActions,
+  RadioGroupField,
+  TextareaField,
+  TextField,
+  useAppForm,
+} from '@/components/forms';
 import { useToast } from '@/hooks/useToast';
 import { formatInr } from '@/utils';
 import { makeSupplierPaymentSchema } from '@/validations/supplier';
@@ -55,9 +63,23 @@ function SettleDuesForm({ supplier, onClose, onPaymentSuccess }: SettleDuesModal
         </div>
       </div>
       <AmountField name="amount" label="Amount to pay" required />
-      <RadioGroupField name="paymentMode" label="Payment method" required inline options={MODE_OPTIONS} />
-      <TextField name="referenceNumber" label="UTR / reference #" placeholder="e.g. UTR #, cheque #, IMPS ref" autoComplete="off" />
-      <TextareaField name="notes" label="Notes" rows={2} maxLength={300} placeholder="e.g. Settlement for invoice INV/2026/894" />
+      <RadioGroupField name="paymentMode" label="Payment method" required variant="segmented" options={MODE_OPTIONS} />
+      <TextField
+        name="referenceNumber"
+        label="UTR / reference #"
+        optional
+        placeholder="e.g. UTR #, cheque #, IMPS ref"
+        autoComplete="off"
+      />
+      <TextareaField
+        name="notes"
+        label="Notes"
+        optional
+        autoResize
+        rows={2}
+        maxLength={300}
+        placeholder="e.g. Settlement for invoice INV/2026/894"
+      />
       <FormActions submitLabel="Confirm payment" submittingLabel="Processing…" onCancel={onClose} />
     </Form>
   );

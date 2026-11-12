@@ -2,7 +2,15 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import { api } from '@/lib/api';
 import { Dialog } from '@/components/ui';
-import { AmountField, Form, FormActions, RadioGroupField, TextareaField, TextField, useAppForm } from '@/components/forms';
+import {
+  AmountField,
+  Form,
+  FormActions,
+  RadioGroupField,
+  TextareaField,
+  TextField,
+  useAppForm,
+} from '@/components/forms';
 import { useToast } from '@/hooks/useToast';
 import { formatInr } from '@/utils';
 import { makeRepaymentSchema, type RepaymentSchema } from '@/validations/customer';
@@ -29,7 +37,11 @@ export function RecordRepaymentModal({ customer, onClose, onRepaymentSuccess }: 
   );
 }
 
-function RepaymentForm({ customer, onClose, onRepaymentSuccess }: RecordRepaymentModalProps & { customer: CustomerItem }) {
+function RepaymentForm({
+  customer,
+  onClose,
+  onRepaymentSuccess,
+}: RecordRepaymentModalProps & { customer: CustomerItem }) {
   const toast = useToast();
   const outstanding = customer.currentCreditBalance;
   const schema = useMemo(() => makeRepaymentSchema(outstanding), [outstanding]);
@@ -60,9 +72,23 @@ function RepaymentForm({ customer, onClose, onRepaymentSuccess }: RecordRepaymen
         </div>
       </div>
       <AmountField name="amount" label="Repayment amount" required />
-      <RadioGroupField name="paymentMode" label="Payment mode" required inline options={MODE_OPTIONS} />
-      <TextField name="referenceNumber" label="Payment reference" placeholder="UPI UTR, receipt # or note" autoComplete="off" />
-      <TextareaField name="remarks" label="Remarks" rows={2} maxLength={300} placeholder="e.g. Partial clearance of weekly bill" />
+      <RadioGroupField name="paymentMode" label="Payment mode" required variant="segmented" options={MODE_OPTIONS} />
+      <TextField
+        name="referenceNumber"
+        label="Payment reference"
+        optional
+        placeholder="UPI UTR, receipt # or note"
+        autoComplete="off"
+      />
+      <TextareaField
+        name="remarks"
+        label="Remarks"
+        optional
+        autoResize
+        rows={2}
+        maxLength={300}
+        placeholder="e.g. Partial clearance of weekly bill"
+      />
       <FormActions submitLabel="Confirm repayment" submittingLabel="Processing…" onCancel={onClose} />
     </Form>
   );

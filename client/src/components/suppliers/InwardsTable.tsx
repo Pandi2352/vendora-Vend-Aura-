@@ -25,8 +25,17 @@ const columns: Column<PurchaseItemRecord>[] = [
     sortValue: (p) => new Date(p.receivedDate),
     render: (p) => <span className="font-mono text-[11px] text-zinc-500">{formatDate(p.receivedDate)}</span>,
   },
-  { key: 'supplier', header: 'Supplier', sortValue: (p) => p.supplierName.toLowerCase(), render: (p) => <span className="font-semibold">{p.supplierName}</span> },
-  { key: 'bill', header: 'Vendor bill #', render: (p) => <span className="font-mono text-zinc-600">{p.supplierInvoiceNumber || '—'}</span> },
+  {
+    key: 'supplier',
+    header: 'Supplier',
+    sortValue: (p) => p.supplierName.toLowerCase(),
+    render: (p) => <span className="font-semibold">{p.supplierName}</span>,
+  },
+  {
+    key: 'bill',
+    header: 'Vendor bill #',
+    render: (p) => <span className="font-mono text-zinc-600">{p.supplierInvoiceNumber || '—'}</span>,
+  },
   {
     key: 'items',
     header: 'Items received',

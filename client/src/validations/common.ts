@@ -15,21 +15,28 @@ export const PINCODE = /^[1-9]\d{5}$/;
 export const rules = {
   /** Required text with optional length limits. */
   text(label: string, { min = 1, max = 200 }: { min?: number; max?: number } = {}) {
-    return z
-      .string({ error: `${label} is required` })
-      .trim()
-      .min(1, `${label} is required`)
-      .min(min, `${label} must be at least ${min} characters`)
-      .max(max, `${label} must be at most ${max} characters`);
+    const required = z.string({ error: `${label} is required` }).trim().min(1, `${label} is required`);
+    // Only add the length rule when it says something beyond "required" (avoids two messages for an empty field).
+    return (min > 1 ? required.min(min, `${label} must be at least ${min} characters`) : required).max(
+      max,
+      `${label} must be at most ${max} characters`,
+    );
   },
 
   /** Optional text; '' becomes undefined. */
   optionalText(label: string, { max = 500 }: { max?: number } = {}) {
-    return z.preprocess(emptyToUndefined, z.string().trim().max(max, `${label} must be at most ${max} characters`).optional());
+    return z.preprocess(
+      emptyToUndefined,
+      z.string().trim().max(max, `${label} must be at most ${max} characters`).optional(),
+    );
   },
 
   email(label = 'Email') {
-    return z.string({ error: `${label} is required` }).trim().min(1, `${label} is required`).email('Enter a valid email address');
+    return z
+      .string({ error: `${label} is required` })
+      .trim()
+      .min(1, `${label} is required`)
+      .email('Enter a valid email address');
   },
 
   optionalEmail() {
@@ -46,7 +53,10 @@ export const rules = {
   },
 
   optionalPhone() {
-    return z.preprocess(emptyToUndefined, z.string().regex(INDIAN_MOBILE, 'Enter a valid 10-digit mobile number').optional());
+    return z.preprocess(
+      emptyToUndefined,
+      z.string().regex(INDIAN_MOBILE, 'Enter a valid 10-digit mobile number').optional(),
+    );
   },
 
   optionalGstin() {
@@ -57,7 +67,11 @@ export const rules = {
   },
 
   pincode(label = 'PIN code') {
-    return z.string({ error: `${label} is required` }).trim().min(1, `${label} is required`).regex(PINCODE, 'Enter a valid 6-digit PIN code');
+    return z
+      .string({ error: `${label} is required` })
+      .trim()
+      .min(1, `${label} is required`)
+      .regex(PINCODE, 'Enter a valid 6-digit PIN code');
   },
 
   optionalPincode() {
@@ -67,7 +81,8 @@ export const rules = {
   /** Number field (NumberField / AmountField give number | undefined). */
   number(label: string, { min, max, integer = false }: { min?: number; max?: number; integer?: boolean } = {}) {
     let schema = z.number({
-      error: (issue) => (issue.input === undefined || issue.input === null ? `${label} is required` : `${label} must be a number`),
+      error: (issue) =>
+        issue.input === undefined || issue.input === null ? `${label} is required` : `${label} must be a number`,
     });
     if (integer) schema = schema.int(`${label} must be a whole number`);
     if (min !== undefined) schema = schema.min(min, `${label} must be at least ${min.toLocaleString('en-IN')}`);
@@ -111,10 +126,48 @@ export const rules = {
   },
 };
 
-/** Adds a "confirm password" match check to an object schema. */
-export function withPasswordConfirmation<T extends z.ZodObject<{ newPassword: z.ZodTypeAny; confirmPassword: z.ZodTypeAny }>>(schema: T) {
-  return schema.refine((v) => v.newPassword === v.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'Passwords do not match',
-  });
+export interface CrossFieldRule<T> {
+  /** Fields the rule reads; it runs as soon as these are valid (even if other fields are not). */
+  fields: (keyof T & string)[];
+  /** Report problems with `ctx.addIssue({ code: 'custom', path: ['field'], message })`. */
+  check: (values: T, ctx: z.RefinementCtx) => void;
+}
+
+/**
+ * Attaches rules that compare several fields (password = confirm, paid ≤ total…).
+ * Plain object refinements only run once EVERY field is valid, so their errors
+ * show late. Zod 4's `when` runs each rule as soon as its own fields parse.
+ */
+export function withCrossFieldRules<Shape extends z.ZodRawShape>(
+  schema: z.ZodObject<Shape>,
+  crossRules: CrossFieldRule<z.output<z.ZodObject<Shape>>>[],
+) {
+  type Out = z.output<z.ZodObject<Shape>>;
+  type In = z.input<z.ZodObject<Shape>>;
+  return crossRules.reduce<z.ZodType<Out, In>>((acc, rule) => {
+    const mask = Object.fromEntries(rule.fields.map((f) => [f, true])) as Parameters<typeof schema.pick>[0];
+    const subset = schema.pick(mask);
+    return acc.superRefine((values, ctx) => rule.check(values as Out, ctx), {
+      when: (payload) => subset.safeParse(payload.value).success,
+    });
+  }, schema);
+}
+
+/** Rule: confirmPassword must equal newPassword. */
+export function passwordsMatchRule<T extends { newPassword: string; confirmPassword: string }>(): CrossFieldRule<T> {
+  return {
+    fields: ['newPassword', 'confirmPassword'] as (keyof T & string)[],
+    check: (v, ctx) => {
+      if (v.newPassword !== v.confirmPassword) {
+        ctx.addIssue({ code: 'custom', path: ['confirmPassword'], message: 'Passwords do not match' });
+      }
+    },
+  };
+}
+
+/** Adds a "confirm password" match check (shows as soon as both password fields are filled). */
+export function withPasswordConfirmation<
+  Shape extends z.ZodRawShape & { newPassword: z.ZodType<string>; confirmPassword: z.ZodType<string> },
+>(schema: z.ZodObject<Shape>) {
+  return withCrossFieldRules(schema, [passwordsMatchRule() as unknown as CrossFieldRule<z.output<z.ZodObject<Shape>>>]);
 }

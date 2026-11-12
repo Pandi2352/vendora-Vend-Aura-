@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+coverage
+test-results
+playwright-report
+.env
+.env.*
+!.env.example
+*.local
+*.log
+*.tsbuildinfo
+Dockerfile
+.dockerignore
+.git
+.vscode
+.idea

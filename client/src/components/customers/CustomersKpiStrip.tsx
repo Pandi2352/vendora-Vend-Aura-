@@ -33,12 +33,8 @@ export function CustomersKpiStrip({
           <span>Customer Lifetime Purchases</span>
           <Receipt className="w-4 h-4 text-emerald-600" />
         </div>
-        <div className="text-xl font-black font-mono text-zinc-950">
-          ₹{totalLifetimeSpent.toLocaleString('en-IN')}
-        </div>
-        <div className="text-[10px] text-zinc-400 mt-0.5">
-          Across {customersCount} registered customers
-        </div>
+        <div className="text-xl font-black font-mono text-zinc-950">₹{totalLifetimeSpent.toLocaleString('en-IN')}</div>
+        <div className="text-[10px] text-zinc-400 mt-0.5">Across {customersCount} registered customers</div>
       </div>
 
       <div className="bg-white p-3.5 rounded-md border border-zinc-200">
@@ -52,4 +48,3 @@ export function CustomersKpiStrip({
     </div>
   );
 }
-

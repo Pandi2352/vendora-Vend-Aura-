@@ -2,6 +2,7 @@ import { api } from '@/lib/api';
 import { Dialog } from '@/components/ui';
 import {
   AmountField,
+  EmailField,
   Form,
   FormActions,
   FormGrid,
@@ -52,11 +53,32 @@ function AddCustomerForm({ onClose, onCustomerAdded }: Omit<AddCustomerModalProp
       <TextField name="name" label="Customer full name" required placeholder="e.g. Arun Kumar" autoComplete="off" />
       <PhoneField name="phone" label="Mobile number" required />
       <FormGrid>
-        <TextField name="email" label="Email" type="email" placeholder="arun@gmail.com" autoComplete="off" />
-        <UppercaseField name="gstin" label="GSTIN" placeholder="33ABCDE1234F1Z5" maxLength={15} />
+        <EmailField name="email" label="Email" optional placeholder="arun@gmail.com" autoComplete="off" />
+        <UppercaseField
+          name="gstin"
+          label="GSTIN"
+          optional
+          tooltip="15-character GST number, e.g. 33ABCDE1234F1Z5 (state code + PAN + entity + Z + check digit)"
+          placeholder="33ABCDE1234F1Z5"
+          maxLength={15}
+        />
       </FormGrid>
-      <AmountField name="creditLimit" label="Credit limit" required hint="Maximum Udhar allowed for this customer" />
-      <TextareaField name="notes" label="Notes" rows={2} maxLength={500} placeholder="e.g. Regular neighbourhood customer" />
+      <AmountField
+        name="creditLimit"
+        label="Credit limit"
+        required
+        tooltip="Khata (credit) sales that would take the balance above this limit are blocked."
+        hint="Maximum Udhar allowed for this customer"
+      />
+      <TextareaField
+        name="notes"
+        label="Notes"
+        optional
+        autoResize
+        rows={2}
+        maxLength={500}
+        placeholder="e.g. Regular neighbourhood customer"
+      />
       <FormActions submitLabel="Save customer" submittingLabel="Saving…" onCancel={onClose} />
     </Form>
   );

@@ -91,7 +91,7 @@ describe('CashDrawerModal', () => {
     wrap(<CashDrawerModal isOpen onClose={vi.fn()} />);
 
     const float = await screen.findByLabelText(/Opening cash float/);
-    expect(float).toHaveValue('2000');
+    expect(float).toHaveValue('2,000'); // AmountField shows grouped digits when not focused
     await user.clear(float);
     await user.tab();
     expect(await screen.findByText('Opening float is required')).toBeInTheDocument();

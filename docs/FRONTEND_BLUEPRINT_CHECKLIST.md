@@ -65,7 +65,7 @@
 - [x] Import aliases — _`@/` → `src/` (`tsconfig.app.json` paths + `vite.config.ts` alias)_
 - [x] Environment configuration — _`.env.example`, `lib/config.ts`_
 - [ ] Development / staging / production environments — _only one `.env`; add `.env.staging` / `.env.production` when deploying_
-- [ ] ESLint configuration — _`.oxlintrc.json` exists but no linter is installed or run yet_
+- [x] ESLint configuration — _ESLint 9 flat config (`eslint.config.js`): typescript-eslint, react-hooks, jsx-a11y, react-refresh; `npm run lint` (0 errors)_
 - [x] Prettier configuration — _`.prettierrc.json`, `npm run format` / `format:check`_
 - [x] Git configuration — _`.gitignore`_
 - [x] Package scripts — _`dev`, `build`, `typecheck`, `test`, `test:watch`, `format`, `format:check`, `preview`_
@@ -142,11 +142,11 @@ All in `components/ui/` (exported from `components/ui/index.ts`).
 | Avatar | ✅ | image or initial |
 | Card / CardHeader | ✅ | |
 | Separator | ✅ | |
-| Tooltip | ❌ | `title` attribute used for now |
-| Popover | ❌ | sidebar flyout uses `useFlyout`; no generic popover yet |
+| Tooltip | ✅ | `ui/overlay/Tooltip` — hover + focus, Esc, `aria-describedby`, flips; info icon in field labels |
+| Popover | ✅ | `ui/overlay/Popover` — click, focus in / out, Esc, outside click, flip + clamp (date pickers use it) |
 | Dialog | ✅ | portal, focus trap, Esc/backdrop close, focus restore, scroll lock; stacked dialogs: only the topmost handles Esc / Tab |
 | Alert Dialog | ✅ | `ConfirmProvider` + `useConfirm()` (danger variant) |
-| Dropdown Menu (actions) | ❌ | `UserMenu` is bespoke; table rows use `RowActions` buttons |
+| Dropdown Menu (actions) | ✅ | `ui/menu/DropdownMenu` (APG menu button) + `tables/RowActionsMenu` |
 | Tabs | ✅ | |
 | Accordion | ❌ | |
 | Breadcrumb | ✅ | `PageHeader`, generated from `config/navigation.ts` |
@@ -154,7 +154,7 @@ All in `components/ui/` (exported from `components/ui/index.ts`).
 | Skeleton | ✅ | |
 | Spinner / PageLoader | ✅ | |
 | Progress | ✅ | `UsageMeter` |
-| Calendar / Date Picker | ❌ | not needed yet (report periods are presets) |
+| Calendar / Date Picker | ✅ | `ui/calendar/Calendar` + `DateField`, `DateRangeField`, `TimeField` (APG date picker keyboard) |
 | Command Menu | ❌ | Level 2 |
 
 ### 5. Common Layout Components
@@ -190,7 +190,7 @@ All in `components/ui/` (exported from `components/ui/index.ts`).
 - [x] Error state — _with Retry_
 - [x] Responsive table handling — _horizontal scroll inside the card_
 - [x] Row actions — _`RowActions` icon buttons (accessible labels)_
-- [ ] Row action dropdown menu
+- [x] Row action dropdown menu — _`RowActionsMenu`_
 
 ### 7. Common Form Foundation
 
@@ -235,7 +235,9 @@ const form = useAppForm(schema, { defaultValues: { name: '', phone: '', creditLi
 - [x] Field options — _`hideLabel` (screen-reader-only label for repeated rows), `inputClassName`, `DropdownField onValueChange`_
 - [x] Migrated screens — _login, change password, add customer, khata repayment, add supplier, settle dues, goods inward (GRN), open / close shift, sales return, checkout cash tendered_
 
-> **Known limitation:** zod runs object-level checks (`passwords match`, `amount paid ≤ total`) only after every field in that object is valid, so those messages appear after the simple field errors are fixed.
+- [x] Cross-field rules show as soon as their own fields are valid — _`withCrossFieldRules()` (Zod 4 `when`), `passwordsMatchRule()`; related fields re-validate via `deps`_
+- [x] Error summary — _`<Form errorSummary>` ("There is a problem" + links to each field, GOV.UK pattern)_
+- [x] **Full field catalogue and per-field features:** see [`FORM_FIELDS_CHECKLIST.md`](./FORM_FIELDS_CHECKLIST.md)
 
 ### 8. API Integration Foundation
 
@@ -310,8 +312,8 @@ const form = useAppForm(schema, { defaultValues: { name: '', phone: '', creditLi
 ### 12. Authentication UI Foundation
 - [x] Login page — _Shop ID + username + password; `?shopId=` prefill from the welcome email_
 - [x] Registration page — _`landing/` `/register`_
-- [ ] Forgot password page — _needs a backend reset-by-email flow first_
-- [ ] Reset password page — _same_
+- [x] Forgot password page — _`/forgot-password`; always the same neutral answer (no account enumeration)_
+- [x] Reset password page — _`/reset-password?token=…` (30-minute, one-time link; server stores only a SHA-256 hash)_
 - [x] Email verification — _OTP step in `landing/` registration_
 - [x] Authentication context — _`AuthProvider` / `useAuth()`_
 - [x] Current user handling
@@ -373,17 +375,17 @@ const form = useAppForm(schema, { defaultValues: { name: '', phone: '', creditLi
 
 ### 17. Build & Deployment Foundation
 - [x] Vite production build
-- [ ] Environment-specific builds
+- [x] Environment-specific builds — _`VITE_*` build args in the Dockerfiles_
 - [x] Asset optimization — _Vite defaults_
 - [x] Lazy loading
 - [x] Code splitting — _per back-office page; admin console split in `landing/`_
-- [ ] Docker configuration
-- [ ] Nginx / static hosting configuration
-- [ ] CI pipeline
+- [x] Docker configuration — _`client/Dockerfile`, root `docker-compose.yml` (Mongo replica set + server + client + landing)_
+- [x] Nginx / static hosting configuration — _`docker/nginx/spa.conf` (gzip, cache headers, security headers)_
+- [x] CI pipeline — _`.github/workflows/ci.yml`: lint, typecheck, tests, build per project_
 - [x] Build verification — _`npm run build` = typecheck + bundle_
-- [ ] Deployment documentation
-- [ ] SPA fallback configuration (production server)
-- [ ] Source map policy
+- [x] Deployment documentation — _`docs/DEPLOYMENT.md`_
+- [x] SPA fallback configuration (production server) — _`try_files … /index.html`_
+- [x] Source map policy — _not shipped (Vite default off); nginx 404s `*.map`_
 
 ---
 
@@ -414,7 +416,7 @@ Introduce when the product needs it. Done items are marked.
 - [ ] Dynamic forms · [ ] Multi-step forms · [ ] Form wizard
 - [x] Conditional fields (khata refund only for customer bills; amount paid only when PARTIAL) · [x] Dependent fields (`DropdownField onValueChange` fills cost/GST from the product) · [x] Nested form arrays (`useFieldArray`: GRN lines, return lines)
 - [ ] Dynamic field generation · [x] Reusable validation schemas (`validations/common.ts` + `auth`, `customer`, `supplier`, `orders`) · [x] Cross-field validation (`withPasswordConfirmation`, `.refine`)
-- [ ] Async validation · [ ] Form autosave · [ ] Draft management · [ ] Unsaved changes warning
+- [x] Async validation support (field `loading` spinner + `error` prop) · [ ] Form autosave · [ ] Draft management · [ ] Unsaved changes warning
 - [x] Complex form submission handling (server error mapping, double-submit guard) · [ ] Schema-driven rendering
 
 ### 21. Advanced State Management
@@ -434,7 +436,7 @@ Introduce when the product needs it. Done items are marked.
 - [ ] Undo / redo · [ ] Onboarding walkthrough · [x] User preference management (Settings) · [ ] Recently viewed · [ ] Saved filters · [ ] Dashboard widgets
 
 ### 24. File & Media Management
-- [ ] Drag-and-drop upload · [ ] Multiple upload · [ ] Upload progress · [ ] Upload cancellation · [ ] File / image preview
+- [x] Drag-and-drop upload (`FileField`) · [x] Multiple upload · [ ] Upload progress · [ ] Upload cancellation · [x] File / image preview
 - [ ] Image cropping / compression · [x] File validation helper (`validateFile`) · [x] File download helper (`downloadFile`) · [ ] Download progress
 - [ ] Large / resumable uploads · [ ] File manager UI · [ ] File version display
 
@@ -498,15 +500,15 @@ Introduce when the product needs it. Done items are marked.
 | Category | Components (✅ available) |
 | :--- | :--- |
 | Basic UI | ✅ Button · ✅ Input · ✅ Dropdown · ✅ Textarea · ✅ Checkbox · ✅ RadioGroup · ✅ Switch / Toggle |
-| Display | ✅ Card · ✅ Badge · ✅ Avatar · ✅ Separator · ✅ InfoRow · ✅ IconBadge · ❌ Tooltip |
-| Navigation | ✅ Sidebar · ✅ Topbar · ✅ Breadcrumb (PageHeader) · ✅ Tabs · ❌ generic Dropdown Menu |
+| Display | ✅ Card · ✅ Badge · ✅ Avatar · ✅ Separator · ✅ InfoRow · ✅ IconBadge · ✅ Tooltip · ✅ Popover |
+| Navigation | ✅ Sidebar · ✅ Topbar · ✅ Breadcrumb (PageHeader) · ✅ Tabs · ✅ Dropdown Menu |
 | Feedback | ✅ Toast · ✅ Alert · ✅ Dialog · ✅ Confirm Dialog · ✅ Empty / Error / Network states |
 | Loading | ✅ Spinner · ✅ Skeleton · ✅ Progress (UsageMeter) · ✅ PageLoader |
 | Forms | ✅ Form · ✅ FormField · ✅ Text / Password / Phone / Uppercase / Number / Amount / Textarea / Dropdown / Checkbox / Switch / RadioGroup fields · ✅ FormGrid · ✅ FormSection · ✅ FormActions |
 | Tables | ✅ DataTable · ✅ TablePagination · ✅ RowActions |
 | Dashboard | ✅ StatTile · ✅ KpiCard (admin) · ✅ ChartCard (admin) |
-| Files | ❌ FileUpload · ❌ FilePreview · ❌ FileList |
-| Advanced | ❌ CommandPalette · ❌ DateRangePicker · ❌ MultiSelect |
+| Files | ✅ FileField / FileDropzone (upload, preview, list) |
+| Advanced | ❌ CommandPalette · ✅ DateRangePicker · ✅ MultiSelect · ✅ Calendar · ✅ OTP · ✅ Slider · ✅ SearchInput |
 
 ---
 

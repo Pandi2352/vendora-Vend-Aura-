@@ -56,21 +56,21 @@ export function HowItWorks() {
 
               <div className="space-y-3.5 text-left">
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-700 mb-1">Customer ID</label>
+                  <span className="block text-[11px] font-semibold text-zinc-700 mb-1">Customer ID</span>
                   <div className="w-full px-3 py-2 rounded-md border border-zinc-300 bg-zinc-50 text-xs font-semibold text-zinc-900">
                     VENDORA
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-700 mb-1">Username</label>
+                  <span className="block text-[11px] font-semibold text-zinc-700 mb-1">Username</span>
                   <div className="w-full px-3 py-2 rounded-md border border-red-600 bg-white text-xs font-medium text-zinc-950 ring-1 ring-red-600/30">
                     admin|
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-700 mb-1">Password</label>
+                  <span className="block text-[11px] font-semibold text-zinc-700 mb-1">Password</span>
                   <div className="w-full px-3 py-2 rounded-md border border-zinc-300 bg-white text-xs flex items-center justify-between text-zinc-400">
                     <span>••••••••••••••••</span>
                     <Eye className="w-4 h-4 text-zinc-400" />

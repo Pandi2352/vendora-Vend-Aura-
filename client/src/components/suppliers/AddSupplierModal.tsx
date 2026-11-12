@@ -2,6 +2,7 @@ import { api } from '@/lib/api';
 import { Dialog } from '@/components/ui';
 import {
   DropdownField,
+  EmailField,
   Form,
   FormActions,
   FormGrid,
@@ -64,21 +65,63 @@ function AddSupplierForm({ onClose, onSupplierAdded }: Omit<AddSupplierModalProp
   return (
     <Form form={form} onSubmit={handleSubmit}>
       <FormSection title="Supplier details">
-        <TextField name="name" label="Company / firm name" required placeholder="e.g. Sri Meenakshi Traders" autoComplete="off" />
+        <TextField
+          name="name"
+          label="Company / firm name"
+          required
+          placeholder="e.g. Sri Meenakshi Traders"
+          autoComplete="off"
+        />
         <FormGrid>
-          <TextField name="contactPerson" label="Contact person" placeholder="e.g. Murugan K" autoComplete="off" />
+          <TextField
+            name="contactPerson"
+            label="Contact person"
+            optional
+            placeholder="e.g. Murugan K"
+            autoComplete="off"
+          />
           <PhoneField name="phone" label="Phone number" required />
-          <TextField name="email" label="Email" type="email" placeholder="orders@supplier.in" autoComplete="off" />
-          <UppercaseField name="gstin" label="GSTIN" placeholder="33ABCDE1234F1Z5" maxLength={15} />
-          <DropdownField name="category" label="Category" options={CATEGORY_OPTIONS} clearable placeholder="Select category" />
-          <NumberField name="creditDays" label="Credit days" required decimals={0} rightAddon="days" hint="0 to 365" />
+          <EmailField name="email" label="Email" optional placeholder="orders@supplier.in" autoComplete="off" />
+          <UppercaseField
+            name="gstin"
+            label="GSTIN"
+            optional
+            tooltip="15-character GST number, e.g. 33ABCDE1234F1Z5 (state code + PAN + entity + Z + check digit)"
+            placeholder="33ABCDE1234F1Z5"
+            maxLength={15}
+          />
+          <DropdownField
+            name="category"
+            label="Category"
+            options={CATEGORY_OPTIONS}
+            clearable
+            placeholder="Select category"
+          />
+          <NumberField
+            name="creditDays"
+            label="Credit days"
+            required
+            decimals={0}
+            suffix="days"
+            min={0}
+            max={365}
+            stepper
+            hint="0 to 365"
+          />
         </FormGrid>
       </FormSection>
       <FormSection title="Address" description="Optional">
         <TextField name="address.street" label="Street" placeholder="e.g. 15 Anna Salai" autoComplete="off" />
         <FormGrid>
           <TextField name="address.city" label="City" placeholder="e.g. Chennai" autoComplete="off" />
-          <TextField name="address.pincode" label="PIN code" inputMode="numeric" maxLength={6} placeholder="600002" normalize={(v) => digitsOnly(v, 6)} />
+          <TextField
+            name="address.pincode"
+            label="PIN code"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="600002"
+            normalize={(v) => digitsOnly(v, 6)}
+          />
         </FormGrid>
       </FormSection>
       <FormActions submitLabel="Register supplier" submittingLabel="Saving…" onCancel={onClose} />

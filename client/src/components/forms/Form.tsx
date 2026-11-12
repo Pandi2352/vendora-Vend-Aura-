@@ -3,6 +3,7 @@ import { FormProvider, type FieldValues, type UseFormReturn } from 'react-hook-f
 import { Alert } from '../ui/Alert';
 import { cn } from '../ui/cn';
 import { applyServerErrors, fieldPaths, ROOT_SERVER_ERROR } from './server-errors';
+import { FormErrorSummary } from './FormErrorSummary';
 
 interface FormProps<TFieldValues extends FieldValues, TTransformed> {
   form: UseFormReturn<TFieldValues, unknown, TTransformed>;
@@ -13,6 +14,8 @@ interface FormProps<TFieldValues extends FieldValues, TTransformed> {
   id?: string;
   /** Show the form-level server error above the fields (default true). */
   showServerError?: boolean;
+  /** "There is a problem" list of all errors after a failed submit (long forms). */
+  errorSummary?: boolean;
 }
 
 /**
@@ -27,6 +30,7 @@ export function Form<TFieldValues extends FieldValues, TTransformed>({
   className,
   id,
   showServerError = true,
+  errorSummary = false,
 }: FormProps<TFieldValues, TTransformed>) {
   const serverError = (form.formState.errors.root as Record<string, { message?: string }> | undefined)?.server?.message;
 
@@ -56,6 +60,7 @@ export function Form<TFieldValues extends FieldValues, TTransformed>({
             {serverError}
           </Alert>
         )}
+        {errorSummary && <FormErrorSummary />}
         {children}
       </form>
     </FormProvider>

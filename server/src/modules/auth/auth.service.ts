@@ -1,12 +1,13 @@
-import { 
-  Injectable, 
-  UnauthorizedException, 
-  BadRequestException, 
-  NotFoundException 
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
@@ -14,19 +15,31 @@ import { User, UserDocument } from '../user/schemas/user.schema';
 import { Tenant, TenantDocument } from '../tenant/schemas/tenant.schema';
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { TenantStatus } from '../../shared';
-import { CryptoUtil, DateUtil, ObjectIdUtil } from '../../common';
+import { CryptoUtil, DateUtil, ObjectIdUtil, PASSWORD_RESET_TTL_MINUTES } from '../../common';
+import { MailService } from '../mail/mail.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+
+/** Same response for every forgot-password request, so accounts cannot be enumerated. */
+export const FORGOT_PASSWORD_MESSAGE =
+  "If the details match an account, we've emailed a link to reset the password. It expires in " +
+  `${PASSWORD_RESET_TTL_MINUTES} minutes.`;
+export const INVALID_RESET_LINK_MESSAGE = 'This reset link is invalid or has expired.';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
     @InjectModel(Outlet.name) private readonly outletModel: Model<OutletDocument>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -138,13 +151,13 @@ export class AuthService {
         username: user.username,
         role: user.role,
       },
-      { expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m') as any },
+      { expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m') as JwtSignOptions['expiresIn'] },
     );
     const refreshToken = this.jwtService.sign(
       { sub: user._id.toString(), jti: randomUUID() },
       {
         secret: this.refreshSecret,
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as any,
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as JwtSignOptions['expiresIn'],
       },
     );
 
@@ -212,6 +225,104 @@ export class AuthService {
     return {
       message: 'Password updated successfully. You can now use your new password.',
     };
+  }
+
+  /**
+   * Starts a password reset. Always resolves the same way whether or not the
+   * account exists; the email is sent in the background so response time does
+   * not reveal it either. Only the SHA-256 of the token is stored.
+   */
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const shopId = dto.shopId.toLowerCase().trim();
+    const identifier = dto.identifier.toLowerCase().trim();
+
+    const tenant = await this.tenantModel.findOne({ shopId });
+    if (!tenant || this.isTenantBlocked(tenant)) {
+      return { message: FORGOT_PASSWORD_MESSAGE };
+    }
+
+    const user = await this.userModel.findOne({
+      tenantId: tenant._id,
+      $or: [{ username: identifier }, { email: identifier }],
+    });
+    if (!user || !user.isActive || !user.email) {
+      return { message: FORGOT_PASSWORD_MESSAGE };
+    }
+
+    const token = CryptoUtil.generateRandomToken(32);
+    await this.userModel.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          resetTokenHash: CryptoUtil.hash(token),
+          resetTokenExpiresAt: DateUtil.addMinutes(DateUtil.nowUtc(), PASSWORD_RESET_TTL_MINUTES),
+        },
+      },
+    );
+
+    const resetUrl =
+      `${this.clientBaseUrl}/reset-password?token=${encodeURIComponent(token)}` +
+      `&shopId=${encodeURIComponent(tenant.shopId)}`;
+    void this.mailService
+      .sendPasswordResetEmail({
+        to: user.email,
+        fullName: user.fullName,
+        businessName: tenant.businessName,
+        shopId: tenant.shopId,
+        resetUrl,
+      })
+      .then((sent) => {
+        if (!sent) this.logger.error(`Password reset email for user ${user._id.toString()} was not delivered.`);
+      })
+      .catch((err: Error) => this.logger.error(`Password reset email failed: ${err.message}`));
+
+    return { message: FORGOT_PASSWORD_MESSAGE };
+  }
+
+  /**
+   * Completes a password reset with a one-time token. The token is consumed
+   * atomically (the update matches on its hash), and the refresh token is
+   * revoked so other sessions are signed out.
+   */
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const tokenHash = CryptoUtil.hash(dto.token.trim());
+    const now = DateUtil.nowUtc();
+
+    const user = await this.userModel.findOne({
+      resetTokenHash: tokenHash,
+      resetTokenExpiresAt: { $gt: now },
+    });
+    if (!user || !user.resetTokenHash || !CryptoUtil.constantTimeCompare(tokenHash, user.resetTokenHash) || !user.isActive) {
+      throw new BadRequestException(INVALID_RESET_LINK_MESSAGE);
+    }
+
+    const tenant = await this.tenantModel.findById(user.tenantId);
+    if (!tenant || this.isTenantBlocked(tenant)) {
+      throw new BadRequestException(INVALID_RESET_LINK_MESSAGE);
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    const result = await this.userModel.updateOne(
+      { _id: user._id, resetTokenHash: tokenHash, resetTokenExpiresAt: { $gt: now } },
+      {
+        $set: { passwordHash, isTemporaryPassword: false },
+        $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1, refreshTokenHash: 1 },
+      },
+    );
+    if (result.modifiedCount !== 1) {
+      // Consumed by a concurrent request in the meantime.
+      throw new BadRequestException(INVALID_RESET_LINK_MESSAGE);
+    }
+
+    return { message: 'Your password has been reset. You can now sign in with your new password.' };
+  }
+
+  private isTenantBlocked(tenant: TenantDocument): boolean {
+    return tenant.status === TenantStatus.SUSPENDED || tenant.status === TenantStatus.EXPIRED;
+  }
+
+  private get clientBaseUrl(): string {
+    return (this.configService.get<string>('CLIENT_BASE_URL') || 'http://localhost:4001').replace(/\/+$/, '');
   }
 
   /**

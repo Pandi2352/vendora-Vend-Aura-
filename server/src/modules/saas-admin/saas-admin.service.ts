@@ -158,7 +158,7 @@ export class SaasAdminService {
 
     const planDetails = SUBSCRIPTION_PLANS[planCode] || SUBSCRIPTION_PLANS[SubscriptionPlanCode.FREE_TRIAL];
 
-    let subscription: any;
+    let subscription: SubscriptionDocument | null;
     if (tenant.subscriptionId) {
       subscription = await this.subscriptionModel.findByIdAndUpdate(
         tenant.subscriptionId,

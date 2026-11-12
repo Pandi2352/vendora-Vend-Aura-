@@ -71,11 +71,25 @@ function InwardStockForm({ suppliers, products, onClose, onInwardSuccess }: Omit
           placeholder="Choose supplier"
           emptyMessage="No suppliers yet. Register one first."
         />
-        <TextField name="supplierInvoiceNumber" label="Vendor invoice #" placeholder="e.g. INV/2026/894" autoComplete="off" />
+        <TextField
+          name="supplierInvoiceNumber"
+          label="Vendor invoice #"
+          optional
+          placeholder="e.g. INV/2026/894"
+          autoComplete="off"
+        />
       </FormGrid>
       <InwardItemsTable products={products} />
       <InwardPaymentSection />
-      <TextareaField name="notes" label="Notes" rows={2} maxLength={500} placeholder="e.g. Delivery received in good condition" />
+      <TextareaField
+        name="notes"
+        label="Notes"
+        optional
+        autoResize
+        rows={2}
+        maxLength={500}
+        placeholder="e.g. Delivery received in good condition"
+      />
       <FormActions submitLabel="Confirm inward & add stock" submittingLabel="Finalizing GRN…" onCancel={onClose} />
     </Form>
   );

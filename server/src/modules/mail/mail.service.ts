@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { OTP_TTL_MINUTES, StringUtil } from '../../common';
+import { OTP_TTL_MINUTES, PASSWORD_RESET_TTL_MINUTES, StringUtil } from '../../common';
 
 @Injectable()
 export class MailService {
@@ -26,8 +26,8 @@ export class MailService {
           },
         });
         this.logger.log(`MailService using SMTP ${host}:${port}`);
-      } catch (err: any) {
-        this.logger.error(`❌ Failed to initialize SMTP transporter: ${err.message}`);
+      } catch (err) {
+        this.logger.error(`❌ Failed to initialize SMTP transporter: ${(err as Error).message}`);
       }
     } else {
       this.logger.warn('SMTP credentials not configured: emails are logged to the console (development only).');
@@ -158,6 +158,71 @@ export class MailService {
     });
   }
 
+  async sendPasswordResetEmail(payload: {
+    to: string;
+    fullName: string;
+    businessName: string;
+    shopId: string;
+    resetUrl: string;
+  }): Promise<boolean> {
+    const subject = 'Reset your Vendora password';
+    const fullName = StringUtil.escapeHtml(payload.fullName);
+    const businessName = StringUtil.escapeHtml(payload.businessName);
+    const shopId = StringUtil.escapeHtml(payload.shopId);
+    const resetUrl = StringUtil.escapeHtml(payload.resetUrl);
+
+    const html = `
+      <div style="font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; overflow: hidden; padding: 0;">
+        <div style="background-color: #0b1a4a; padding: 24px 32px; text-align: left;">
+          <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+            Retail<span style="color: #ef4444;">POS</span>
+          </h1>
+          <p style="color: #93c5fd; font-size: 11px; margin: 4px 0 0 0; font-weight: 600;">Powered by Vendora</p>
+        </div>
+
+        <div style="padding: 32px;">
+          <h2 style="font-size: 18px; font-weight: 800; color: #09090b; margin: 0 0 12px 0;">Reset your password</h2>
+          <p style="font-size: 14px; color: #52525b; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi ${fullName}, we received a request to reset the password for your account at
+            <strong>${businessName}</strong> (Shop ID <span style="font-family: monospace;">${shopId}</span>).
+            Use the button below to choose a new password.
+          </p>
+
+          <div style="text-align: center; margin: 0 0 24px 0;">
+            <a href="${resetUrl}" target="_blank" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none; padding: 12px 32px; border-radius: 6px;">
+              Choose a new password
+            </a>
+          </div>
+
+          <p style="font-size: 12px; color: #71717a; line-height: 1.5; margin: 0 0 8px 0;">
+            Or paste this link into your browser:
+          </p>
+          <p style="font-size: 12px; color: #2563eb; line-height: 1.5; margin: 0 0 24px 0; word-break: break-all;">
+            ${resetUrl}
+          </p>
+
+          <p style="font-size: 12px; color: #71717a; line-height: 1.5; margin: 0 0 16px 0;">
+            ⏳ This link is valid for <strong>${PASSWORD_RESET_TTL_MINUTES} minutes</strong> and can be used once. Resetting your password signs you out on other devices.
+            If you did not request a reset, you can ignore this email; your password will not change.
+          </p>
+
+          <hr style="border: none; border-top: 1px solid #f4f4f5; margin: 24px 0;" />
+
+          <p style="font-size: 11px; color: #a1a1aa; margin: 0; text-align: center;">
+            © 2026 Vendora Cloud POS & ERP. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `;
+
+    return this.deliver({
+      to: payload.to,
+      subject,
+      html,
+      devFallbackLog: `Password reset for ${payload.to} | shop ${payload.shopId} | ${payload.resetUrl}`,
+    });
+  }
+
   /** True when real SMTP delivery is configured. */
   get isConfigured(): boolean {
     return this.transporter !== null;
@@ -182,8 +247,8 @@ export class MailService {
       await this.transporter.sendMail({ from: this.fromAddress, to: mail.to, subject: mail.subject, html: mail.html });
       this.logger.log(`Email "${mail.subject.replace(/\d{6}/, '******')}" delivered to ${StringUtil.maskEmail(mail.to)}`);
       return true;
-    } catch (err: any) {
-      this.logger.error(`SMTP delivery to ${StringUtil.maskEmail(mail.to)} failed: ${err.message}`);
+    } catch (err) {
+      this.logger.error(`SMTP delivery to ${StringUtil.maskEmail(mail.to)} failed: ${(err as Error).message}`);
       return false;
     }
   }

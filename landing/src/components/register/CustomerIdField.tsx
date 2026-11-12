@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { CircleNotch, CheckCircle, WarningCircle } from '@phosphor-icons/react';
 
 interface IdCheckStatus {
@@ -27,15 +28,18 @@ export function CustomerIdField({
   const isAvailable = checkStatus?.available === true && !errorMessage;
   const isError = Boolean(errorMessage || (checkStatus && !checkStatus.available));
 
+  const inputId = useId();
+
   return (
     <div>
-      <label className="block text-xs font-bold text-zinc-900 mb-1.5">
+      <label htmlFor={inputId} className="block text-xs font-bold text-zinc-900 mb-1.5">
         Customer ID <span className="text-red-600">*</span>
       </label>
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <input
+            id={inputId}
             type="text"
             value={value}
             onChange={(e) => {

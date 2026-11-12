@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { rules } from './common';
+import { rules, withCrossFieldRules } from './common';
 
 /* ----------------------------- Cash drawer ----------------------------- */
 
@@ -51,29 +51,35 @@ export function makeSalesReturnSchema(limits: readonly number[], hasCustomer: bo
     reason: z.enum(RETURN_REASONS).nullable(),
   });
 
-  return z
-    .object({
-      lines: z.array(line),
-      refundMode: rules.selectOneOf('Refund method', REFUND_MODES),
-      remarks: rules.optionalText('Remarks', { max: 500 }),
-    })
-    .superRefine((values, ctx) => {
-      values.lines.forEach((l, i) => {
-        const max = limits[i] ?? 0;
-        if (l.quantity > max) {
-          ctx.addIssue({ code: 'custom', path: ['lines', i, 'quantity'], message: `Only ${max} can be returned` });
+  const base = z.object({
+    lines: z.array(line),
+    refundMode: rules.selectOneOf('Refund method', REFUND_MODES),
+    remarks: rules.optionalText('Remarks', { max: 500 }),
+  });
+
+  // Cross-field: runs as soon as lines + refund method are valid (not after every field).
+  return withCrossFieldRules(base, [
+    {
+      fields: ['lines', 'refundMode'],
+      check: (values, ctx) => {
+        values.lines.forEach((l, i) => {
+          const max = limits[i] ?? 0;
+          if (l.quantity > max) {
+            ctx.addIssue({ code: 'custom', path: ['lines', i, 'quantity'], message: `Only ${max} can be returned` });
+          }
+          if (l.quantity > 0 && !l.reason) {
+            ctx.addIssue({ code: 'custom', path: ['lines', i, 'reason'], message: 'Select a reason' });
+          }
+        });
+        if (!values.lines.some((l) => l.quantity > 0)) {
+          ctx.addIssue({ code: 'custom', path: ['lines'], message: 'Enter a return quantity for at least one item' });
         }
-        if (l.quantity > 0 && !l.reason) {
-          ctx.addIssue({ code: 'custom', path: ['lines', i, 'reason'], message: 'Select a reason' });
+        if (values.refundMode === 'CUSTOMER_KHATA' && !hasCustomer) {
+          ctx.addIssue({ code: 'custom', path: ['refundMode'], message: 'Khata refund needs a bill with a customer' });
         }
-      });
-      if (!values.lines.some((l) => l.quantity > 0)) {
-        ctx.addIssue({ code: 'custom', path: ['lines'], message: 'Enter a return quantity for at least one item' });
-      }
-      if (values.refundMode === 'CUSTOMER_KHATA' && !hasCustomer) {
-        ctx.addIssue({ code: 'custom', path: ['refundMode'], message: 'Khata refund needs a bill with a customer' });
-      }
-    });
+      },
+    },
+  ]);
 }
 
 export type SalesReturnSchema = ReturnType<typeof makeSalesReturnSchema>;

@@ -16,3 +16,6 @@ export const MAX_PAGE_SIZE = 100;
 
 /** Email OTP lifetime. Shown in the email and enforced on verify. */
 export const OTP_TTL_MINUTES = 10;
+
+/** Password reset link lifetime. Shown in the email and enforced on reset. */
+export const PASSWORD_RESET_TTL_MINUTES = 30;

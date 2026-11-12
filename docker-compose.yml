@@ -1,0 +1,102 @@
+# Vendora local / single-host stack.
+#
+#   cp .env.docker.example .env      # then fill in the secrets
+#   docker compose up -d --build
+#
+# Compose reads ./.env (git-ignored) for the ${...} values below. Images are
+# tagged with VENDORA_TAG so a previous release can be redeployed (see
+# docs/DEPLOYMENT.md, "Rollback").
+
+name: vendora
+
+services:
+  mongo:
+    image: mongo:7
+    # Single-node replica set: the API runs billing, returns, GRNs and invoice
+    # numbering inside MongoDB transactions, which require a replica set.
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    # Initiates the replica set on first start (no-op afterwards) and reports
+    # healthy only once this node is the writable primary.
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - >-
+          try { rs.status() } catch (e) {
+            rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] })
+          }
+          if (!db.hello().isWritablePrimary) quit(1)
+      interval: 5s
+      timeout: 10s
+      start_period: 20s
+      retries: 30
+
+  server:
+    build:
+      context: ./server
+    image: ${VENDORA_REGISTRY:-vendora}/server:${VENDORA_TAG:-local}
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5000
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/vendora?replicaSet=rs0}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (see .env.docker.example)}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in .env (see .env.docker.example)}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      PLATFORM_ADMIN_USERNAME: ${PLATFORM_ADMIN_USERNAME:-}
+      PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4000,http://localhost:4001}
+      CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4001}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    ports:
+      - "5000:5000"
+
+  client:
+    build:
+      context: ./client
+      additional_contexts:
+        nginx: ./docker/nginx
+      args:
+        VITE_API_URL: ${PUBLIC_API_URL:-http://localhost:5000/api/v1}
+        VITE_LANDING_URL: ${PUBLIC_LANDING_URL:-http://localhost:4000}
+        VITE_SUPPORT_EMAIL: ${PUBLIC_SUPPORT_EMAIL:-support@vendora.com}
+    image: ${VENDORA_REGISTRY:-vendora}/client:${VENDORA_TAG:-local}
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "4001:80"
+
+  landing:
+    build:
+      context: ./landing
+      additional_contexts:
+        nginx: ./docker/nginx
+      args:
+        VITE_API_URL: ${PUBLIC_API_URL:-http://localhost:5000/api/v1}
+        VITE_POS_URL: ${PUBLIC_POS_URL:-http://localhost:4001}
+    image: ${VENDORA_REGISTRY:-vendora}/landing:${VENDORA_TAG:-local}
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "4000:80"
+
+volumes:
+  mongo-data:
+  mongo-config:

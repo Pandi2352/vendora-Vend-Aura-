@@ -135,6 +135,7 @@ export function Dropdown<V extends DropdownValue = string>({
   useEffect(() => {
     if (open && activeIndex >= 0) document.getElementById(optionId(activeIndex))?.scrollIntoView({ block: 'nearest' });
     // optionId only depends on the stable trigger id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, activeIndex]);
 
   // Close on outside pointer down.
@@ -147,6 +148,7 @@ export function Dropdown<V extends DropdownValue = string>({
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
     // closeList reads current props at call time; re-subscribing per render is unnecessary.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleListKeys = (e: KeyboardEvent) => {
@@ -331,6 +333,8 @@ export function Dropdown<V extends DropdownValue = string>({
                 const isSelected = option.value === value;
                 const isActive = index === activeIndex;
                 return (
+                  // Keyboard selection is handled on the listbox / search input via aria-activedescendant.
+                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events
                   <li
                     key={String(option.value)}
                     id={optionId(index)}

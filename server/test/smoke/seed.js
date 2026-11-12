@@ -1,10 +1,13 @@
-// Seeds ONLY the throwaway database "vendora_smoketest".
+// Seeds ONLY a throwaway database: "vendora_smoketest" by default, or SMOKE_DB_NAME
+// (which must also start with "vendora_smoketest"). It is dropped and recreated.
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const DB_NAME = process.env.SMOKE_DB_NAME || 'vendora_smoketest';
+if (!/^vendora_smoketest[a-z0-9_]*$/.test(DB_NAME)) throw new Error(`refusing to seed "${DB_NAME}": not a smoke-test database`);
 (async () => {
-  await mongoose.connect('mongodb://localhost:27017/vendora_smoketest');
+  await mongoose.connect(`mongodb://localhost:27017/${DB_NAME}`);
   const db = mongoose.connection.db;
-  if (db.databaseName !== 'vendora_smoketest') throw new Error('wrong db');
+  if (db.databaseName !== DB_NAME) throw new Error('wrong db');
   await db.dropDatabase();
   const tenantId = new mongoose.Types.ObjectId();
   const outletId = new mongoose.Types.ObjectId();

@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { Tenant, TenantSchema } from '../tenant/schemas/tenant.schema';
 import { Outlet, OutletSchema } from '../outlet/schemas/outlet.schema';
+import { MailModule } from '../mail/mail.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -20,6 +21,7 @@ import { PlatformAdminGuard } from './guards/platform-admin.guard';
       { name: Tenant.name, schema: TenantSchema },
       { name: Outlet.name, schema: OutletSchema },
     ]),
+    MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

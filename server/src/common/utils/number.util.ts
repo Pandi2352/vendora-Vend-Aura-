@@ -12,13 +12,13 @@ export class NumberUtil {
     }).format(amount);
   }
 
-  static safeParseInt(val: any, fallback: number = 0): number {
-    const parsed = parseInt(val, 10);
+  static safeParseInt(val: unknown, fallback: number = 0): number {
+    const parsed = parseInt(String(val), 10);
     return isNaN(parsed) ? fallback : parsed;
   }
 
-  static safeParseFloat(val: any, fallback: number = 0): number {
-    const parsed = parseFloat(val);
+  static safeParseFloat(val: unknown, fallback: number = 0): number {
+    const parsed = parseFloat(String(val));
     return isNaN(parsed) ? fallback : parsed;
   }
 }

@@ -69,22 +69,23 @@ export function CustomerTagSelector({
           {customerSearch.trim() && (
             <div className="max-h-28 overflow-y-auto border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
               {filteredCustomerList.slice(0, 4).map((c) => (
-                <div
+                <button
+                  type="button"
                   key={c.id}
                   onClick={() => {
                     onSelectCustomer(c);
                     setCustomerSearch('');
                   }}
-                  className="p-2 hover:bg-red-50 cursor-pointer flex justify-between items-center text-xs"
+                  className="w-full p-2 hover:bg-red-50 cursor-pointer flex justify-between items-center text-xs text-left"
                 >
-                  <div>
+                  <span>
                     <span className="font-bold text-zinc-900">{c.name}</span>
                     <span className="text-zinc-400 font-mono text-[11px] ml-2">{c.phone}</span>
-                  </div>
+                  </span>
                   <span className="font-mono text-zinc-500 text-[11px]">
                     Khata: ₹{c.currentCreditBalance}
                   </span>
-                </div>
+                </button>
               ))}
               {filteredCustomerList.length === 0 && (
                 <div className="p-2 text-center text-zinc-400 text-xs">

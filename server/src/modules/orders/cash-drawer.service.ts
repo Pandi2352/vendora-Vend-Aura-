@@ -12,9 +12,9 @@ import { AuthenticatedUser, DateUtil, NumberUtil, ObjectIdUtil, PaginationDto, P
 import { SequenceService } from '../sequence/sequence.service';
 
 export interface CurrentShiftSummary {
-  _id?: any;
-  tenantId?: any;
-  outletId?: any;
+  _id?: Types.ObjectId;
+  tenantId?: Types.ObjectId;
+  outletId?: Types.ObjectId;
   shiftNumber?: string;
   cashierName?: string;
   openedAt?: Date;

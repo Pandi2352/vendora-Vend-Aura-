@@ -23,13 +23,29 @@ const supplier: SupplierItem = {
 };
 
 const products: ProductItem[] = [
-  { id: 'p1', name: 'Ponni Rice 5kg', category: 'Staples', barcode: '8901', unitPrice: 400, mrp: 420, costPrice: 300, taxRatePercent: 5, stock: 4 },
+  {
+    id: 'p1',
+    name: 'Ponni Rice 5kg',
+    category: 'Staples',
+    barcode: '8901',
+    unitPrice: 400,
+    mrp: 420,
+    costPrice: 300,
+    taxRatePercent: 5,
+    stock: 4,
+  },
 ];
 
 function renderInward(onInwardSuccess = vi.fn()) {
   render(
     <ToastProvider>
-      <InwardStockModal isOpen suppliers={[supplier]} products={products} onClose={vi.fn()} onInwardSuccess={onInwardSuccess} />
+      <InwardStockModal
+        isOpen
+        suppliers={[supplier]}
+        products={products}
+        onClose={vi.fn()}
+        onInwardSuccess={onInwardSuccess}
+      />
     </ToastProvider>,
   );
   return userEvent.setup();

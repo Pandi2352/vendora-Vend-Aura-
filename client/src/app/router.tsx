@@ -6,6 +6,8 @@ import { ROLE_GROUPS } from '../lib/permissions';
 import { AppLayout } from '../layouts/AppLayout';
 import { RedirectIfAuthenticated, RequireAuth, RequirePasswordChange, RequireRole } from '../routes/guards';
 import { LoginPage } from '../pages/LoginPage';
+import { ForgotPasswordPage } from '../pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/ResetPasswordPage';
 import { ChangePasswordPage } from '../pages/ChangePasswordPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { PosPage } from '../pages/PosPage';
@@ -24,6 +26,7 @@ const lazyPage = (page: ReactNode) => <Suspense fallback={<PageFallback />}>{pag
 
 /**
  * Flow: welcome email link -> /login?shopId=… -> (first login) /change-password -> /dashboard.
+ * Recovery: /forgot-password -> emailed link /reset-password?token=…&shopId=… -> /login?shopId=….
  */
 export const router = createBrowserRouter([
   {
@@ -32,6 +35,24 @@ export const router = createBrowserRouter([
     element: (
       <RedirectIfAuthenticated>
         <LoginPage />
+      </RedirectIfAuthenticated>
+    ),
+  },
+  {
+    path: ROUTES.FORGOT_PASSWORD,
+    errorElement: <RouteErrorPage />,
+    element: (
+      <RedirectIfAuthenticated>
+        <ForgotPasswordPage />
+      </RedirectIfAuthenticated>
+    ),
+  },
+  {
+    path: ROUTES.RESET_PASSWORD,
+    errorElement: <RouteErrorPage />,
+    element: (
+      <RedirectIfAuthenticated>
+        <ResetPasswordPage />
       </RedirectIfAuthenticated>
     ),
   },

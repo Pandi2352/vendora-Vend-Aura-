@@ -29,12 +29,18 @@ const columns: Column<CustomerStatementItem>[] = [
         <span className="font-semibold text-emerald-600">Repayment ({st.paymentMode || 'Cash'})</span>
       ),
   },
-  { key: 'ref', header: 'Ref ID', render: (st) => <span className="font-mono text-[11px] text-zinc-500">{st.referenceId}</span> },
+  {
+    key: 'ref',
+    header: 'Ref ID',
+    render: (st) => <span className="font-mono text-[11px] text-zinc-500">{st.referenceId}</span>,
+  },
   {
     key: 'debit',
     header: 'Debit (+)',
     align: 'right',
-    render: (st) => <span className="font-mono font-bold text-red-600">{isDebit(st) ? formatInr(st.amount) : '—'}</span>,
+    render: (st) => (
+      <span className="font-mono font-bold text-red-600">{isDebit(st) ? formatInr(st.amount) : '—'}</span>
+    ),
   },
   {
     key: 'credit',
@@ -61,7 +67,11 @@ export function PassbookModal({ customer, statement, loadingStatement, onClose }
       onClose={onClose}
       size="xl"
       title={customer ? `Khata passbook: ${customer.name}` : 'Khata passbook'}
-      description={customer ? `Mobile: ${customer.phone} · Outstanding dues: ${formatInr(customer.currentCreditBalance)}` : undefined}
+      description={
+        customer
+          ? `Mobile: ${customer.phone} · Outstanding dues: ${formatInr(customer.currentCreditBalance)}`
+          : undefined
+      }
       footer={
         <Button variant="secondary" onClick={onClose}>
           Close passbook

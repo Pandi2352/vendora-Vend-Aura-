@@ -147,6 +147,17 @@ npm run build
 
 ---
 
+## 🐳 Deployment & CI
+
+```bash
+cp .env.docker.example .env   # set JWT_SECRET / JWT_REFRESH_SECRET (>= 32 chars, different)
+docker compose up -d --build  # mongo (replica set rs0) + API :5000 + POS :4001 + landing :4000
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) type-checks, tests and builds all three projects on every push and pull request. See [**`docs/DEPLOYMENT.md`**](docs/DEPLOYMENT.md) for required environment variables, production notes, image tagging and rollback.
+
+---
+
 ## 🔐 Environment & Conventions
 
 - **Server** (`server/.env`, see `.env.example`): `MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET` (must differ), `PLATFORM_ADMIN_USERNAME` / `PLATFORM_ADMIN_PASSWORD`, `CLIENT_BASE_URL` (POS URL used in welcome emails), `CORS_ORIGINS`, SMTP settings.

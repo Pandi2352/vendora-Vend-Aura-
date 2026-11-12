@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { CaretDown, CaretUp } from '@phosphor-icons/react';
 import { BusinessType, BUSINESS_TYPE_LABELS } from '../shared';
 import {
@@ -59,9 +59,17 @@ interface BusinessTypeDropdownProps {
   value: BusinessType;
   onChange: (val: BusinessType) => void;
   className?: string;
+  /** Id of the visible field label; the trigger is named "<label> <selected value>". */
+  'aria-labelledby'?: string;
 }
 
-export function BusinessTypeDropdown({ value, onChange, className = '' }: BusinessTypeDropdownProps) {
+export function BusinessTypeDropdown({
+  value,
+  onChange,
+  className = '',
+  'aria-labelledby': labelledBy,
+}: BusinessTypeDropdownProps) {
+  const valueId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -84,13 +92,15 @@ export function BusinessTypeDropdown({ value, onChange, className = '' }: Busine
       {/* Trigger Button matching screenshot #3 */}
       <button
         type="button"
+        aria-expanded={isOpen}
+        aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full px-3.5 py-2.5 rounded-md border text-left flex items-center justify-between text-sm font-medium transition-all cursor-pointer bg-white ${isOpen ? 'border-blue-500 ring-1 ring-blue-500 text-zinc-950' : 'border-zinc-300 hover:border-zinc-400 text-zinc-900'
           }`}
       >
         <div className="flex items-center gap-2.5 truncate">
           <SelectedIcon className="w-4 h-4 text-zinc-700 shrink-0" />
-          <span className="truncate">{selectedOption.label}</span>
+          <span id={valueId} className="truncate">{selectedOption.label}</span>
         </div>
         {isOpen ? (
           <CaretUp weight="bold" className="w-3.5 h-3.5 text-zinc-700 shrink-0" />
@@ -106,20 +116,22 @@ export function BusinessTypeDropdown({ value, onChange, className = '' }: Busine
             const Icon = opt.icon;
             const isSelected = opt.value === value;
             return (
-              <div
+              <button
+                type="button"
                 key={opt.value}
+                aria-pressed={isSelected}
                 onClick={() => {
                   onChange(opt.value);
                   setIsOpen(false);
                 }}
-                className={`px-3 py-2 text-sm flex items-center gap-2.5 cursor-pointer transition-colors ${isSelected
+                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 cursor-pointer transition-colors ${isSelected
                     ? 'bg-blue-50 text-blue-900 font-semibold'
                     : 'text-zinc-800 hover:bg-zinc-100 hover:text-zinc-950'
                   }`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-blue-700' : 'text-zinc-600'}`} />
                 <span className="truncate">{opt.label}</span>
-              </div>
+              </button>
             );
           })}
         </div>

@@ -4,12 +4,7 @@ import { DropdownField, Form, FormActions, FormGrid, TextField, useAppForm } fro
 import { api, unwrap } from '@/lib/api';
 import { round2 } from '@/lib/totals';
 import type { InvoiceReturnLookup, OrderReturnRecord } from '@/types/shift-return.types';
-import {
-  REFUND_MODES,
-  REFUND_MODE_LABELS,
-  makeSalesReturnSchema,
-  type SalesReturnValues,
-} from '@/validations/orders';
+import { REFUND_MODES, REFUND_MODE_LABELS, makeSalesReturnSchema, type SalesReturnValues } from '@/validations/orders';
 import { formatInr } from '@/utils';
 import { ReturnItemsSelector, lineQty } from './ReturnItemsSelector';
 
@@ -25,7 +20,11 @@ export function ReturnForm({ lookup, onCancel, onProcessed }: ReturnFormProps) {
   const hasCustomer = !!order.customerId;
 
   const schema = useMemo(
-    () => makeSalesReturnSchema(returnableItems.map((it) => Math.max(0, it.returnableQty)), hasCustomer),
+    () =>
+      makeSalesReturnSchema(
+        returnableItems.map((it) => Math.max(0, it.returnableQty)),
+        hasCustomer,
+      ),
     [returnableItems, hasCustomer],
   );
   const form = useAppForm(schema, {
@@ -37,7 +36,9 @@ export function ReturnForm({ lookup, onCancel, onProcessed }: ReturnFormProps) {
   });
   const { fields } = useFieldArray({ control: form.control, name: 'lines' });
   const lines = useWatch({ control: form.control, name: 'lines' }) ?? [];
-  const totalRefund = round2(returnableItems.reduce((sum, it, i) => sum + it.unitRefund * lineQty(lines[i]?.quantity), 0));
+  const totalRefund = round2(
+    returnableItems.reduce((sum, it, i) => sum + it.unitRefund * lineQty(lines[i]?.quantity), 0),
+  );
 
   const refundOptions = REFUND_MODES.filter((m) => m !== 'CUSTOMER_KHATA' || hasCustomer).map((value) => ({
     value,
@@ -62,7 +63,7 @@ export function ReturnForm({ lookup, onCancel, onProcessed }: ReturnFormProps) {
 
       <FormGrid>
         <DropdownField name="refundMode" label="Refund method" required options={refundOptions} />
-        <TextField name="remarks" label="Return remarks" placeholder="Optional note / inspection remark" />
+        <TextField name="remarks" label="Return remarks" optional placeholder="Optional note / inspection remark" />
       </FormGrid>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-zinc-100 pt-3">

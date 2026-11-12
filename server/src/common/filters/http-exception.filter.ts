@@ -11,6 +11,23 @@ import { ApiErrorResponse } from '../interfaces/api-response.interface';
 import { ERROR_CODES } from '../constants/error-codes.constant';
 import { DateUtil } from '../utils/date.util';
 
+/** Shape of a Nest HttpException body when it is an object. */
+interface HttpExceptionBody {
+  message?: string | string[];
+  errors?: unknown;
+  errorCode?: string;
+}
+
+/** Fields read from MongoDB / Mongoose errors (all optional: the exception may be anything). */
+interface DriverError {
+  code?: number;
+  keyValue?: unknown;
+  name?: string;
+  path?: string;
+  message?: string;
+  errors?: Record<string, { message: string }>;
+}
+
 interface NormalizedError {
   statusCode: number;
   message: string | string[];
@@ -56,7 +73,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
   private normalize(exception: unknown): NormalizedError {
     if (exception instanceof HttpException) {
       const statusCode = exception.getStatus();
-      const res: any = exception.getResponse();
+      const res = exception.getResponse() as string | HttpExceptionBody;
       if (typeof res === 'string') {
         return { statusCode, message: res, errorCode: this.mapStatusCodeToErrorCode(statusCode) };
       }
@@ -68,7 +85,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       };
     }
 
-    const err = exception as any;
+    const err = exception as DriverError | null | undefined;
 
     // MongoDB unique index violation
     if (err?.code === 11000) {
@@ -91,7 +108,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
 
     // Mongoose schema validation
     if (err?.name === 'ValidationError' && err.errors) {
-      const messages = Object.values(err.errors).map((e: any) => e.message);
+      const messages = Object.values(err.errors).map((e) => e.message);
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         message: messages.length ? messages : 'Validation failed.',

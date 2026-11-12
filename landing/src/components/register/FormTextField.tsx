@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { WarningCircle } from '@phosphor-icons/react';
 
 interface FormTextFieldProps {
@@ -23,12 +24,14 @@ export function FormTextField({
   maxLength,
   autoComplete,
 }: FormTextFieldProps) {
+  const inputId = useId();
   return (
     <div>
-      <label className="block text-xs font-bold text-zinc-900 mb-1.5">
+      <label htmlFor={inputId} className="block text-xs font-bold text-zinc-900 mb-1.5">
         {label} <span className="text-red-600">*</span>
       </label>
       <input
+        id={inputId}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

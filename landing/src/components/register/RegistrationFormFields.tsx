@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { WarningCircle, CircleNotch } from '@phosphor-icons/react';
 import { CustomerIdField } from './CustomerIdField';
 import { FormTextField } from './FormTextField';
@@ -52,6 +53,10 @@ export function RegistrationFormFields({
   isSubmitting,
   onSubmit,
 }: RegistrationFormFieldsProps) {
+  const businessTypeLabelId = useId();
+  const emailId = useId();
+  const otpId = useId();
+
   return (
     <form onSubmit={onSubmit} className="space-y-5 text-left font-sans" noValidate>
       <div>
@@ -151,10 +156,11 @@ export function RegistrationFormFields({
       {/* Business Type & Contact Person */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-zinc-900 mb-1.5">
+          <span id={businessTypeLabelId} className="block text-xs font-bold text-zinc-900 mb-1.5">
             Business type <span className="text-red-600">*</span>
-          </label>
+          </span>
           <BusinessTypeDropdown
+            aria-labelledby={businessTypeLabelId}
             value={values.businessType}
             onChange={(val) => onFieldChange('businessType', val)}
           />
@@ -184,11 +190,12 @@ export function RegistrationFormFields({
 
       {/* Email & Send OTP */}
       <div>
-        <label className="block text-xs font-bold text-zinc-900 mb-1.5">
+        <label htmlFor={emailId} className="block text-xs font-bold text-zinc-900 mb-1.5">
           Email <span className="text-red-600">*</span>
         </label>
         <div className="flex items-center gap-2">
           <input
+            id={emailId}
             type="email"
             value={values.email}
             onChange={(e) => onFieldChange('email', e.target.value)}
@@ -240,10 +247,11 @@ export function RegistrationFormFields({
       {/* OTP Field */}
       {otpSent ? (
         <div className="pt-1">
-          <label className="block text-xs font-bold text-zinc-900 mb-1.5">
+          <label htmlFor={otpId} className="block text-xs font-bold text-zinc-900 mb-1.5">
             OTP <span className="text-red-600">*</span>
           </label>
           <input
+            id={otpId}
             type="text"
             value={values.otp}
             onChange={(e) => onFieldChange('otp', digitsOnly(e.target.value, 6))}

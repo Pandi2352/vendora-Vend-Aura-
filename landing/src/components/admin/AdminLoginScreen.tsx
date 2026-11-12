@@ -96,12 +96,13 @@ export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username / Email */}
             <div>
-              <label className="block text-xs font-bold text-zinc-700 mb-1.5 uppercase tracking-wider">
+              <label htmlFor="admin-login-username" className="block text-xs font-bold text-zinc-700 mb-1.5 uppercase tracking-wider">
                 Admin Username / Email <span className="text-red-600">*</span>
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
                 <input
+                  id="admin-login-username"
                   type="text"
                   required
                   value={username}
@@ -115,13 +116,14 @@ export function AdminLoginScreen({ onLoginSuccess }: AdminLoginScreenProps) {
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                <label htmlFor="admin-login-password" className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">
                   Master Password <span className="text-red-600">*</span>
                 </label>
               </div>
               <div className="relative">
                 <LockKey className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
                 <input
+                  id="admin-login-password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}

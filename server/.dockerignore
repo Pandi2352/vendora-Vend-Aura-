@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+test-results
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+test/smoke/.ids.json
+Dockerfile
+.dockerignore
+.git
+.vscode
+.idea

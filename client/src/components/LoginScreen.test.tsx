@@ -1,7 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError, type AxiosResponse } from 'axios';
+import { MemoryRouter } from 'react-router-dom';
 import { LoginScreen } from './LoginScreen';
+
+// The screen links to /forgot-password, so it needs a router.
+const render = (ui: ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('LoginScreen', () => {
   it('shows a required error when leaving the Shop ID empty, before any submit', async () => {
@@ -62,5 +67,13 @@ describe('LoginScreen', () => {
     await user.type(screen.getByLabelText(/^Password/), 'wrong');
     await user.click(screen.getByRole('button', { name: /Sign In/ }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Invalid Shop ID, username or password');
+  });
+
+  it('links to forgot password with the typed Shop ID', async () => {
+    const user = userEvent.setup();
+    render(<LoginScreen onLogin={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
+    await user.type(screen.getByLabelText(/Shop ID/), 'srm01');
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password?shopId=srm01');
   });
 });

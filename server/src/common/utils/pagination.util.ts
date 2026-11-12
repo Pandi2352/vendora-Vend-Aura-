@@ -1,4 +1,4 @@
-import type { FilterQuery, Model, PopulateOptions, SortOrder } from 'mongoose';
+import type { BufferToBinary, FilterQuery, FlattenMaps, Model, PopulateOptions, Require_id, SortOrder } from 'mongoose';
 import { PaginationMeta } from '../interfaces/api-response.interface';
 
 export interface PaginateOptions {
@@ -35,7 +35,7 @@ export class PaginationUtil {
     model: Model<T>,
     filter: FilterQuery<T>,
     options: PaginateOptions,
-  ): Promise<PaginatedResult<any>> {
+  ): Promise<PaginatedResult<Require_id<FlattenMaps<BufferToBinary<T>>>>> {
     const { page, limit } = options;
     let query = model
       .find(filter)

@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Product, ProductDocument } from '../catalog/schemas/product.schema';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { DateUtil, NumberUtil, ObjectIdUtil } from '../../common';
@@ -65,8 +65,16 @@ export class InventoryReportsService {
     let lowStockCount = 0;
     let outOfStockCount = 0;
 
-    const lowStockItems: any[] = [];
-    const deadStockItems: any[] = [];
+    const lowStockItems: {
+      id: string;
+      name: string;
+      barcode: string;
+      category: string;
+      stock: number;
+      unitPrice: number;
+      costPrice: number;
+    }[] = [];
+    const deadStockItems: { id: string; name: string; category: string; stock: number; valuationAtCost: number }[] = [];
 
     for (const p of products) {
       const stock = p.stock || 0;

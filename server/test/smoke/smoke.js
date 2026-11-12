@@ -1,4 +1,9 @@
 // Smoke test against the throwaway server on :5055 (database vendora_smoketest).
+// The password-reset checks read/patch the same database directly (SMOKE_DB_NAME).
+const crypto = require('crypto');
+const mongoose = require('mongoose');
+const SMOKE_DB_NAME = process.env.SMOKE_DB_NAME || 'vendora_smoketest';
+if (!/^vendora_smoketest[a-z0-9_]*$/.test(SMOKE_DB_NAME)) throw new Error(`refusing to use "${SMOKE_DB_NAME}": not a smoke-test database`);
 const ids = JSON.parse(process.argv[2] || require('fs').readFileSync(0, 'utf8'));
 const B = process.env.SMOKE_API_URL || 'http://localhost:5055/api/v1';
 let pass = 0, fail = 0;
@@ -9,7 +14,7 @@ async function call(method, path, body, token) {
     body: body ? JSON.stringify(body) : undefined,
   });
   let json = null;
-  try { json = await res.json(); } catch {}
+  try { json = await res.json(); } catch { /* non-JSON body: keep json = null */ }
   return { status: res.status, json };
 }
 function check(name, cond, extra) {
@@ -169,6 +174,57 @@ function check(name, cond, extra) {
   check('cashier can read catalog', r.status === 200, r.json);
   r = await call('POST', '/auth/logout', null, cashierToken);
   check('logout ok', r.status === 200, r.json);
+
+  // ---- forgot / reset password ----
+  await mongoose.connect(`mongodb://localhost:27017/${SMOKE_DB_NAME}`);
+  const users = mongoose.connection.db.collection('users');
+  const sha256 = (t) => crypto.createHash('sha256').update(t, 'utf8').digest('hex');
+
+  r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
+  const cashierRefresh = r.json?.data?.refreshToken;
+  check('cashier login before reset', r.status === 200 && cashierRefresh, r.json);
+
+  const unknownUser = await call('POST', '/auth/forgot-password', { shopId: 'smoke', identifier: 'nobody_here' });
+  const unknownShop = await call('POST', '/auth/forgot-password', { shopId: 'no-such-shop', identifier: 'smoke_cashier' });
+  const knownUser = await call('POST', '/auth/forgot-password', { shopId: 'SMOKE', identifier: 'C@X.IN' });
+  check('forgot-password: unknown user -> generic 200', unknownUser.status === 200 && typeof unknownUser.json?.message === 'string', unknownUser.json);
+  // Everything except the envelope's per-request fields must be identical.
+  const comparable = (res) => JSON.stringify({ status: res.status, body: { ...res.json, timestamp: undefined, requestId: undefined } });
+  check('forgot-password: same response for unknown shop, unknown user and known user',
+    comparable(unknownUser) === comparable(unknownShop) && comparable(unknownUser) === comparable(knownUser),
+    [comparable(unknownUser), comparable(unknownShop), comparable(knownUser)]);
+  let cashierDoc = await users.findOne({ username: 'smoke_cashier' });
+  const ttlMinutes = cashierDoc?.resetTokenExpiresAt ? (cashierDoc.resetTokenExpiresAt.getTime() - Date.now()) / 60000 : 0;
+  check('forgot-password stores only a SHA-256 hash + 30 min expiry', /^[0-9a-f]{64}$/.test(cashierDoc?.resetTokenHash || '') && ttlMinutes > 29 && ttlMinutes <= 30, { hash: cashierDoc?.resetTokenHash, ttlMinutes });
+  r = await call('POST', '/auth/forgot-password', { shopId: 'smoke' });
+  check('forgot-password without identifier -> 400', r.status === 400, r.json);
+
+  r = await call('POST', '/auth/reset-password', { token: 'not-a-real-token', newPassword: 'Reset1234' });
+  check('reset with bad token -> 400 invalid/expired', r.status === 400 && r.json?.message === 'This reset link is invalid or has expired.', r.json);
+  r = await call('POST', '/auth/reset-password', { token: 'whatever', newPassword: 'onlyletters' });
+  check('reset with weak password -> 400', r.status === 400, r.json);
+
+  // The raw token is only emailed, so plant a known token's hash for the rest of the checks.
+  const expiredToken = crypto.randomBytes(32).toString('hex');
+  await users.updateOne({ username: 'smoke_cashier' }, { $set: { resetTokenHash: sha256(expiredToken), resetTokenExpiresAt: new Date(Date.now() - 1000) } });
+  r = await call('POST', '/auth/reset-password', { token: expiredToken, newPassword: 'Reset1234' });
+  check('reset with expired token -> 400', r.status === 400 && /invalid or has expired/.test(r.json?.message), r.json);
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  await users.updateOne({ username: 'smoke_cashier' }, { $set: { resetTokenHash: sha256(resetToken), resetTokenExpiresAt: new Date(Date.now() + 30 * 60000) } });
+  r = await call('POST', '/auth/reset-password', { token: resetToken, newPassword: 'Reset1234' });
+  check('reset with valid token -> 200', r.status === 200 && typeof r.json?.message === 'string', r.json);
+  cashierDoc = await users.findOne({ username: 'smoke_cashier' });
+  check('reset clears token + refresh hash, not temporary', cashierDoc && !cashierDoc.resetTokenHash && !cashierDoc.resetTokenExpiresAt && !cashierDoc.refreshTokenHash && cashierDoc.isTemporaryPassword === false, cashierDoc && { h: cashierDoc.resetTokenHash, e: cashierDoc.resetTokenExpiresAt, r: cashierDoc.refreshTokenHash });
+  r = await call('POST', '/auth/reset-password', { token: resetToken, newPassword: 'Another1234' });
+  check('reset token is one-time use -> 400', r.status === 400, r.json);
+  r = await call('POST', '/auth/refresh', { refreshToken: cashierRefresh });
+  check('reset signs out other sessions (refresh -> 401)', r.status === 401, r.json);
+  r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
+  check('old password rejected after reset', r.status === 401, r.json);
+  r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Reset1234' });
+  check('login with reset password ok', r.status === 200 && r.json.data.mustChangePassword === false, r.json);
+  await mongoose.disconnect();
 
   // onboarding shop ID rules shared between check + registration
   r = await call('GET', '/onboarding/check-subdomain?shopId=admin');

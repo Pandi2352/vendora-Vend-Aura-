@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { formatInr } from '@/utils';
-import { rules } from './common';
+import { rules, withCrossFieldRules } from './common';
 
 export const SUPPLIER_CATEGORIES = [
   'General FMCG',
@@ -85,41 +85,47 @@ export function inwardTotals(lines: InwardLineAmounts[]) {
   return { subTotal, taxTotal, grandTotal: Math.round(subTotal + taxTotal) };
 }
 
-export const inwardSchema = z
-  .object({
-    supplierId: rules.select('Supplier'),
-    supplierInvoiceNumber: rules.optionalText('Vendor invoice #', { max: 60 }),
-    items: z
-      .array(inwardLineSchema)
-      .min(1, 'Add at least one product line')
-      .superRefine((items, ctx) => {
-        const seen = new Set<string>();
-        items.forEach((item, index) => {
-          if (seen.has(item.productId)) {
-            ctx.addIssue({ code: 'custom', path: [index, 'productId'], message: 'This product is already in the list' });
-          }
-          seen.add(item.productId);
-        });
-      }),
-    paymentStatus: rules.selectOneOf('Payment status', PURCHASE_PAYMENT_STATUSES),
-    amountPaid: z.number().optional(),
-    notes: rules.optionalText('Notes', { max: 500 }),
-  })
-  .superRefine((v, ctx) => {
-    if (v.paymentStatus !== 'PARTIAL') return;
-    const { grandTotal } = inwardTotals(v.items);
-    if (v.amountPaid === undefined) {
-      ctx.addIssue({ code: 'custom', path: ['amountPaid'], message: 'Amount paid is required' });
-    } else if (v.amountPaid <= 0) {
-      ctx.addIssue({ code: 'custom', path: ['amountPaid'], message: 'Amount paid must be more than zero' });
-    } else if (v.amountPaid > grandTotal) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['amountPaid'],
-        message: `Amount paid cannot be more than the bill total (${formatInr(grandTotal)})`,
+const inwardBaseSchema = z.object({
+  supplierId: rules.select('Supplier'),
+  supplierInvoiceNumber: rules.optionalText('Vendor invoice #', { max: 60 }),
+  items: z
+    .array(inwardLineSchema)
+    .min(1, 'Add at least one product line')
+    .superRefine((items, ctx) => {
+      const seen = new Set<string>();
+      items.forEach((item, index) => {
+        if (seen.has(item.productId)) {
+          ctx.addIssue({ code: 'custom', path: [index, 'productId'], message: 'This product is already in the list' });
+        }
+        seen.add(item.productId);
       });
-    }
-  });
+    }),
+  paymentStatus: rules.selectOneOf('Payment status', PURCHASE_PAYMENT_STATUSES),
+  amountPaid: z.number().optional(),
+  notes: rules.optionalText('Notes', { max: 500 }),
+});
+
+/** "Amount paid" is checked as soon as lines + payment fields are valid. */
+export const inwardSchema = withCrossFieldRules(inwardBaseSchema, [
+  {
+    fields: ['items', 'paymentStatus', 'amountPaid'],
+    check: (v, ctx) => {
+      if (v.paymentStatus !== 'PARTIAL') return;
+      const { grandTotal } = inwardTotals(v.items);
+      if (v.amountPaid === undefined) {
+        ctx.addIssue({ code: 'custom', path: ['amountPaid'], message: 'Amount paid is required' });
+      } else if (v.amountPaid <= 0) {
+        ctx.addIssue({ code: 'custom', path: ['amountPaid'], message: 'Amount paid must be more than zero' });
+      } else if (v.amountPaid > grandTotal) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['amountPaid'],
+          message: `Amount paid cannot be more than the bill total (${formatInr(grandTotal)})`,
+        });
+      }
+    },
+  },
+]);
 
 export type InwardInput = z.input<typeof inwardSchema>;
 export type InwardValues = z.output<typeof inwardSchema>;

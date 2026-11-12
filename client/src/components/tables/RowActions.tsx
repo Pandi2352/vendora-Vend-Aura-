@@ -21,6 +21,8 @@ const TONES = {
 /** Small tinted square icon buttons for a table row (view, edit, delete…). `label` is the accessible name. */
 export function RowActions({ actions }: { actions: RowAction[] }) {
   return (
+    // Not a control: only stops clicks on the buttons inside from reaching the row's onRowClick.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
       {actions.map((a) => {
         const className = cn(

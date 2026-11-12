@@ -53,7 +53,9 @@ export function SuppliersTable({ suppliers, loading, error, onRetry, onPayDues }
       align: 'right',
       sortValue: (s) => s.balanceDue,
       render: (s) => (
-        <span className={cn('font-mono font-bold tabular-nums', s.balanceDue > 0 ? 'text-red-600' : 'text-emerald-600')}>
+        <span
+          className={cn('font-mono font-bold tabular-nums', s.balanceDue > 0 ? 'text-red-600' : 'text-emerald-600')}
+        >
           {formatInr(s.balanceDue)}
         </span>
       ),
@@ -64,7 +66,14 @@ export function SuppliersTable({ suppliers, loading, error, onRetry, onPayDues }
       align: 'center',
       render: (s) => (
         <RowActions
-          actions={[{ label: `Pay dues to ${s.name}`, icon: <CurrencyInr weight="bold" />, tone: 'success', onClick: () => onPayDues(s) }]}
+          actions={[
+            {
+              label: `Pay dues to ${s.name}`,
+              icon: <CurrencyInr weight="bold" />,
+              tone: 'success',
+              onClick: () => onPayDues(s),
+            },
+          ]}
         />
       ),
     },

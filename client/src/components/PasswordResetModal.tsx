@@ -50,6 +50,7 @@ export function PasswordResetModal({ initialCurrentPassword = '', onSubmit, onSi
             name="currentPassword"
             label="Current (temporary) password"
             required
+            deps={['newPassword']}
             placeholder="Password from your onboarding email"
             leftAddon={lockIcon}
           />
@@ -57,6 +58,7 @@ export function PasswordResetModal({ initialCurrentPassword = '', onSubmit, onSi
             name="newPassword"
             label="New password"
             required
+            deps={['confirmPassword']}
             autoComplete="new-password"
             placeholder="At least 8 characters"
             leftAddon={lockIcon}

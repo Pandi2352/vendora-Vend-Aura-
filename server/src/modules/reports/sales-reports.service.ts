@@ -1,7 +1,7 @@
 import { ObjectIdUtil } from '../../common';
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { OrderReturn, OrderReturnDocument } from '../orders/schemas/order-return.schema';
 import { Product, ProductDocument } from '../catalog/schemas/product.schema';
@@ -111,7 +111,7 @@ export class SalesReportsService {
       tenderMap[mode].count += 1;
 
       // Time slot breakdown
-      const hour = new Date(order.createdAt as any).getHours();
+      const hour = new Date(order.createdAt).getHours();
       let slotKey = 'Night (20:00 - 24:00)';
       if (hour >= 6 && hour < 12) slotKey = 'Morning (06:00 - 12:00)';
       else if (hour >= 12 && hour < 16) slotKey = 'Afternoon (12:00 - 16:00)';

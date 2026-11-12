@@ -5,8 +5,8 @@ export class StringUtil {
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-')
       .replace(/^-+/, '')
       .replace(/-+$/, '');
   }
@@ -48,6 +48,16 @@ export class StringUtil {
     const clean = phone.replace(/\D/g, '');
     if (clean.length < 4) return phone;
     return `******${clean.slice(-4)}`;
+  }
+
+  /** Escapes text for safe interpolation into HTML (email templates). */
+  static escapeHtml(text: string): string {
+    return String(text ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /** Escapes user input for safe use inside a RegExp (prevents regex injection / ReDoS). */

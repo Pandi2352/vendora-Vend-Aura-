@@ -8,6 +8,7 @@ import {
   ArrowsClockwise,
   SignOut,
   HouseLine,
+  type Icon as PhosphorIcon,
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { API_DOCS_URL, POS_URL } from '../../lib/config';
@@ -34,7 +35,7 @@ export function AdminNavbar({
   onRefresh,
   onSignOut,
 }: AdminNavbarProps) {
-  const navTabs: { id: AdminTab; label: string; icon: any; badge?: number }[] = [
+  const navTabs: { id: AdminTab; label: string; icon: PhosphorIcon; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: SquaresFour },
     { id: 'tenants', label: 'Store Tenants', icon: Buildings, badge: tenantsCount },
     { id: 'contacts', label: 'Contacts & Leads', icon: AddressBook, badge: contactsCount },
