@@ -7,7 +7,7 @@ import {
   SwitchField,
   TimeField,
 } from '@/components/forms';
-import { FieldIcon } from '../components/FieldIcon';
+import { FieldIcon } from '../../../shared/FieldIcon';
 import { CASH_ROUNDING_OPTIONS } from '../config/options';
 
 const SWITCHES = [

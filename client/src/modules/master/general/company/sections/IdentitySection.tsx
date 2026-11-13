@@ -1,6 +1,6 @@
 import { DropdownField, FormGrid, TextField, UppercaseField } from '@/components/forms';
 import { digitsOnly } from '@/utils/string';
-import { FieldIcon } from '../components/FieldIcon';
+import { FieldIcon } from '../../../shared/FieldIcon';
 import { COUNTRY_OPTIONS, STATE_OPTIONS } from '../config/options';
 
 /** 4 columns on wide screens: codes + name / both address lines / place / remarks. */

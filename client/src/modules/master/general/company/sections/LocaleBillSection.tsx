@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 import { DropdownField, FormGrid, TextField } from '@/components/forms';
 import type { CompanyProfileInput } from '../config/companyProfile.schema';
-import { FieldIcon } from '../components/FieldIcon';
+import { FieldIcon } from '../../../shared/FieldIcon';
 import {
   BILL_PRINT_OPTIONS,
   COM_PORT_OPTIONS,

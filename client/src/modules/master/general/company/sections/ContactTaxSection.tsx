@@ -9,7 +9,7 @@ import {
   UppercaseField,
 } from '@/components/forms';
 import { digitsOnly } from '@/utils/string';
-import { FieldIcon } from '../components/FieldIcon';
+import { FieldIcon } from '../../../shared/FieldIcon';
 import { TAX_TAKEN_OPTIONS } from '../config/options';
 
 export function ContactTaxSection() {
