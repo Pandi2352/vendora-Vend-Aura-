@@ -59,3 +59,4 @@ export class InventoryStockControlController {
     return { data: await this.stockControlService.listAudits(tenantId) };
   }
 }
+

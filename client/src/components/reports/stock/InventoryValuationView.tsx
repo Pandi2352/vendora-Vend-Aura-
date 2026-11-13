@@ -157,3 +157,4 @@ export function InventoryValuationView({ data, isLoading }: InventoryValuationVi
     </div>
   );
 }
+

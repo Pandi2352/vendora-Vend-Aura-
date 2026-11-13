@@ -55,3 +55,4 @@ export class Discount extends TenantBaseEntity {
 export const DiscountSchema = SchemaFactory.createForClass(Discount);
 DiscountSchema.index({ tenantId: 1, code: 1 }, { unique: true });
 DiscountSchema.index({ tenantId: 1, isActive: 1 });
+

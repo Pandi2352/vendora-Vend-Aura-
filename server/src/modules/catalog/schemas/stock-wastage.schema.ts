@@ -55,3 +55,4 @@ export class StockWastage extends TenantBaseEntity {
 
 export const StockWastageSchema = SchemaFactory.createForClass(StockWastage);
 StockWastageSchema.index({ tenantId: 1, createdAt: -1 });
+

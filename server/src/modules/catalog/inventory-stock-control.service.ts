@@ -224,3 +224,4 @@ export class InventoryStockControlService {
     return docs.map(withId);
   }
 }
+

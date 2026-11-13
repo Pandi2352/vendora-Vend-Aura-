@@ -17,3 +17,4 @@ export class ValidateDiscountDto {
   @IsOptional()
   currentTime?: string;
 }
+

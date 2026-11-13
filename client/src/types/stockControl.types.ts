@@ -104,3 +104,4 @@ export interface StockAuditRecord {
   notes?: string;
   createdAt: string;
 }
+

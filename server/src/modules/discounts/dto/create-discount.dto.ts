@@ -76,3 +76,4 @@ export class CreateDiscountDto {
   @IsOptional()
   isActive?: boolean;
 }
+

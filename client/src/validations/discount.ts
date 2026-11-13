@@ -16,3 +16,4 @@ export const discountSchema = z.object({
 });
 
 export type DiscountFormValues = z.infer<typeof discountSchema>;
+

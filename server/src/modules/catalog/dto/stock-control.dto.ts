@@ -104,3 +104,4 @@ export class StockLedgerQueryDto extends PaginationDto {
   @IsOptional()
   endDate?: string;
 }
+

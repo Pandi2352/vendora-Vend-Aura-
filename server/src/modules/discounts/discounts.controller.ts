@@ -46,3 +46,4 @@ export class DiscountsController {
     return { data: await this.discountsService.validateCoupon(tenantId, dto) };
   }
 }
+

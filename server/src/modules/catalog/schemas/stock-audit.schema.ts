@@ -58,3 +58,4 @@ export class StockAudit extends TenantBaseEntity {
 
 export const StockAuditSchema = SchemaFactory.createForClass(StockAudit);
 StockAuditSchema.index({ tenantId: 1, createdAt: -1 });
+
