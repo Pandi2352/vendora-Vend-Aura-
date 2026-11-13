@@ -4,13 +4,13 @@ import { Model } from 'mongoose';
 import { ObjectIdUtil } from '../../../common';
 import { Transporter, TransporterDocument } from '../schemas/transporter.schema';
 import { CreateTransporterDto, UpdateTransporterDto } from '../dto/transporter.dto';
-import { MasterSeedService } from './master-seed.service';
+import { OperationsSeedService } from './operations-seed.service';
 
 @Injectable()
 export class TransporterService {
   constructor(
     @InjectModel(Transporter.name) private readonly transporterModel: Model<TransporterDocument>,
-    private readonly seedService: MasterSeedService,
+    private readonly seedService: OperationsSeedService,
   ) {}
 
   async list(tenantIdStr: string) {
@@ -84,4 +84,3 @@ export class TransporterService {
     return { success: true };
   }
 }
-

@@ -5,7 +5,6 @@ import { Warehouse, WarehouseDocument } from '../schemas/warehouse.schema';
 import { Territory, TerritoryDocument } from '../schemas/territory.schema';
 import { Reason, ReasonDocument } from '../schemas/reason.schema';
 import { ParamRecord, ParamDocument } from '../schemas/param.schema';
-import { Transporter, TransporterDocument } from '../schemas/transporter.schema';
 
 @Injectable()
 export class MasterSeedService {
@@ -16,7 +15,6 @@ export class MasterSeedService {
     @InjectModel(Territory.name) private readonly territoryModel: Model<TerritoryDocument>,
     @InjectModel(Reason.name) private readonly reasonModel: Model<ReasonDocument>,
     @InjectModel(ParamRecord.name) private readonly paramModel: Model<ParamDocument>,
-    @InjectModel(Transporter.name) private readonly transporterModel: Model<TransporterDocument>,
   ) {}
 
   async ensureWarehouses(tenantId: Types.ObjectId): Promise<void> {
@@ -214,40 +212,12 @@ export class MasterSeedService {
     this.logger.log(`✓ Seeded default parameters for tenant [${tenantId.toString()}]`);
   }
 
-  async ensureTransporters(tenantId: Types.ObjectId): Promise<void> {
-    const count = await this.transporterModel.countDocuments({ tenantId, isDeleted: { $ne: true } });
-    if (count > 0) return;
-
-    await this.transporterModel.insertMany([
-      {
-        tenantId,
-        code: 'TR-BLUEDART',
-        name: 'Blue Dart Express',
-        transporterId: '29AABCU9603R1ZM',
-        phone: '+91 98401 23456',
-        address: 'Guindy Industrial Estate, Chennai',
-        active: true,
-      },
-      {
-        tenantId,
-        code: 'TR-VRL',
-        name: 'VRL Logistics Ltd',
-        transporterId: '29AABCV1234K1Z0',
-        phone: '+91 98402 34567',
-        address: 'Madhavaram Truck Terminal, Chennai',
-        active: true,
-      },
-    ]);
-    this.logger.log(`✓ Seeded default transporters for tenant [${tenantId.toString()}]`);
-  }
-
   async seedAllDefaults(tenantId: Types.ObjectId): Promise<void> {
     await Promise.all([
       this.ensureWarehouses(tenantId),
       this.ensureTerritories(tenantId),
       this.ensureReasons(tenantId),
       this.ensureParams(tenantId),
-      this.ensureTransporters(tenantId),
     ]);
   }
 }

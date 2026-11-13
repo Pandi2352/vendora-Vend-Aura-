@@ -224,6 +224,42 @@ function check(name, cond, extra) {
   r = await call('DELETE', `/master/transporters/${transporterId}`, null, accessToken);
   check('delete transporter ok', r.status === 200, r.json);
 
+  // 7. Freight Charges
+  r = await call('POST', '/master/freight', { code: 'FRT-SMK', name: 'Smoke Express Delivery', rateType: 'flat', rate: 75 }, accessToken);
+  check('create freight ok', r.status === 201 && r.json.data.code === 'FRT-SMK', r.json);
+  const freightId = r.json.data._id || r.json.data.id;
+  r = await call('GET', '/master/freight', null, accessToken);
+  check('list freight ok', r.status === 200 && r.json.data.some((x) => x.code === 'FRT-SMK'), r.json);
+  r = await call('DELETE', `/master/freight/${freightId}`, null, accessToken);
+  check('delete freight ok', r.status === 200, r.json);
+
+  // 8. Barcode Templates
+  r = await call('POST', '/master/barcode-templates', { code: 'LBL-SMK', name: 'Smoke Label 40x20', paperWidthMm: 40, paperHeightMm: 20 }, accessToken);
+  check('create barcode template ok', r.status === 201 && r.json.data.code === 'LBL-SMK', r.json);
+  const barcodeId = r.json.data._id || r.json.data.id;
+  r = await call('GET', '/master/barcode-templates', null, accessToken);
+  check('list barcode templates ok', r.status === 200 && r.json.data.some((x) => x.code === 'LBL-SMK'), r.json);
+  r = await call('DELETE', `/master/barcode-templates/${barcodeId}`, null, accessToken);
+  check('delete barcode template ok', r.status === 200, r.json);
+
+  // 9. Pickers
+  r = await call('POST', '/master/pickers', { code: 'PKR-SMK', name: 'Smoke Picker Staff' }, accessToken);
+  check('create picker ok', r.status === 201 && r.json.data.code === 'PKR-SMK', r.json);
+  const pickerId = r.json.data._id || r.json.data.id;
+  r = await call('GET', '/master/pickers', null, accessToken);
+  check('list pickers ok', r.status === 200 && r.json.data.some((x) => x.code === 'PKR-SMK'), r.json);
+  r = await call('DELETE', `/master/pickers/${pickerId}`, null, accessToken);
+  check('delete picker ok', r.status === 200, r.json);
+
+  // 10. Vouchers
+  r = await call('POST', '/master/vouchers', { code: 'GV-SMK', name: 'Smoke Promo Voucher', voucherType: 'flat', value: 200 }, accessToken);
+  check('create voucher ok', r.status === 201 && r.json.data.code === 'GV-SMK', r.json);
+  const voucherId = r.json.data._id || r.json.data.id;
+  r = await call('GET', '/master/vouchers', null, accessToken);
+  check('list vouchers ok', r.status === 200 && r.json.data.some((x) => x.code === 'GV-SMK'), r.json);
+  r = await call('DELETE', `/master/vouchers/${voucherId}`, null, accessToken);
+  check('delete voucher ok', r.status === 200, r.json);
+
   // roles: cashier can bill but not manage suppliers / see reports
   r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
   const cashierToken = r.json?.data?.accessToken;

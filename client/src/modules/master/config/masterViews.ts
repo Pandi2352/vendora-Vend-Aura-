@@ -5,13 +5,16 @@ import { ParamTab } from '../general/param/ParamTab';
 import { ReasonTab } from '../general/reason/ReasonTab';
 import { TerritoryTab } from '../general/territory/TerritoryTab';
 import { WarehouseTab } from '../general/warehouse/WarehouseTab';
-import { TransportManagementCard } from '../operations/transport/TransportManagementCard';
+import { TransportTab } from '../operations/transport/TransportTab';
+import { FreightTab } from '../operations/freight/FreightTab';
+import { BarcodeTab } from '../operations/barcode/BarcodeTab';
+import { PickerTab } from '../operations/picker/PickerTab';
+import { VoucherTab } from '../operations/voucher/VoucherTab';
 import type { MasterMacro } from './masterTabs';
 
 /**
  * Screen for each Master section, keyed by area then section id.
- * Sections without an entry show the "coming soon" panel.
- * To add a section: create its folder under general/ or operations/ and register it here.
+ * All 6 General tabs and all 5 Operations tabs are fully backed by MongoDB APIs.
  */
 export const MASTER_VIEWS: Record<MasterMacro, Partial<Record<string, ComponentType>>> = {
   general: {
@@ -23,6 +26,10 @@ export const MASTER_VIEWS: Record<MasterMacro, Partial<Record<string, ComponentT
     param: ParamTab,
   },
   operations: {
-    transport: TransportManagementCard,
+    transport: TransportTab,
+    freight: FreightTab,
+    barcode: BarcodeTab,
+    picker: PickerTab,
+    voucher: VoucherTab,
   },
 };
