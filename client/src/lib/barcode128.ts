@@ -65,3 +65,4 @@ export function computeBarcodeBars(text: string, barWidth = 1.5): { bars: Array<
 
   return { bars, totalWidth: x + 10 };
 }
+

@@ -257,3 +257,4 @@ export class StockTransferService {
     return withId(transfer.toObject());
   }
 }
+

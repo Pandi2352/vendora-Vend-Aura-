@@ -44,3 +44,4 @@ export interface StockTransferResponse {
   totalPages: number;
   summary: StockTransferSummary;
 }
+

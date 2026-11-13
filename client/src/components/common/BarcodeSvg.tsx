@@ -23,3 +23,4 @@ export function BarcodeSvg({ text, height = 40, className = '' }: BarcodeSvgProp
     </svg>
   );
 }
+

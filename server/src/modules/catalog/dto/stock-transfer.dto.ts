@@ -62,3 +62,4 @@ export class StockTransferQueryDto {
   @IsNumber()
   limit?: number;
 }
+

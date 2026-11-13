@@ -62,3 +62,4 @@ export class StockTransferController {
     return { message: `Stock transfer ${data.transferNumber} cancelled`, data };
   }
 }
+

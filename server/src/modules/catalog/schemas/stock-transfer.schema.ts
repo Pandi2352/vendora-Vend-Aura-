@@ -81,3 +81,4 @@ export class StockTransfer extends TenantBaseEntity {
 export const StockTransferSchema = SchemaFactory.createForClass(StockTransfer);
 StockTransferSchema.index({ tenantId: 1, transferNumber: 1 });
 StockTransferSchema.index({ tenantId: 1, status: 1, createdAt: -1 });
+

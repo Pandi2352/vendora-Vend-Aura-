@@ -160,3 +160,4 @@ export async function printToSerialThermalPrinter(buffer: Uint8Array): Promise<b
     return false;
   }
 }
+

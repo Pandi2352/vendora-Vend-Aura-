@@ -155,3 +155,4 @@ export function TransferDetailModal({ transfer, onClose }: TransferDetailModalPr
     </div>
   );
 }
+
