@@ -39,5 +39,7 @@ export function orderToInvoice(order: OrderItemRecord, user: AuthUser | null): I
     paymentMode: order.paymentMode,
     cashTendered: order.cashTendered ?? order.grandTotal,
     changeDue: order.changeDue ?? 0,
+    couponCode: order.couponCode,
+    discountAmount: order.discountTotal,
   };
 }

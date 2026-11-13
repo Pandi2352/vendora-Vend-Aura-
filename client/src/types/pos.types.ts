@@ -70,6 +70,8 @@ export interface InvoiceData {
   paymentMode: PaymentMode;
   cashTendered: number;
   changeDue: number;
+  couponCode?: string;
+  discountAmount?: number;
   isOffline?: boolean;
   offlineRef?: string;
 }
@@ -78,6 +80,8 @@ export interface OrderItemRecord {
   id: string;
   _id?: string;
   invoiceNumber: string;
+  couponCode?: string;
+  discountTotal?: number;
   customerId?: string;
   customerName?: string;
   customerPhone?: string;

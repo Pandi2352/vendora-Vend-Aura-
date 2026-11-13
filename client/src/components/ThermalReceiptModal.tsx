@@ -121,6 +121,12 @@ function ThermalReceipt({
               <span>Subtotal (Net):</span>
               <span>₹{invoice.subTotal.toFixed(2)}</span>
             </div>
+            {invoice.discountAmount && invoice.discountAmount > 0 ? (
+              <div className="flex justify-between text-emerald-700 font-semibold">
+                <span>Promo Discount ({invoice.couponCode || 'OFFER'}):</span>
+                <span>-₹{invoice.discountAmount.toFixed(2)}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between text-zinc-600">
               <span>CGST:</span>
               <span>₹{(invoice.cgst).toFixed(2)}</span>

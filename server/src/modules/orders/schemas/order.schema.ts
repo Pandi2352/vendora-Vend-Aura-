@@ -57,6 +57,12 @@ export class Order extends TenantBaseEntity {
   @Prop({ default: 0 })
   roundOff: number;
 
+  @Prop({ trim: true, uppercase: true })
+  couponCode?: string;
+
+  @Prop({ default: 0, min: 0 })
+  discountTotal: number;
+
   @Prop({ required: true, min: 0 })
   grandTotal: number;
 

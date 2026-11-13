@@ -20,7 +20,12 @@ export function usePosCheckout({ user, cart, onCompleted, onShiftProblem }: UseP
   const [completedInvoice, setCompletedInvoice] = useState<InvoiceData | null>(null);
 
   const finalizeBill = useCallback(
-    async (paymentMode: PaymentMode, cashTendered: number, customer?: CustomerItem | null) => {
+    async (
+      paymentMode: PaymentMode,
+      cashTendered: number,
+      customer?: CustomerItem | null,
+      discount?: { couponCode: string; discountAmount: number } | null,
+    ) => {
       if (cart.length === 0 || isSubmitting) return false;
       setError('');
       setIsSubmitting(true);
@@ -52,6 +57,8 @@ export function usePosCheckout({ user, cart, onCompleted, onShiftProblem }: UseP
           paymentMode,
           customerId: customer?.id || undefined,
           cashTendered: paymentMode === 'CASH' ? cashTendered : undefined,
+          couponCode: discount?.couponCode || undefined,
+          discountAmount: discount?.discountAmount || undefined,
         });
         setCompletedInvoice(orderToInvoice(unwrap<OrderItemRecord>(res), user));
         onCompleted();

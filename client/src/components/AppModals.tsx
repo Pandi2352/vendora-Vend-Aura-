@@ -13,7 +13,12 @@ interface AppModalsProps {
   selectedCustomer: CustomerItem | null;
   onSelectCustomer: (c: CustomerItem | null) => void;
   onCloseCheckout: () => void;
-  onFinalizeBill: (mode: PaymentMode, cashTendered: number, customer?: CustomerItem | null) => void;
+  onFinalizeBill: (
+    mode: PaymentMode,
+    cashTendered: number,
+    customer?: CustomerItem | null,
+    discount?: { couponCode: string; discountAmount: number } | null,
+  ) => void;
   checkoutError: string;
   isSubmittingBill: boolean;
 

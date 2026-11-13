@@ -75,6 +75,8 @@ export class CreateOrderDto {
 
   @IsOptional() @IsString() customerName?: string;
   @IsOptional() @IsString() customerPhone?: string;
+  @IsOptional() @IsString() couponCode?: string;
+  @IsOptional() @IsNumber() discountAmount?: number;
   @IsOptional() @IsNumber() subTotal?: number;
   @IsOptional() @IsNumber() taxTotal?: number;
   @IsOptional() @IsNumber() cgst?: number;

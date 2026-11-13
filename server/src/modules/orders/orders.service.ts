@@ -84,8 +84,10 @@ export class OrdersService {
     const taxTotal = round2(lines.reduce((sum, l) => sum + l.taxAmount, 0));
     const cgst = round2(taxTotal / 2);
     const sgst = round2(taxTotal - cgst);
-    const grandTotal = Math.round(subTotal + taxTotal);
-    const roundOff = round2(grandTotal - (subTotal + taxTotal));
+    const discountTotal = dto.discountAmount ? Math.min(dto.discountAmount, subTotal) : 0;
+    const rawTotal = Math.max(0, subTotal - discountTotal + taxTotal);
+    const grandTotal = Math.round(rawTotal);
+    const roundOff = round2(grandTotal - rawTotal);
 
     let cashTendered = grandTotal;
     let changeDue = 0;
@@ -126,6 +128,8 @@ export class OrdersService {
             customerName: customer?.name ?? dto.customerName?.trim(),
             customerPhone: customer?.phone ?? dto.customerPhone?.trim(),
             items: lines.map((l) => ({ ...l, productId: l.productId.toString() })),
+            couponCode: dto.couponCode?.trim().toUpperCase(),
+            discountTotal,
             subTotal,
             taxTotal,
             cgst,

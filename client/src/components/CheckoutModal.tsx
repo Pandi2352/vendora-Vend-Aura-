@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui';
 import { round2 } from '@/lib/totals';
 import { formatInr } from '@/utils';
+import { api, unwrap, getErrorMessage } from '../lib/api';
 import {
   X,
   Money,
@@ -10,6 +11,7 @@ import {
   CheckCircle,
   HandCoins,
   WarningCircle,
+  Tag,
 } from '@phosphor-icons/react';
 import type { CustomerItem, PaymentMode } from '../types/pos.types';
 import { CustomerTagSelector } from './checkout/CustomerTagSelector';
@@ -22,14 +24,26 @@ const PAYMENT_TABS: Array<{ id: PaymentMode; label: string; hotkey?: string; ico
   { id: 'CREDIT', label: 'Khata / Credit', icon: HandCoins },
 ];
 
-/** Mounted only while open, so tender state starts fresh (cash tendered = grand total) every time. */
+interface AppliedDiscount {
+  code: string;
+  name: string;
+  discountAmount: number;
+  description: string;
+}
+
+/** Mounted only while open, so tender state starts fresh every time. */
 interface CheckoutModalProps {
   grandTotal: number;
   customers: CustomerItem[];
   selectedCustomer: CustomerItem | null;
   onSelectCustomer: (c: CustomerItem | null) => void;
   onClose: () => void;
-  onFinalize: (paymentMode: PaymentMode, cashTendered: number, customer?: CustomerItem | null) => void;
+  onFinalize: (
+    paymentMode: PaymentMode,
+    cashTendered: number,
+    customer?: CustomerItem | null,
+    discount?: { couponCode: string; discountAmount: number } | null,
+  ) => void;
   error?: string;
   isSubmitting?: boolean;
 }
@@ -45,7 +59,16 @@ export function CheckoutModal({
   isSubmitting = false,
 }: CheckoutModalProps) {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('CASH');
-  const [cashTendered, setCashTendered] = useState<number>(grandTotal);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedDiscount | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState('');
+
+  const effectiveGrandTotal = appliedCoupon
+    ? Math.max(0, round2(grandTotal - appliedCoupon.discountAmount))
+    : grandTotal;
+
+  const [cashTendered, setCashTendered] = useState<number>(effectiveGrandTotal);
   const [cashTouched, setCashTouched] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const cashInputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +76,7 @@ export function CheckoutModal({
   const isCreditExceeded =
     paymentMode === 'CREDIT' &&
     !!selectedCustomer &&
-    selectedCustomer.currentCreditBalance + grandTotal > selectedCustomer.creditLimit;
+    selectedCustomer.currentCreditBalance + effectiveGrandTotal > selectedCustomer.creditLimit;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -72,9 +95,39 @@ export function CheckoutModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const cashInvalid = paymentMode === 'CASH' && round2(cashTendered) < round2(grandTotal);
+  const handleApplyCoupon = async () => {
+    const trimmed = couponCode.trim().toUpperCase();
+    if (!trimmed) return;
+    setIsValidatingCoupon(true);
+    setCouponError('');
+    try {
+      const res = await api.post('/discounts/validate', {
+        code: trimmed,
+        orderAmount: grandTotal,
+      });
+      const data = unwrap<AppliedDiscount>(res);
+      setAppliedCoupon(data);
+      const newPayable = Math.max(0, round2(grandTotal - data.discountAmount));
+      setCashTendered(newPayable);
+    } catch (err) {
+      setCouponError(getErrorMessage(err, 'Invalid coupon code or not applicable to this order'));
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+    setCashTendered(grandTotal);
+  };
+
+  const cashInvalid = paymentMode === 'CASH' && round2(cashTendered) < round2(effectiveGrandTotal);
   const cashError =
-    cashInvalid && (cashTouched || submitAttempted) ? `Cash tendered must be at least ${formatInr(grandTotal)}` : undefined;
+    cashInvalid && (cashTouched || submitAttempted)
+      ? `Cash tendered must be at least ${formatInr(effectiveGrandTotal)}`
+      : undefined;
 
   const canSubmit = !isSubmitting && !(paymentMode === 'CREDIT' && (!selectedCustomer || isCreditExceeded));
 
@@ -84,7 +137,15 @@ export function CheckoutModal({
       cashInputRef.current?.focus();
       return;
     }
-    onFinalize(paymentMode, paymentMode === 'CASH' ? cashTendered : grandTotal, selectedCustomer);
+    const finalTender = paymentMode === 'CASH' ? cashTendered : effectiveGrandTotal;
+    if (appliedCoupon) {
+      onFinalize(paymentMode, finalTender, selectedCustomer, {
+        couponCode: appliedCoupon.code,
+        discountAmount: appliedCoupon.discountAmount,
+      });
+    } else {
+      onFinalize(paymentMode, finalTender, selectedCustomer);
+    }
   };
 
   return (
@@ -94,7 +155,7 @@ export function CheckoutModal({
         <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between shrink-0">
           <div>
             <h3 className="font-bold text-sm text-zinc-950">Payment Tender & Checkout</h3>
-            <p className="text-[0.6875rem] text-zinc-500">Tag customer & select settlement tender</p>
+            <p className="text-[0.6875rem] text-zinc-500">Tag customer, apply promo coupon & select settlement tender</p>
           </div>
           <button
             onClick={onClose}
@@ -115,10 +176,93 @@ export function CheckoutModal({
 
           {/* Amount Due Banner */}
           <div className="p-3.5 rounded-md bg-primary-50 border border-primary-200 text-center">
-            <span className="text-[0.6875rem] text-primary-700 font-bold uppercase tracking-wider block">Total Amount Due</span>
-            <span className="font-mono font-black text-2xl text-zinc-900 mt-0.5 block">
-              ₹{grandTotal.toLocaleString('en-IN')}
+            {appliedCoupon ? (
+              <div className="space-y-1 mb-2 pb-2 border-b border-primary-200 text-xs">
+                <div className="flex justify-between text-zinc-600">
+                  <span>Bill Subtotal:</span>
+                  <span className="font-mono">₹{grandTotal.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span>Promo Offer ({appliedCoupon.code}):</span>
+                  <span className="font-mono">-₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            ) : null}
+            <span className="text-[0.6875rem] text-primary-700 font-bold uppercase tracking-wider block">
+              {appliedCoupon ? 'Net Payable Amount' : 'Total Amount Due'}
             </span>
+            <span className="font-mono font-black text-2xl text-zinc-900 mt-0.5 block">
+              ₹{effectiveGrandTotal.toLocaleString('en-IN')}
+            </span>
+          </div>
+
+          {/* Coupon Code / Discount Validation Field */}
+          <div className="p-3 rounded-md border border-dashed border-zinc-300 bg-zinc-50/70 space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-zinc-700">
+              <span className="flex items-center gap-1.5">
+                <Tag weight="bold" className="w-3.5 h-3.5 text-primary-600" />
+                Merchandising & Promo Coupon
+              </span>
+              {appliedCoupon && (
+                <button
+                  type="button"
+                  onClick={handleRemoveCoupon}
+                  className="text-[0.6875rem] text-red-600 hover:text-red-700 font-bold cursor-pointer"
+                >
+                  Remove Coupon
+                </button>
+              )}
+            </div>
+            {!appliedCoupon ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. DIWALI20, FLAT50"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    setCouponError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleApplyCoupon();
+                    }
+                  }}
+                  className="flex-1 px-2.5 py-1.5 text-xs font-mono font-bold uppercase rounded-md border border-zinc-300 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={!couponCode.trim() || isValidatingCoupon}
+                  loading={isValidatingCoupon}
+                  onClick={handleApplyCoupon}
+                >
+                  Apply
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-2 rounded bg-emerald-50 border border-emerald-200 text-xs">
+                <div>
+                  <div className="font-bold text-emerald-800 flex items-center gap-1.5">
+                    <CheckCircle weight="fill" className="w-4 h-4 text-emerald-600" />
+                    <span>{appliedCoupon.code}</span>
+                    <span className="font-normal text-emerald-600">({appliedCoupon.name})</span>
+                  </div>
+                  <div className="text-[0.6875rem] text-emerald-700 mt-0.5">{appliedCoupon.description}</div>
+                </div>
+                <span className="font-mono font-bold text-emerald-700 text-sm">
+                  -₹{appliedCoupon.discountAmount}
+                </span>
+              </div>
+            )}
+            {couponError && (
+              <p className="text-[0.6875rem] text-red-600 flex items-center gap-1">
+                <WarningCircle weight="bold" className="w-3.5 h-3.5 shrink-0" />
+                {couponError}
+              </p>
+            )}
           </div>
 
           {/* Payment Mode Selector Tabs */}
@@ -151,12 +295,12 @@ export function CheckoutModal({
           {/* Active Tender Panel */}
           <PaymentModePanels
             paymentMode={paymentMode}
-            grandTotal={grandTotal}
+            grandTotal={effectiveGrandTotal}
             cashTendered={cashTendered}
             selectedCustomer={selectedCustomer}
             onCashTenderedChange={setCashTendered}
             onAddCash={(amount) => setCashTendered((prev) => prev + amount)}
-            onSetExact={() => setCashTendered(grandTotal)}
+            onSetExact={() => setCashTendered(effectiveGrandTotal)}
             cashError={cashError}
             onCashBlur={() => setCashTouched(true)}
             cashInputRef={cashInputRef}
