@@ -5,10 +5,13 @@ import { Warehouse, WarehouseSchema } from './schemas/warehouse.schema';
 import { Territory, TerritorySchema } from './schemas/territory.schema';
 import { Reason, ReasonSchema } from './schemas/reason.schema';
 import { ParamRecord, ParamSchema } from './schemas/param.schema';
+import { Transporter, TransporterSchema } from './schemas/transporter.schema';
 import { WarehouseService } from './services/warehouse.service';
 import { TerritoryService } from './services/territory.service';
 import { ReasonService } from './services/reason.service';
 import { ParamService } from './services/param.service';
+import { TransporterService } from './services/transporter.service';
+import { MasterSeedService } from './services/master-seed.service';
 
 @Module({
   imports: [
@@ -17,10 +20,25 @@ import { ParamService } from './services/param.service';
       { name: Territory.name, schema: TerritorySchema },
       { name: Reason.name, schema: ReasonSchema },
       { name: ParamRecord.name, schema: ParamSchema },
+      { name: Transporter.name, schema: TransporterSchema },
     ]),
   ],
   controllers: [MasterController],
-  providers: [WarehouseService, TerritoryService, ReasonService, ParamService],
-  exports: [WarehouseService, TerritoryService, ReasonService, ParamService],
+  providers: [
+    WarehouseService,
+    TerritoryService,
+    ReasonService,
+    ParamService,
+    TransporterService,
+    MasterSeedService,
+  ],
+  exports: [
+    WarehouseService,
+    TerritoryService,
+    ReasonService,
+    ParamService,
+    TransporterService,
+    MasterSeedService,
+  ],
 })
 export class MasterModule {}

@@ -4,15 +4,18 @@ import { Model } from 'mongoose';
 import { ObjectIdUtil } from '../../../common';
 import { ParamDocument, ParamRecord } from '../schemas/param.schema';
 import { CreateParamDto, UpdateParamDto } from '../dto/param.dto';
+import { MasterSeedService } from './master-seed.service';
 
 @Injectable()
 export class ParamService {
   constructor(
     @InjectModel(ParamRecord.name) private readonly paramModel: Model<ParamDocument>,
+    private readonly seedService: MasterSeedService,
   ) {}
 
   async list(tenantIdStr: string) {
     const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    await this.seedService.ensureParams(tenantId);
     return this.paramModel
       .find({ tenantId, isDeleted: { $ne: true } })
       .sort({ module: 1, code: 1 })

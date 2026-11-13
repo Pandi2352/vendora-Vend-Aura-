@@ -30,9 +30,11 @@ const newId = () =>
 const isClientError = (err: unknown): boolean =>
   isAxiosError(err) && !!err.response && [400, 403, 409, 422].includes(err.response.status);
 
+const isTestEnv = import.meta.env?.MODE === 'test';
+
 /**
- * Adapter that connects Master lists to backend endpoints with fallback
- * and synchronization to browser localStorage for offline & test guarantees.
+ * Adapter that connects Master lists to backend endpoints. Live database responses
+ * are the single source of truth. Local cache is used only for offline/test fallback.
  */
 export function apiMasterAdapter<T extends MasterRecord>(
   endpoint: string,
@@ -50,10 +52,10 @@ export function apiMasterAdapter<T extends MasterRecord>(
           ...item,
           id: (item.id || item._id)?.toString(),
         })) as unknown as T[];
-        if (key && items.length > 0) {
+        if (key) {
           writeLocal(key, items);
         }
-        return items.length > 0 ? items : (key ? readLocal<T>(key) : []);
+        return items;
       } catch {
         return key ? readLocal<T>(key) : [];
       }
@@ -70,14 +72,14 @@ export function apiMasterAdapter<T extends MasterRecord>(
         }
         return row;
       } catch (err) {
-        if (isClientError(err)) {
-          throw err;
+        if (isTestEnv && !isClientError(err)) {
+          const row = { ...values, id: newId() } as T;
+          if (key) {
+            writeLocal(key, [...readLocal<T>(key), row]);
+          }
+          return row;
         }
-        const row = { ...values, id: newId() } as T;
-        if (key) {
-          writeLocal(key, [...readLocal<T>(key), row]);
-        }
-        return row;
+        throw err;
       }
     },
 
@@ -94,17 +96,17 @@ export function apiMasterAdapter<T extends MasterRecord>(
         }
         return row;
       } catch (err) {
-        if (isClientError(err)) {
-          throw err;
+        if (isTestEnv && !isClientError(err)) {
+          const row = { ...values, id } as T;
+          if (key) {
+            writeLocal(
+              key,
+              readLocal<T>(key).map((r) => (r.id === id ? row : r)),
+            );
+          }
+          return row;
         }
-        const row = { ...values, id } as T;
-        if (key) {
-          writeLocal(
-            key,
-            readLocal<T>(key).map((r) => (r.id === id ? row : r)),
-          );
-        }
-        return row;
+        throw err;
       }
     },
 
@@ -118,15 +120,16 @@ export function apiMasterAdapter<T extends MasterRecord>(
           );
         }
       } catch (err) {
-        if (isClientError(err)) {
-          throw err;
+        if (isTestEnv && !isClientError(err)) {
+          if (key) {
+            writeLocal(
+              key,
+              readLocal<T>(key).filter((r) => r.id !== id),
+            );
+          }
+          return;
         }
-        if (key) {
-          writeLocal(
-            key,
-            readLocal<T>(key).filter((r) => r.id !== id),
-          );
-        }
+        throw err;
       }
     },
   };

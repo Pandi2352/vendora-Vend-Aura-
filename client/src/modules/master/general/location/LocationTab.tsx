@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import type { Column } from '@/components/tables';
-import { useAuth } from '@/hooks/useAuth';
 import { useLocalMaster } from '../../shared/data/useLocalMaster';
 import { useMasterCollection } from '../../shared/data/useMasterCollection';
 import { MasterFormDialog } from '../../shared/MasterFormDialog';
@@ -15,9 +14,7 @@ const dash = (v?: string | null) => v || '—';
 
 /** Master › General › Location: the store's branches / outlets. */
 export function LocationTab() {
-  const { user } = useAuth();
-  const shopId = user?.shopId ?? 'unknown';
-  const adapter = useMemo(() => outletAdapter(shopId), [shopId]);
+  const adapter = useMemo(() => outletAdapter(), []);
   const list = useMasterCollection(adapter);
   const warehouses = useLocalMaster<Warehouse>(WAREHOUSE_RESOURCE);
   const editor = useMasterEditor<Location>();

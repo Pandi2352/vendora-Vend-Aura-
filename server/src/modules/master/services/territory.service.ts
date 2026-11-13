@@ -4,15 +4,18 @@ import { Model } from 'mongoose';
 import { ObjectIdUtil } from '../../../common';
 import { Territory, TerritoryDocument } from '../schemas/territory.schema';
 import { CreateTerritoryDto, UpdateTerritoryDto } from '../dto/territory.dto';
+import { MasterSeedService } from './master-seed.service';
 
 @Injectable()
 export class TerritoryService {
   constructor(
     @InjectModel(Territory.name) private readonly territoryModel: Model<TerritoryDocument>,
+    private readonly seedService: MasterSeedService,
   ) {}
 
   async list(tenantIdStr: string) {
     const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    await this.seedService.ensureTerritories(tenantId);
     return this.territoryModel
       .find({ tenantId, isDeleted: { $ne: true } })
       .sort({ code: 1 })
@@ -107,7 +110,7 @@ export class TerritoryService {
       isDeleted: { $ne: true },
     });
     if (hasChildren) {
-      throw new BadRequestException('Move or delete the territories under it first.');
+      throw new BadRequestException('Move or delete the territories under this group first');
     }
 
     const row = await this.territoryModel.findOneAndDelete({ _id: id, tenantId });

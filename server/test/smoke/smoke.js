@@ -213,6 +213,17 @@ function check(name, cond, extra) {
   r = await call('DELETE', `/master/params/${paramId}`, null, accessToken);
   check('delete param ok', r.status === 200, r.json);
 
+  // 6. Transporters
+  r = await call('POST', '/master/transporters', { code: 'TR-SMK', name: 'Smoke Logistics', transporterId: '33AABCS1234F1Z5' }, accessToken);
+  check('create transporter ok', r.status === 201 && r.json.data.code === 'TR-SMK', r.json);
+  const transporterId = r.json.data._id || r.json.data.id;
+  r = await call('GET', '/master/transporters', null, accessToken);
+  check('list transporters ok', r.status === 200 && r.json.data.some((x) => x.code === 'TR-SMK'), r.json);
+  r = await call('PATCH', `/master/transporters/${transporterId}`, { name: 'Smoke Logistics Express' }, accessToken);
+  check('patch transporter ok', r.status === 200 && r.json.data.name === 'Smoke Logistics Express', r.json);
+  r = await call('DELETE', `/master/transporters/${transporterId}`, null, accessToken);
+  check('delete transporter ok', r.status === 200, r.json);
+
   // roles: cashier can bill but not manage suppliers / see reports
   r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
   const cashierToken = r.json?.data?.accessToken;

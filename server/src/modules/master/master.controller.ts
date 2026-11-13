@@ -5,10 +5,12 @@ import { WarehouseService } from './services/warehouse.service';
 import { TerritoryService } from './services/territory.service';
 import { ReasonService } from './services/reason.service';
 import { ParamService } from './services/param.service';
+import { TransporterService } from './services/transporter.service';
 import { CreateWarehouseDto, UpdateWarehouseDto } from './dto/warehouse.dto';
 import { CreateTerritoryDto, UpdateTerritoryDto } from './dto/territory.dto';
 import { CreateReasonDto, UpdateReasonDto } from './dto/reason.dto';
 import { CreateParamDto, UpdateParamDto } from './dto/param.dto';
+import { CreateTransporterDto, UpdateTransporterDto } from './dto/transporter.dto';
 
 @ApiTags('Master Data')
 @ApiBearerAuth()
@@ -19,6 +21,7 @@ export class MasterController {
     private readonly territoryService: TerritoryService,
     private readonly reasonService: ReasonService,
     private readonly paramService: ParamService,
+    private readonly transporterService: TransporterService,
   ) {}
 
   // --- Warehouses ---
@@ -36,11 +39,7 @@ export class MasterController {
 
   @Patch('warehouses/:id')
   @ApiOperation({ summary: 'Update a warehouse' })
-  updateWarehouse(
-    @TenantId() tenantId: string,
-    @Param('id') id: string,
-    @Body() dto: UpdateWarehouseDto,
-  ) {
+  updateWarehouse(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpdateWarehouseDto) {
     return this.warehouseService.update(tenantId, id, dto);
   }
 
@@ -65,11 +64,7 @@ export class MasterController {
 
   @Patch('territories/:id')
   @ApiOperation({ summary: 'Update a territory' })
-  updateTerritory(
-    @TenantId() tenantId: string,
-    @Param('id') id: string,
-    @Body() dto: UpdateTerritoryDto,
-  ) {
+  updateTerritory(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpdateTerritoryDto) {
     return this.territoryService.update(tenantId, id, dto);
   }
 
@@ -94,11 +89,7 @@ export class MasterController {
 
   @Patch('reasons/:id')
   @ApiOperation({ summary: 'Update a reason' })
-  updateReason(
-    @TenantId() tenantId: string,
-    @Param('id') id: string,
-    @Body() dto: UpdateReasonDto,
-  ) {
+  updateReason(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpdateReasonDto) {
     return this.reasonService.update(tenantId, id, dto);
   }
 
@@ -123,11 +114,7 @@ export class MasterController {
 
   @Patch('params/:id')
   @ApiOperation({ summary: 'Update a store parameter' })
-  updateParam(
-    @TenantId() tenantId: string,
-    @Param('id') id: string,
-    @Body() dto: UpdateParamDto,
-  ) {
+  updateParam(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpdateParamDto) {
     return this.paramService.update(tenantId, id, dto);
   }
 
@@ -135,5 +122,30 @@ export class MasterController {
   @ApiOperation({ summary: 'Delete a store parameter' })
   removeParam(@TenantId() tenantId: string, @Param('id') id: string) {
     return this.paramService.remove(tenantId, id);
+  }
+
+  // --- Transporters ---
+  @Get('transporters')
+  @ApiOperation({ summary: 'List all transporters' })
+  listTransporters(@TenantId() tenantId: string) {
+    return this.transporterService.list(tenantId);
+  }
+
+  @Post('transporters')
+  @ApiOperation({ summary: 'Create a transporter' })
+  createTransporter(@TenantId() tenantId: string, @Body() dto: CreateTransporterDto) {
+    return this.transporterService.create(tenantId, dto);
+  }
+
+  @Patch('transporters/:id')
+  @ApiOperation({ summary: 'Update a transporter' })
+  updateTransporter(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpdateTransporterDto) {
+    return this.transporterService.update(tenantId, id, dto);
+  }
+
+  @Delete('transporters/:id')
+  @ApiOperation({ summary: 'Delete a transporter' })
+  removeTransporter(@TenantId() tenantId: string, @Param('id') id: string) {
+    return this.transporterService.remove(tenantId, id);
   }
 }

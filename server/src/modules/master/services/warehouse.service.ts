@@ -4,15 +4,18 @@ import { Model } from 'mongoose';
 import { ObjectIdUtil } from '../../../common';
 import { Warehouse, WarehouseDocument } from '../schemas/warehouse.schema';
 import { CreateWarehouseDto, UpdateWarehouseDto } from '../dto/warehouse.dto';
+import { MasterSeedService } from './master-seed.service';
 
 @Injectable()
 export class WarehouseService {
   constructor(
     @InjectModel(Warehouse.name) private readonly warehouseModel: Model<WarehouseDocument>,
+    private readonly seedService: MasterSeedService,
   ) {}
 
   async list(tenantIdStr: string) {
     const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    await this.seedService.ensureWarehouses(tenantId);
     return this.warehouseModel
       .find({ tenantId, isDeleted: { $ne: true } })
       .sort({ createdAt: -1 })

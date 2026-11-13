@@ -4,15 +4,18 @@ import { Model } from 'mongoose';
 import { ObjectIdUtil } from '../../../common';
 import { Reason, ReasonDocument } from '../schemas/reason.schema';
 import { CreateReasonDto, UpdateReasonDto } from '../dto/reason.dto';
+import { MasterSeedService } from './master-seed.service';
 
 @Injectable()
 export class ReasonService {
   constructor(
     @InjectModel(Reason.name) private readonly reasonModel: Model<ReasonDocument>,
+    private readonly seedService: MasterSeedService,
   ) {}
 
   async list(tenantIdStr: string) {
     const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    await this.seedService.ensureReasons(tenantId);
     return this.reasonModel
       .find({ tenantId, isDeleted: { $ne: true } })
       .sort({ createdAt: -1 })

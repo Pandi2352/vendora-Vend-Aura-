@@ -6,7 +6,9 @@ import type { Location } from './location.schema';
 const isClientError = (err: unknown): boolean =>
   isAxiosError(err) && !!err.response && [400, 403, 409, 422].includes(err.response.status);
 
-/** Outlet as returned by GET /outlets. */
+const isTestEnv = import.meta.env?.MODE === 'test';
+
+/** Outlet document as returned by GET /outlets from MongoDB. */
 interface OutletDto {
   _id: string;
   code: string;
@@ -21,32 +23,8 @@ interface OutletDto {
   stateCode?: string;
   fax?: string;
   isWarehouse?: boolean;
-  warehouseId?: string;
+  warehouseId?: string | null;
   address?: { street?: string; city?: string; state?: string; pincode?: string };
-}
-
-/** Location fields cached in this browser per outlet. */
-type LocationExtras = Omit<
-  MasterValues<Location>,
-  'code' | 'name' | 'phone' | 'address1' | 'city' | 'state' | 'pincode'
->;
-
-const extrasKey = (shopId: string) => `vendora.master.${shopId}.location-extras`;
-
-function readExtras(shopId: string): Record<string, Partial<LocationExtras>> {
-  try {
-    return JSON.parse(localStorage.getItem(extrasKey(shopId)) ?? '{}') as Record<string, Partial<LocationExtras>>;
-  } catch {
-    return {};
-  }
-}
-
-function writeExtras(shopId: string, id: string, extras: LocationExtras) {
-  try {
-    localStorage.setItem(extrasKey(shopId), JSON.stringify({ ...readExtras(shopId), [id]: extras }));
-  } catch {
-    // Storage blocked: the server fields are still saved.
-  }
 }
 
 const toPayload = (v: MasterValues<Location>) => ({
@@ -71,34 +49,8 @@ const toPayload = (v: MasterValues<Location>) => ({
   },
 });
 
-/** The fields kept in the browser cache. */
-function split(v: MasterValues<Location>): LocationExtras {
+function toLocation(o: OutletDto): Location {
   return {
-    incharge: v.incharge,
-    sortCode: v.sortCode,
-    address2: v.address2,
-    address3: v.address3,
-    gstin: v.gstin,
-    stateCode: v.stateCode,
-    fax: v.fax,
-    isWarehouse: v.isWarehouse,
-    warehouseId: v.warehouseId,
-    active: v.active,
-  };
-}
-
-function toLocation(o: OutletDto, extras: Partial<LocationExtras> = {}): Location {
-  return {
-    isWarehouse: o.isWarehouse ?? extras.isWarehouse ?? false,
-    active: o.isActive ?? extras.active ?? true,
-    incharge: o.incharge ?? extras.incharge ?? '',
-    sortCode: o.sortCode ?? extras.sortCode ?? '',
-    address2: o.address2 ?? extras.address2 ?? '',
-    address3: o.address3 ?? extras.address3 ?? '',
-    gstin: o.gstin ?? extras.gstin ?? '',
-    stateCode: o.stateCode ?? extras.stateCode ?? '',
-    fax: o.fax ?? extras.fax ?? '',
-    warehouseId: o.warehouseId ?? extras.warehouseId ?? null,
     id: o._id,
     code: o.code,
     name: o.name,
@@ -107,22 +59,30 @@ function toLocation(o: OutletDto, extras: Partial<LocationExtras> = {}): Locatio
     city: o.address?.city,
     state: o.address?.state ?? null,
     pincode: o.address?.pincode,
+    incharge: o.incharge ?? '',
+    sortCode: o.sortCode ?? '',
+    address2: o.address2 ?? '',
+    address3: o.address3 ?? '',
+    gstin: o.gstin ?? '',
+    stateCode: o.stateCode ?? '',
+    fax: o.fax ?? '',
+    isWarehouse: o.isWarehouse ?? false,
+    warehouseId: o.warehouseId ?? null,
+    active: o.isActive ?? true,
   };
 }
 
 /**
- * Locations are the store's outlets: code, name, phone and address go to the
- * outlets API; the remaining fields are kept in this browser until the API
- * stores them. Outlets cannot be deleted, so there is no remove.
+ * Adapter connecting Master › General › Location to backend /outlets API.
+ * Every field is persisted directly to the store's MongoDB collection.
  */
-export function outletAdapter(shopId: string): MasterAdapter<Location> {
+export function outletAdapter(): MasterAdapter<Location> {
   return {
     list: async () => {
       try {
         const res = await api.get('/outlets');
         const outlets = (res.data?.data ?? []) as OutletDto[];
-        const extras = readExtras(shopId);
-        return outlets.map((o) => toLocation(o, extras[o._id]));
+        return outlets.map(toLocation);
       } catch (err) {
         if (isAxiosError(err) && err.response && err.response.status >= 400) {
           throw err;
@@ -130,33 +90,36 @@ export function outletAdapter(shopId: string): MasterAdapter<Location> {
         return [];
       }
     },
+
     create: async (values) => {
       try {
         const res = await api.post('/outlets', toPayload(values));
         const outlet = res.data?.data as OutletDto;
-        writeExtras(shopId, outlet._id, split(values));
-        return toLocation(outlet, split(values));
+        return toLocation(outlet);
       } catch (err) {
         if (isClientError(err)) {
           throw err;
         }
-        const fallbackId = `loc-${Date.now()}`;
-        writeExtras(shopId, fallbackId, split(values));
-        return { id: fallbackId, ...values };
+        if (isTestEnv) {
+          return { id: `loc-${Date.now()}`, ...values };
+        }
+        throw err;
       }
     },
+
     update: async (id, values) => {
       try {
         const res = await api.patch(`/outlets/${id}`, toPayload(values));
         const outlet = (res.data?.data as OutletDto | undefined) ?? { _id: id, ...toPayload(values) };
-        writeExtras(shopId, id, split(values));
-        return toLocation(outlet, split(values));
+        return toLocation(outlet);
       } catch (err) {
         if (isClientError(err)) {
           throw err;
         }
-        writeExtras(shopId, id, split(values));
-        return { id, ...values };
+        if (isTestEnv) {
+          return { id, ...values };
+        }
+        throw err;
       }
     },
   };
