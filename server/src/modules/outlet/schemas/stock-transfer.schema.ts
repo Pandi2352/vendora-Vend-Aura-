@@ -38,7 +38,7 @@ export class StockTransfer extends TenantBaseEntity {
 
   @Prop({
     required: true,
-    enum: ['PENDING', 'IN_TRANSIT', 'RECEIVED', 'CANCELLED'],
+    enum: ['PENDING', 'DISPATCHED', 'IN_TRANSIT', 'RECEIVED', 'CANCELLED'],
     default: 'IN_TRANSIT',
     index: true,
   })

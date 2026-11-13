@@ -260,6 +260,73 @@ function check(name, cond, extra) {
   r = await call('DELETE', `/master/vouchers/${voucherId}`, null, accessToken);
   check('delete voucher ok', r.status === 200, r.json);
 
+  // ---- Discounts & Coupons ----
+  r = await call('POST', '/discounts', { code: 'FESTIVE20', name: 'Festive 20% Off', type: 'PERCENTAGE', value: 20, minOrderValue: 50, maxDiscountCap: 100, isActive: true }, accessToken);
+  check('create discount ok', r.status === 201 && r.json.data.code === 'FESTIVE20', r.json);
+  const discountId = r.json.data._id || r.json.data.id;
+
+  r = await call('GET', '/discounts', null, accessToken);
+  check('list discounts ok', r.status === 200 && r.json.data.some((d) => d.code === 'FESTIVE20'), r.json);
+
+  r = await call('POST', '/discounts/validate', { code: 'FESTIVE20', orderAmount: 200 }, accessToken);
+  check('validate coupon ok', (r.status === 200 || r.status === 201) && r.json.data.valid === true && r.json.data.discountAmount === 40, r.json);
+
+  r = await call('POST', '/discounts/validate', { code: 'FESTIVE20', orderAmount: 30 }, accessToken);
+  check('coupon minOrderValue enforced', r.status === 400, r.json);
+
+  r = await call('PATCH', `/discounts/${discountId}`, { value: 25 }, accessToken);
+  check('update discount ok', r.status === 200 && r.json.data.value === 25, r.json);
+
+  r = await call('DELETE', `/discounts/${discountId}`, null, accessToken);
+  check('delete discount ok', r.status === 200, r.json);
+
+  // ---- Stock Control: Movement Ledger, Physical Audit & Wastage ----
+  r = await call('GET', '/inventory/ledger', null, accessToken);
+  check('stock movement ledger query ok', r.status === 200 && Array.isArray(r.json.data), r.json);
+
+  r = await call('GET', '/inventory/audit/sheet', null, accessToken);
+  check('audit count sheet ok', r.status === 200 && Array.isArray(r.json.data) && r.json.data.length > 0, r.json);
+
+  r = await call('POST', '/inventory/audit/reconcile', { items: [{ productId: ids.rice, physicalCount: 15 }], notes: 'Monthly physical audit' }, accessToken);
+  check('physical audit reconcile ok', r.status === 201 && r.json.data.auditNumber, r.json);
+
+  r = await call('GET', '/inventory/audit/history', null, accessToken);
+  check('list audit history ok', r.status === 200 && r.json.data.length >= 1, r.json);
+
+  r = await call('POST', '/inventory/wastage', { productId: ids.soap, quantity: 2, reason: 'EXPIRED', remarks: 'Damaged wrapper' }, accessToken);
+  check('record wastage write-off ok', r.status === 201 && r.json.data.quantity === 2 && r.json.data.totalLoss === 40, r.json);
+
+  r = await call('GET', '/inventory/wastage', null, accessToken);
+  check('list wastages ok', r.status === 200 && r.json.data.items && r.json.data.items.length >= 1, r.json);
+
+  // ---- Inter-Branch Stock Transfers (STN) ----
+  r = await call('POST', '/inventory/transfers', {
+    sourceOutletId: ids.primaryOutlet,
+    destinationOutletId: ids.branchOutlet,
+    items: [{ productId: ids.soap, quantity: 5 }],
+    notes: 'Inter-branch replenishment'
+  }, accessToken);
+  check('create stock transfer ok', r.status === 201 && r.json.data.transferNumber && r.json.data.status === 'PENDING', r.json);
+  const transferId = r.json.data._id || r.json.data.id;
+
+  r = await call('GET', '/inventory/transfers', null, accessToken);
+  check('list stock transfers ok', r.status === 200 && (r.json.data?.summary?.pending >= 1 || r.json.data?.items?.length >= 1), r.json);
+
+  r = await call('POST', `/inventory/transfers/${transferId}/dispatch`, {}, accessToken);
+  check('dispatch transfer ok (status=DISPATCHED)', r.status === 201 && r.json.data.status === 'DISPATCHED', r.json);
+
+  r = await call('POST', `/inventory/transfers/${transferId}/receive`, {}, accessToken);
+  check('receive transfer ok (status=RECEIVED)', r.status === 201 && r.json.data.status === 'RECEIVED', r.json);
+
+  r = await call('POST', '/inventory/transfers', {
+    sourceOutletId: ids.primaryOutlet,
+    destinationOutletId: ids.branchOutlet,
+    items: [{ productId: ids.soap, quantity: 2 }],
+  }, accessToken);
+  const cancelTransferId = r.json.data._id || r.json.data.id;
+  r = await call('POST', `/inventory/transfers/${cancelTransferId}/cancel`, {}, accessToken);
+  check('cancel transfer ok (status=CANCELLED)', r.status === 201 && r.json.data.status === 'CANCELLED', r.json);
+
   // roles: cashier can bill but not manage suppliers / see reports
   r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
   const cashierToken = r.json?.data?.accessToken;

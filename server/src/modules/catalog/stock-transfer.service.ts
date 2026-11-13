@@ -59,9 +59,9 @@ export class StockTransferService {
     });
 
     return {
-      ...result,
-      data: result.data.map(withId),
+      items: result.data.map(withId),
       summary,
+      meta: result.meta,
     };
   }
 

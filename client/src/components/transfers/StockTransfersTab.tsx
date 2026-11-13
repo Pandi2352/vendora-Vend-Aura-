@@ -48,10 +48,13 @@ export function StockTransfersTab() {
       if (statusFilter !== 'ALL') params.status = statusFilter;
 
       const res = await api.get('/inventory/transfers', { params });
-      const data = unwrap<StockTransferResponse>(res);
-      setTransfers(data?.data || []);
-      setTotalPages(data?.totalPages || 1);
-      if (data?.summary) setSummary(data.summary);
+      const raw = unwrap<StockTransferResponse | StockTransferRecord[]>(res);
+      const items = Array.isArray(raw) ? raw : (raw?.items || raw?.data || []);
+      setTransfers(items);
+      setTotalPages(
+        (!Array.isArray(raw) && (raw?.totalPages || raw?.meta?.totalPages)) || 1,
+      );
+      if (!Array.isArray(raw) && raw?.summary) setSummary(raw.summary);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to fetch stock transfers'));
     } finally {

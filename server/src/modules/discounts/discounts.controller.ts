@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TenantId } from '../../common';
 import { DiscountsService } from './discounts.service';
@@ -41,6 +41,7 @@ export class DiscountsController {
   }
 
   @Post('validate')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Validate a coupon code at checkout and compute discount' })
   async validateCoupon(@TenantId() tenantId: string, @Body() dto: ValidateDiscountDto) {
     return { data: await this.discountsService.validateCoupon(tenantId, dto) };

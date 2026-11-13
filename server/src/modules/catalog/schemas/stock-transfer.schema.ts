@@ -4,7 +4,7 @@ import { TenantBaseEntity } from '../../../common';
 
 export type StockTransferDocument = StockTransfer & Document;
 
-export type TransferStatus = 'PENDING' | 'DISPATCHED' | 'RECEIVED' | 'CANCELLED';
+export type TransferStatus = 'PENDING' | 'DISPATCHED' | 'IN_TRANSIT' | 'RECEIVED' | 'CANCELLED';
 
 @Schema({ _id: false })
 export class StockTransferItem {
@@ -47,7 +47,7 @@ export class StockTransfer extends TenantBaseEntity {
 
   @Prop({
     required: true,
-    enum: ['PENDING', 'DISPATCHED', 'RECEIVED', 'CANCELLED'],
+    enum: ['PENDING', 'DISPATCHED', 'IN_TRANSIT', 'RECEIVED', 'CANCELLED'],
     default: 'PENDING',
     index: true,
   })

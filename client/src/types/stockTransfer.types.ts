@@ -37,11 +37,18 @@ export interface StockTransferSummary {
 }
 
 export interface StockTransferResponse {
-  data: StockTransferRecord[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  summary: StockTransferSummary;
+  items?: StockTransferRecord[];
+  data?: StockTransferRecord[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+  summary?: StockTransferSummary;
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 

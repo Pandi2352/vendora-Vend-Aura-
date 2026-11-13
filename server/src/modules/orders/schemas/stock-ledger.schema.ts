@@ -6,8 +6,8 @@ export type StockLedgerDocument = StockLedger & Document;
 
 @Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: 'stock_ledgers' })
 export class StockLedger extends TenantBaseEntity {
-  @Prop({ type: Types.ObjectId, ref: 'Outlet', required: true, index: true })
-  outletId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Outlet', required: false, index: true })
+  outletId?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Product', required: true, index: true })
   productId: Types.ObjectId;
