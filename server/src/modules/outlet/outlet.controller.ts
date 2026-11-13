@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OutletService } from './outlet.service';
 import { StockTransferService, StockTransferView } from './stock-transfer.service';
@@ -39,6 +39,13 @@ export class OutletController {
     @Body() dto: Partial<CreateOutletDto>,
   ) {
     return this.outletService.updateOutlet(tenantId, outletId, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete/deactivate branch location' })
+  @Roles(UserRole.OWNER, UserRole.STORE_MANAGER)
+  deleteOutlet(@TenantId() tenantId: string, @Param('id') outletId: string) {
+    return this.outletService.deleteOutlet(tenantId, outletId);
   }
 
   @Get('transfers')

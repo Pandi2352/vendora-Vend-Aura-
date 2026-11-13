@@ -1,12 +1,6 @@
-import { isAxiosError } from 'axios';
 import { api } from '@/lib/api';
 import type { MasterAdapter, MasterValues } from '../../shared/data/types';
 import type { Location } from './location.schema';
-
-const isClientError = (err: unknown): boolean =>
-  isAxiosError(err) && !!err.response && [400, 403, 409, 422].includes(err.response.status);
-
-const isTestEnv = import.meta.env?.MODE === 'test';
 
 /** Outlet document as returned by GET /outlets from MongoDB. */
 interface OutletDto {
@@ -79,48 +73,25 @@ function toLocation(o: OutletDto): Location {
 export function outletAdapter(): MasterAdapter<Location> {
   return {
     list: async () => {
-      try {
-        const res = await api.get('/outlets');
-        const outlets = (res.data?.data ?? []) as OutletDto[];
-        return outlets.map(toLocation);
-      } catch (err) {
-        if (isAxiosError(err) && err.response && err.response.status >= 400) {
-          throw err;
-        }
-        return [];
-      }
+      const res = await api.get('/outlets');
+      const outlets = (res.data?.data ?? []) as OutletDto[];
+      return outlets.map(toLocation);
     },
 
     create: async (values) => {
-      try {
-        const res = await api.post('/outlets', toPayload(values));
-        const outlet = res.data?.data as OutletDto;
-        return toLocation(outlet);
-      } catch (err) {
-        if (isClientError(err)) {
-          throw err;
-        }
-        if (isTestEnv) {
-          return { id: `loc-${Date.now()}`, ...values };
-        }
-        throw err;
-      }
+      const res = await api.post('/outlets', toPayload(values));
+      const outlet = res.data?.data as OutletDto;
+      return toLocation(outlet);
     },
 
     update: async (id, values) => {
-      try {
-        const res = await api.patch(`/outlets/${id}`, toPayload(values));
-        const outlet = (res.data?.data as OutletDto | undefined) ?? { _id: id, ...toPayload(values) };
-        return toLocation(outlet);
-      } catch (err) {
-        if (isClientError(err)) {
-          throw err;
-        }
-        if (isTestEnv) {
-          return { id, ...values };
-        }
-        throw err;
-      }
+      const res = await api.patch(`/outlets/${id}`, toPayload(values));
+      const outlet = (res.data?.data as OutletDto | undefined) ?? { _id: id, ...toPayload(values) };
+      return toLocation(outlet);
+    },
+
+    remove: async (id: string) => {
+      await api.delete(`/outlets/${id}`);
     },
   };
 }

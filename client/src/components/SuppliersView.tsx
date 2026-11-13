@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowClockwise, Package, Plus, Truck } from '@phosphor-icons/react';
 import { api, unwrap, getErrorMessage } from '@/lib/api';
 import { Button, Tabs } from '@/components/ui';
@@ -18,6 +19,7 @@ interface SuppliersViewProps {
 type SubTab = 'suppliers' | 'inwards';
 
 export function SuppliersView({ products, onInwardStockCompleted }: SuppliersViewProps) {
+  const [searchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState<SupplierItem[]>([]);
   const [purchases, setPurchases] = useState<PurchaseItemRecord[]>([]);
   const [subTab, setSubTab] = useState<SubTab>('suppliers');
@@ -28,6 +30,17 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
   const [isInwardModalOpen, setIsInwardModalOpen] = useState(false);
   const [supplierToPay, setSupplierToPay] = useState<SupplierItem | null>(null);
+
+  useEffect(() => {
+    const action = searchParams.get('action');
+    const tab = searchParams.get('tab');
+    if (action === 'inward') {
+      setIsInwardModalOpen(true);
+    }
+    if (tab === 'inwards') {
+      setSubTab('inwards');
+    }
+  }, [searchParams]);
 
   const fetchAllData = useCallback(async () => {
     setLoading(true);

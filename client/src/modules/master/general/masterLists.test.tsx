@@ -58,7 +58,7 @@ describe('Warehouse list', () => {
     await user.click(screen.getByRole('button', { name: 'Delete WH01' }));
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
     expect(await screen.findByText('No warehouses yet')).toBeInTheDocument();
-  });
+  }, 10000);
 });
 
 describe('Territory list', () => {

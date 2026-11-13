@@ -26,7 +26,7 @@ export const NAVIGATION: NavItem[] = [
     sectionTitle: 'GENERAL MASTER',
     children: [
       { label: 'Master', path: ROUTES.MASTER, icon: ms('folder_special') },
-      { label: 'Inventory', path: `${ROUTES.DASHBOARD}?tab=catalog`, icon: ms('category') },
+      { label: 'Inventory', path: ROUTES.INVENTORY, icon: ms('category') },
       { label: 'Customer', path: ROUTES.CUSTOMERS, icon: ms('group') },
       { label: 'Sales', path: ROUTES.ORDERS, icon: ms('sell') },
       { label: 'Purchase', path: ROUTES.SUPPLIERS, icon: ms('receipt_long') },
@@ -38,9 +38,9 @@ export const NAVIGATION: NavItem[] = [
     roles: ROLE_GROUPS.MANAGEMENT,
     sectionTitle: 'Inventory Master',
     children: [
-      { label: 'Item Catalog', path: `${ROUTES.DASHBOARD}?tab=catalog`, icon: ms('inventory_2') },
-      { label: 'Categories & Brands', path: `${ROUTES.SETTINGS}?tab=categories`, icon: ms('category') },
-      { label: 'Opening Stock', path: ROUTES.REPORTS_INVENTORY, icon: ms('assignment') },
+      { label: 'Item Catalog', path: ROUTES.INVENTORY, icon: ms('inventory_2') },
+      { label: 'Categories & Brands', path: `${ROUTES.INVENTORY}?tab=categories`, icon: ms('category') },
+      { label: 'Opening Stock', path: `${ROUTES.INVENTORY}?tab=stock`, icon: ms('assignment') },
     ],
   },
   {

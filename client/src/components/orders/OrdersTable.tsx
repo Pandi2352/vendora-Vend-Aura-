@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Printer } from '@phosphor-icons/react';
-import { DataTable, RowActions, type Column } from '@/components/tables';
+import { ArrowUUpLeft, Printer } from '@phosphor-icons/react';
+import { DataTable, RowActions, type Column, type RowAction } from '@/components/tables';
 import { Badge, type BadgeTone } from '@/components/ui';
 import type { OrderItemRecord, PaymentMode } from '@/types/pos.types';
 import { formatDate, formatInr, formatTime } from '@/utils';
@@ -18,13 +18,14 @@ interface OrdersTableProps {
   error?: string | null;
   onRetry?: () => void;
   onReprint: (order: OrderItemRecord) => void;
+  onReturn?: (order: OrderItemRecord) => void;
   /** Extra filters shown in the table toolbar. */
   toolbar?: ReactNode;
 }
 
 const searchText = (o: OrderItemRecord) => [o.invoiceNumber, o.customerName, o.customerPhone].filter(Boolean).join(' ');
 
-export function OrdersTable({ orders, loading, error, onRetry, onReprint, toolbar }: OrdersTableProps) {
+export function OrdersTable({ orders, loading, error, onRetry, onReprint, onReturn, toolbar }: OrdersTableProps) {
   const columns: Column<OrderItemRecord>[] = [
     {
       key: 'invoice',
@@ -84,11 +85,20 @@ export function OrdersTable({ orders, loading, error, onRetry, onReprint, toolba
       key: 'actions',
       header: 'Action',
       align: 'center',
-      render: (o) => (
-        <RowActions
-          actions={[{ label: `Reprint receipt ${o.invoiceNumber}`, icon: <Printer />, tone: 'primary', onClick: () => onReprint(o) }]}
-        />
-      ),
+      render: (o) => {
+        const actions: RowAction[] = [
+          { label: `Reprint receipt ${o.invoiceNumber}`, icon: <Printer />, tone: 'primary', onClick: () => onReprint(o) },
+        ];
+        if (onReturn) {
+          actions.push({
+            label: `Sales return ${o.invoiceNumber}`,
+            icon: <ArrowUUpLeft weight="bold" />,
+            tone: 'warning',
+            onClick: () => onReturn(o),
+          });
+        }
+        return <RowActions actions={actions} />;
+      },
     },
   ];
 

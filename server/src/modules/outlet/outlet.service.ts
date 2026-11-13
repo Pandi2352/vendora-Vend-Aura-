@@ -81,5 +81,19 @@ export class OutletService {
     if (!outlet) throw new NotFoundException('Outlet not found.');
     return outlet;
   }
+
+  async deleteOutlet(tenantIdStr: string, outletIdStr: string) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const outletId = ObjectIdUtil.toObjectId(outletIdStr, 'outlet');
+
+    const outlet = await this.outletModel.findOneAndUpdate(
+      { _id: outletId, tenantId },
+      { $set: { isActive: false, isDeleted: true } },
+      { new: true },
+    );
+
+    if (!outlet) throw new NotFoundException('Outlet not found.');
+    return { success: true, message: 'Outlet deleted' };
+  }
 }
 

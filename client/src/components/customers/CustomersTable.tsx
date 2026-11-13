@@ -1,4 +1,4 @@
-import { BookOpen, CurrencyInr, Phone, WhatsappLogo } from '@phosphor-icons/react';
+import { BookOpen, CurrencyInr, PencilSimple, Phone, WhatsappLogo } from '@phosphor-icons/react';
 import { DataTable, RowActions, type Column, type RowAction } from '@/components/tables';
 import { cn } from '@/components/ui';
 import { formatInr } from '@/utils';
@@ -8,6 +8,7 @@ interface CustomersTableProps {
   customers: CustomerItem[];
   loading: boolean;
   shopName: string;
+  onEdit?: (customer: CustomerItem) => void;
   onRepay: (customer: CustomerItem) => void;
   onOpenStatement: (customer: CustomerItem) => void;
 }
@@ -22,7 +23,7 @@ function whatsappReminder(c: CustomerItem, shopName: string) {
   return `https://wa.me/91${c.phone}?text=${text}`;
 }
 
-export function CustomersTable({ customers, loading, shopName, onRepay, onOpenStatement }: CustomersTableProps) {
+export function CustomersTable({ customers, loading, shopName, onEdit, onRepay, onOpenStatement }: CustomersTableProps) {
   const columns: Column<CustomerItem>[] = [
     {
       key: 'name',
@@ -77,6 +78,12 @@ export function CustomersTable({ customers, loading, shopName, onRepay, onOpenSt
       align: 'center',
       render: (c) => {
         const actions: RowAction[] = [
+          {
+            label: `Edit details for ${c.name}`,
+            icon: <PencilSimple weight="bold" />,
+            tone: 'neutral',
+            onClick: () => onEdit?.(c),
+          },
           {
             label: `Record Khata payment for ${c.name}`,
             icon: <CurrencyInr weight="bold" />,

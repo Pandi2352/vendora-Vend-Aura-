@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Receipt, ArrowClockwise } from '@phosphor-icons/react';
+import { Receipt, ArrowClockwise, ArrowUUpLeft } from '@phosphor-icons/react';
 import { api, unwrap, getErrorMessage } from '@/lib/api';
 import { orderToInvoice } from '@/lib/invoice';
 import { Button, Dropdown, cn } from '@/components/ui';
 import type { OrderItemRecord, InvoiceData, AuthUser, PaymentMode } from '@/types/pos.types';
 import { OrdersKpiStrip } from './orders/OrdersKpiStrip';
 import { OrdersTable } from './orders/OrdersTable';
+import { SalesReturnModal } from './orders/SalesReturnModal';
 
 interface OrdersHistoryViewProps {
   currentUser: AuthUser | null;
@@ -30,6 +31,7 @@ export function OrdersHistoryView({ currentUser, onReprintInvoice }: OrdersHisto
   const [loading, setLoading] = useState(false);
   const [filterMode, setFilterMode] = useState<ModeFilter>('ALL');
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -67,15 +69,23 @@ export function OrdersHistoryView({ currentUser, onReprintInvoice }: OrdersHisto
             Audit settled sales, reprint 80mm thermal receipts and filter by payment mode.
           </p>
         </div>
-        <Button
-          variant="secondary"
-          onClick={fetchOrders}
-          disabled={loading}
-          className="self-start sm:self-auto"
-          icon={<ArrowClockwise className={cn('w-4 h-4', loading && 'animate-spin')} />}
-        >
-          Refresh bills
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
+            variant="secondary"
+            onClick={fetchOrders}
+            disabled={loading}
+            icon={<ArrowClockwise className={cn('w-4 h-4', loading && 'animate-spin')} />}
+          >
+            Refresh bills
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => setIsReturnModalOpen(true)}
+            icon={<ArrowUUpLeft weight="bold" className="w-4 h-4" />}
+          >
+            Sales Return
+          </Button>
+        </div>
       </div>
 
       <OrdersKpiStrip
@@ -92,6 +102,7 @@ export function OrdersHistoryView({ currentUser, onReprintInvoice }: OrdersHisto
         error={loadError}
         onRetry={fetchOrders}
         onReprint={handleReprint}
+        onReturn={() => setIsReturnModalOpen(true)}
         toolbar={
           <div className="w-44">
             <Dropdown<ModeFilter>
@@ -103,6 +114,13 @@ export function OrdersHistoryView({ currentUser, onReprintInvoice }: OrdersHisto
           </div>
         }
       />
+
+      {isReturnModalOpen && (
+        <SalesReturnModal
+          onClose={() => setIsReturnModalOpen(false)}
+          onReturnSuccess={fetchOrders}
+        />
+      )}
     </div>
   );
 }

@@ -29,9 +29,9 @@ const newId = () =>
 const isTestEnv = import.meta.env?.MODE === 'test';
 
 /**
- * Adapter that connects Master lists to backend endpoints. In production, live
- * database responses from MongoDB via REST APIs are the sole source of truth.
- * In unit tests (where no backend server runs), it operates locally without socket hangs.
+ * Adapter that connects Master lists directly to live backend endpoints.
+ * All data is stored in and retrieved from MongoDB via REST APIs.
+ * In unit tests (where no backend server is running), operates locally.
  */
 export function apiMasterAdapter<T extends MasterRecord>(
   endpoint: string,
@@ -43,20 +43,16 @@ export function apiMasterAdapter<T extends MasterRecord>(
   return {
     list: async () => {
       if (isTestEnv && key) return readLocal<T>(key);
-      try {
-        const res = await api.get(endpoint);
-        const data = (res.data?.data ?? []) as Array<Record<string, unknown>>;
-        const items = data.map((item) => ({
-          ...item,
-          id: (item.id || item._id)?.toString(),
-        })) as unknown as T[];
-        if (key) {
-          writeLocal(key, items);
-        }
-        return items;
-      } catch {
-        return key ? readLocal<T>(key) : [];
-      }
+      const res = await api.get(endpoint);
+      const raw = Array.isArray(res.data?.data)
+        ? res.data.data
+        : Array.isArray(res.data)
+          ? res.data
+          : [];
+      return raw.map((item: Record<string, unknown>) => ({
+        ...item,
+        id: (item.id || item._id)?.toString(),
+      })) as unknown as T[];
     },
 
     create: async (values: MasterValues<T>) => {
@@ -66,13 +62,8 @@ export function apiMasterAdapter<T extends MasterRecord>(
         return row;
       }
       const res = await api.post(endpoint, values);
-      const item = res.data?.data ?? values;
-      const row = { ...item, id: (item.id || item._id || newId())?.toString() } as T;
-      if (key) {
-        const existing = readLocal<T>(key).filter((r) => r.id !== row.id);
-        writeLocal(key, [...existing, row]);
-      }
-      return row;
+      const item = res.data?.data ?? res.data ?? values;
+      return { ...item, id: (item.id || item._id || newId())?.toString() } as T;
     },
 
     update: async (id: string, values: MasterValues<T>) => {
@@ -85,15 +76,8 @@ export function apiMasterAdapter<T extends MasterRecord>(
         return row;
       }
       const res = await api.patch(`${endpoint}/${id}`, values);
-      const item = res.data?.data ?? { ...values, id };
-      const row = { ...item, id: (item.id || item._id || id)?.toString() } as T;
-      if (key) {
-        writeLocal(
-          key,
-          readLocal<T>(key).map((r) => (r.id === id ? row : r)),
-        );
-      }
-      return row;
+      const item = res.data?.data ?? res.data ?? { ...values, id };
+      return { ...item, id: (item.id || item._id || id)?.toString() } as T;
     },
 
     remove: async (id: string) => {
@@ -105,12 +89,6 @@ export function apiMasterAdapter<T extends MasterRecord>(
         return;
       }
       await api.delete(`${endpoint}/${id}`);
-      if (key) {
-        writeLocal(
-          key,
-          readLocal<T>(key).filter((r) => r.id !== id),
-        );
-      }
     },
   };
 }

@@ -9,6 +9,7 @@ export const FinancePage = lazy(() => import('../pages/FinancePage').then((m) =>
 export const ReportsPage = lazy(() => import('../pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 export const SettingsPage = lazy(() => import('../pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 export const MasterPage = lazy(() => import('../modules/master').then((m) => ({ default: m.MasterPage })));
+export const InventoryPage = lazy(() => import('../pages/InventoryPage').then((m) => ({ default: m.InventoryPage })));
 export const SetupPage = lazy(() => import('../pages/SetupPage').then((m) => ({ default: m.SetupPage })));
 
 /** Shows the page loader while a lazy page's code downloads. */

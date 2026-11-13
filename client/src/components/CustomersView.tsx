@@ -7,6 +7,7 @@ import type { CustomerItem, CustomerStatementItem } from '@/types/pos.types';
 import { CustomersKpiStrip } from './customers/CustomersKpiStrip';
 import { CustomersTable } from './customers/CustomersTable';
 import { AddCustomerModal } from './customers/AddCustomerModal';
+import { EditCustomerModal } from './customers/EditCustomerModal';
 import { RecordRepaymentModal } from './customers/RecordRepaymentModal';
 import { PassbookModal } from './customers/PassbookModal';
 
@@ -21,6 +22,7 @@ interface CustomersViewProps {
 export function CustomersView({ customers, loading, onRefreshCustomers, shopName }: CustomersViewProps) {
   const toast = useToast();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [customerToEdit, setCustomerToEdit] = useState<CustomerItem | null>(null);
   const [customerToRepay, setCustomerToRepay] = useState<CustomerItem | null>(null);
   const [statementCustomer, setStatementCustomer] = useState<CustomerItem | null>(null);
   const [statement, setStatement] = useState<CustomerStatementItem[]>([]);
@@ -84,11 +86,19 @@ export function CustomersView({ customers, loading, onRefreshCustomers, shopName
         customers={customers}
         loading={loading}
         shopName={shopName}
+        onEdit={setCustomerToEdit}
         onRepay={setCustomerToRepay}
         onOpenStatement={openStatementModal}
       />
 
       <AddCustomerModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onCustomerAdded={onRefreshCustomers} />
+
+      <EditCustomerModal
+        isOpen={!!customerToEdit}
+        customer={customerToEdit}
+        onClose={() => setCustomerToEdit(null)}
+        onCustomerUpdated={onRefreshCustomers}
+      />
 
       <RecordRepaymentModal
         customer={customerToRepay}

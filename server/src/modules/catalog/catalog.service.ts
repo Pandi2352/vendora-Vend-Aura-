@@ -1,11 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types } from 'mongoose';
 import { NumberUtil, ObjectIdUtil, StringUtil, withId } from '../../common';
 import { CatalogQueryDto } from './dto/catalog-query.dto';
+import { CreateProductDto, UpdateProductDto } from './dto/create-product.dto';
+import { CreateCategoryDto, UpdateCategoryDto, UpdateOpeningStockDto } from './dto/create-category.dto';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { Category, CategoryDocument } from './schemas/category.schema';
 import { BusinessType } from '../../shared';
+import { getStarterCatalogData } from './starter-catalog.data';
 
 @Injectable()
 export class CatalogService {
@@ -16,11 +19,13 @@ export class CatalogService {
     @InjectModel(Category.name) private readonly categoryModel: Model<CategoryDocument>,
   ) {}
 
-  /**
-   * Get all products for a specific tenant with optional category/search filters
-   */
+  /** Get all products for a specific tenant with optional category/search filters */
   async getProductsByTenant(tenantId: string, query: CatalogQueryDto) {
-    const filter: FilterQuery<ProductDocument> = { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'), isActive: true };
+    const filter: FilterQuery<ProductDocument> = {
+      tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'),
+      isActive: true,
+      isDeleted: { $ne: true },
+    };
 
     if (query.category && query.category !== 'ALL') {
       filter.category = query.category;
@@ -30,38 +35,176 @@ export class CatalogService {
       filter.$or = [{ name: regex }, { barcode: regex }, { category: regex }];
     }
 
-    // The POS terminal keeps the whole active catalog in memory for instant barcode lookup,
-    // so this list is intentionally not paginated.
     const products = await this.productModel.find(filter).sort({ name: 1 }).lean();
     return products.map(withId);
   }
 
-  /**
-   * Get categories for a tenant
-   */
+  /** Get categories for a tenant */
   async getCategoriesByTenant(tenantId: string) {
     const categories = await this.categoryModel
-      .find({ tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'), isActive: true })
+      .find({
+        tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'),
+        isActive: true,
+        isDeleted: { $ne: true },
+      })
       .sort({ displayOrder: 1 })
       .lean();
     return categories.map(withId);
   }
 
-  /**
-   * Seed sector-specific starter catalog on tenant registration
-   */
-  async seedTenantCatalog(tenantId: Types.ObjectId | string, businessType: BusinessType) {
-    const tId = ObjectIdUtil.toObjectId(tenantId, 'tenant');
+  /** Create a new product in the tenant catalog */
+  async createProduct(tenantIdStr: string, dto: CreateProductDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const barcode = dto.barcode.trim();
 
-    // Verify if already seeded
-    const existing = await this.productModel.countDocuments({ tenantId: tId });
-    if (existing > 0) {
-      return;
+    const exists = await this.productModel.findOne({ tenantId, barcode, isDeleted: { $ne: true } }).lean();
+    if (exists) {
+      throw new ConflictException(`A product with barcode "${barcode}" already exists.`);
     }
 
-    const { categories, products } = this.getStarterCatalogData(businessType);
+    const costPrice = dto.costPrice ?? NumberUtil.round(dto.unitPrice * 0.75);
+    const prod = await this.productModel.create({
+      ...dto,
+      tenantId,
+      barcode,
+      name: dto.name.trim(),
+      category: dto.category.trim(),
+      costPrice,
+      taxRatePercent: dto.taxRatePercent ?? 0,
+      stock: dto.stock ?? 50,
+      unit: dto.unit || 'pcs',
+      isActive: true,
+    });
+    return withId(prod.toObject());
+  }
 
-    // Seed Categories
+  /** Update an existing product */
+  async updateProduct(tenantIdStr: string, idStr: string, dto: UpdateProductDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const id = ObjectIdUtil.toObjectId(idStr, 'product');
+
+    if (dto.barcode) {
+      const barcode = dto.barcode.trim();
+      const duplicate = await this.productModel.findOne({
+        tenantId,
+        barcode,
+        _id: { $ne: id },
+        isDeleted: { $ne: true },
+      }).lean();
+      if (duplicate) {
+        throw new ConflictException(`A product with barcode "${barcode}" already exists.`);
+      }
+    }
+
+    const payload: Record<string, unknown> = { ...dto };
+    if (dto.name) payload.name = dto.name.trim();
+    if (dto.category) payload.category = dto.category.trim();
+    if (dto.barcode) payload.barcode = dto.barcode.trim();
+
+    const updated = await this.productModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { $set: payload },
+      { new: true },
+    ).lean();
+
+    if (!updated) throw new NotFoundException('Product not found.');
+    return withId(updated);
+  }
+
+  /** Soft-delete a product */
+  async deleteProduct(tenantIdStr: string, idStr: string) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const id = ObjectIdUtil.toObjectId(idStr, 'product');
+
+    const deleted = await this.productModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { $set: { isActive: false, isDeleted: true } },
+      { new: true },
+    );
+    if (!deleted) throw new NotFoundException('Product not found.');
+    return { success: true };
+  }
+
+  /** Create a new category */
+  async createCategory(tenantIdStr: string, dto: CreateCategoryDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const name = dto.name.trim();
+    const slug = dto.slug?.trim() || StringUtil.slugify(name);
+
+    const exists = await this.categoryModel.findOne({ tenantId, slug, isDeleted: { $ne: true } }).lean();
+    if (exists) {
+      throw new ConflictException(`Category "${name}" already exists.`);
+    }
+
+    const cat = await this.categoryModel.create({
+      tenantId,
+      name,
+      slug,
+      icon: dto.icon || 'Tag',
+      displayOrder: dto.displayOrder ?? 0,
+      isActive: true,
+    });
+    return withId(cat.toObject());
+  }
+
+  /** Update a category */
+  async updateCategory(tenantIdStr: string, idStr: string, dto: UpdateCategoryDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const id = ObjectIdUtil.toObjectId(idStr, 'category');
+
+    const payload: Record<string, unknown> = { ...dto };
+    if (dto.name) {
+      payload.name = dto.name.trim();
+      if (!dto.slug) payload.slug = StringUtil.slugify(dto.name);
+    }
+
+    const updated = await this.categoryModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { $set: payload },
+      { new: true },
+    ).lean();
+
+    if (!updated) throw new NotFoundException('Category not found.');
+    return withId(updated);
+  }
+
+  /** Delete a category */
+  async deleteCategory(tenantIdStr: string, idStr: string) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const id = ObjectIdUtil.toObjectId(idStr, 'category');
+
+    const deleted = await this.categoryModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { $set: { isActive: false, isDeleted: true } },
+      { new: true },
+    );
+    if (!deleted) throw new NotFoundException('Category not found.');
+    return { success: true };
+  }
+
+  /** Update opening stock and cost valuation */
+  async updateOpeningStock(tenantIdStr: string, dto: UpdateOpeningStockDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const filter = ObjectIdUtil.isValid(dto.productId)
+      ? { _id: ObjectIdUtil.toObjectId(dto.productId, 'product'), tenantId }
+      : { barcode: dto.productId, tenantId };
+
+    const update: Record<string, unknown> = { stock: dto.stock };
+    if (dto.costPrice !== undefined) update.costPrice = dto.costPrice;
+
+    const prod = await this.productModel.findOneAndUpdate(filter, { $set: update }, { new: true }).lean();
+    if (!prod) throw new NotFoundException('Product not found.');
+    return withId(prod);
+  }
+
+  /** Seed sector-specific starter catalog on tenant registration */
+  async seedTenantCatalog(tenantId: Types.ObjectId | string, businessType: BusinessType) {
+    const tId = ObjectIdUtil.toObjectId(tenantId, 'tenant');
+    const existing = await this.productModel.countDocuments({ tenantId: tId });
+    if (existing > 0) return;
+
+    const { categories, products } = getStarterCatalogData(businessType);
+
     for (let i = 0; i < categories.length; i++) {
       const catName = categories[i];
       await this.categoryModel.create({
@@ -73,7 +216,6 @@ export class CatalogService {
       });
     }
 
-    // Seed Products
     for (const prod of products) {
       await this.productModel.create({
         tenantId: tId,
@@ -91,100 +233,5 @@ export class CatalogService {
     }
 
     this.logger.log(`✓ Seeded ${products.length} starter products for Tenant [${tenantId}] (${businessType})`);
-  }
-
-  private getStarterCatalogData(businessType: BusinessType): {
-    categories: string[];
-    products: Array<{
-      name: string;
-      category: string;
-      barcode: string;
-      unitPrice: number;
-      mrp: number;
-      taxRatePercent: number;
-      stock?: number;
-      unit?: string;
-    }>;
-  } {
-    switch (businessType) {
-      case BusinessType.TEXTILE_GARMENTS:
-        return {
-          categories: ['Men', 'Women', 'Kids', 'Ethnic', 'Fabrics'],
-          products: [
-            { name: "Men's Formal Oxford Cotton Shirt - Sky Blue", category: 'Men', barcode: '8902001', unitPrice: 899, mrp: 1299, taxRatePercent: 5 },
-            { name: 'Slim Fit Stretch Denim Jeans 32"', category: 'Men', barcode: '8902002', unitPrice: 1299, mrp: 1799, taxRatePercent: 12 },
-            { name: 'Kanchipuram Silk Saree Traditional Zari', category: 'Ethnic', barcode: '8902003', unitPrice: 3499, mrp: 4999, taxRatePercent: 5 },
-            { name: 'Printed Rayon Anarkali Kurti Set', category: 'Women', barcode: '8902004', unitPrice: 999, mrp: 1499, taxRatePercent: 5 },
-            { name: "Kids Pure Cotton Graphic T-Shirt", category: 'Kids', barcode: '8902005', unitPrice: 349, mrp: 499, taxRatePercent: 5 },
-            { name: "Men's Classic Linen Trousers - Beige", category: 'Men', barcode: '8902006', unitPrice: 1199, mrp: 1599, taxRatePercent: 12 },
-            { name: 'Chanderi Silk Dupatta Floral Embroidery', category: 'Ethnic', barcode: '8902007', unitPrice: 499, mrp: 799, taxRatePercent: 5 },
-            { name: 'Pure Cotton Handloom Towel Set (Pack of 2)', category: 'Fabrics', barcode: '8902008', unitPrice: 299, mrp: 399, taxRatePercent: 5 },
-          ],
-        };
-
-      case BusinessType.PHARMACY:
-        return {
-          categories: ['Medicines', 'Vitamins & Health', 'First Aid', 'Personal Care', 'Baby Care'],
-          products: [
-            { name: 'Dolo 650mg Paracetamol Tablets (Strip of 15)', category: 'Medicines', barcode: '8903001', unitPrice: 32, mrp: 34, taxRatePercent: 12 },
-            { name: 'Limcee 500mg Vitamin C Chewable (Strip of 15)', category: 'Vitamins & Health', barcode: '8903002', unitPrice: 26, mrp: 28, taxRatePercent: 12 },
-            { name: 'Dettol Antiseptic Liquid 250ml Bottle', category: 'First Aid', barcode: '8903003', unitPrice: 145, mrp: 150, taxRatePercent: 18 },
-            { name: 'Band-Aid Washproof Strips (Pack of 20)', category: 'First Aid', barcode: '8903004', unitPrice: 50, mrp: 55, taxRatePercent: 12 },
-            { name: 'Electral ORS Hydration Powder 21.8g Sachet', category: 'Medicines', barcode: '8903005', unitPrice: 22, mrp: 24, taxRatePercent: 5 },
-            { name: 'Himalaya Baby Wet Wipes 72s', category: 'Baby Care', barcode: '8903006', unitPrice: 165, mrp: 190, taxRatePercent: 18 },
-            { name: 'Moov Pain Relief Ointment 50g Tube', category: 'Medicines', barcode: '8903007', unitPrice: 175, mrp: 185, taxRatePercent: 12 },
-            { name: 'Digital Infrared Forehead Thermometer', category: 'Personal Care', barcode: '8903008', unitPrice: 850, mrp: 1200, taxRatePercent: 18 },
-          ],
-        };
-
-      case BusinessType.BAKERY_SWEETS:
-        return {
-          categories: ['Breads & Buns', 'Cakes & Pastries', 'Cookies & Biscuits', 'Traditional Sweets', 'Savouries'],
-          products: [
-            { name: 'Fresh Milk Bread 400g Loaf', category: 'Breads & Buns', barcode: '8904001', unitPrice: 45, mrp: 45, taxRatePercent: 0 },
-            { name: 'Dutch Chocolate Truffle Pastry (Per Piece)', category: 'Cakes & Pastries', barcode: '8904002', unitPrice: 75, mrp: 80, taxRatePercent: 5 },
-            { name: 'Desi Ghee Motichoor Laddu 500g Box', category: 'Traditional Sweets', barcode: '8904003', unitPrice: 280, mrp: 300, taxRatePercent: 5 },
-            { name: 'Handmade Butter Cashew Cookies 250g', category: 'Cookies & Biscuits', barcode: '8904004', unitPrice: 120, mrp: 130, taxRatePercent: 12 },
-            { name: 'Spicy Madras Mixture 200g Packet', category: 'Savouries', barcode: '8904005', unitPrice: 65, mrp: 70, taxRatePercent: 12 },
-            { name: 'Red Velvet Birthday Cake 1kg Round', category: 'Cakes & Pastries', barcode: '8904006', unitPrice: 650, mrp: 750, taxRatePercent: 5 },
-            { name: 'Whole Wheat Pav Buns (Pack of 6)', category: 'Breads & Buns', barcode: '8904007', unitPrice: 35, mrp: 35, taxRatePercent: 0 },
-            { name: 'Kaju Katli Diamond Cut 250g Box', category: 'Traditional Sweets', barcode: '8904008', unitPrice: 260, mrp: 280, taxRatePercent: 5 },
-          ],
-        };
-
-      case BusinessType.RESTAURANT_CAFE:
-        return {
-          categories: ['Beverages', 'Starters', 'Main Course', 'Breads & Rice', 'Desserts'],
-          products: [
-            { name: 'Traditional South Indian Filter Coffee', category: 'Beverages', barcode: '8905001', unitPrice: 40, mrp: 40, taxRatePercent: 5 },
-            { name: 'Crispy Ghee Podi Masala Dosa', category: 'Starters', barcode: '8905002', unitPrice: 110, mrp: 110, taxRatePercent: 5 },
-            { name: 'Paneer Butter Masala (Full Handi)', category: 'Main Course', barcode: '8905003', unitPrice: 220, mrp: 240, taxRatePercent: 5 },
-            { name: 'Tandoori Butter Naan (1 Piece)', category: 'Breads & Rice', barcode: '8905004', unitPrice: 45, mrp: 45, taxRatePercent: 5 },
-            { name: 'Chicken Dum Biryani Pot with Raita', category: 'Main Course', barcode: '8905005', unitPrice: 260, mrp: 280, taxRatePercent: 5 },
-            { name: 'Cold Hazelnut Frappe with Whipped Cream', category: 'Beverages', barcode: '8905006', unitPrice: 140, mrp: 150, taxRatePercent: 5 },
-            { name: 'Gulab Jamun with Vanilla Ice Cream', category: 'Desserts', barcode: '8905007', unitPrice: 85, mrp: 90, taxRatePercent: 5 },
-            { name: 'Jeera Rice with Dal Tadka Combo', category: 'Breads & Rice', barcode: '8905008', unitPrice: 180, mrp: 190, taxRatePercent: 5 },
-          ],
-        };
-
-      case BusinessType.GROCERY:
-      case BusinessType.SUPERMARKET:
-      default:
-        return {
-          categories: ['FMCG', 'Grocery', 'Spices', 'Beverages', 'Confectionery', 'Dairy'],
-          products: [
-            { name: 'Aambal Handwash 2 x 300ml Combo', category: 'FMCG', barcode: '890103001', unitPrice: 115, mrp: 115, taxRatePercent: 0 },
-            { name: 'Aditi Chakki Fresh Atta 1kg', category: 'Grocery', barcode: '890172518', unitPrice: 55, mrp: 73, taxRatePercent: 0 },
-            { name: 'Bakers Al Faham Masala 80gm', category: 'Spices', barcode: '890600123', unitPrice: 75, mrp: 80, taxRatePercent: 5 },
-            { name: 'Tata Tea Gold Leaf 500g', category: 'Beverages', barcode: '890105885', unitPrice: 320, mrp: 350, taxRatePercent: 5 },
-            { name: 'Parle-G Gold Biscuits 1kg Family Pack', category: 'FMCG', barcode: '890171910', unitPrice: 120, mrp: 140, taxRatePercent: 18 },
-            { name: 'Fortune Sunlite Refined Sunflower Oil 1L', category: 'Grocery', barcode: '890600728', unitPrice: 145, mrp: 165, taxRatePercent: 5 },
-            { name: 'Cadbury Dairy Milk Silk 150g', category: 'Confectionery', barcode: '890123302', unitPrice: 175, mrp: 180, taxRatePercent: 18 },
-            { name: 'Surf Excel Quick Wash Detergent Powder 1kg', category: 'FMCG', barcode: '890103039', unitPrice: 140, mrp: 155, taxRatePercent: 18 },
-            { name: 'Aashirvaad Select Sharbati Atta 5kg Bag', category: 'Grocery', barcode: '890103042', unitPrice: 295, mrp: 320, taxRatePercent: 0 },
-            { name: 'Amul Pasteurised Butter 500g Brick', category: 'Dairy', barcode: '890103088', unitPrice: 275, mrp: 285, taxRatePercent: 5 },
-          ],
-        };
-    }
   }
 }

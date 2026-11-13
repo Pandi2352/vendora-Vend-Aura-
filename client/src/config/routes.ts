@@ -15,6 +15,7 @@ export const ROUTES = {
   REPORTS_GST: '/reports/gst',
   REPORTS_INVENTORY: '/reports/inventory',
   MASTER: '/master',
+  INVENTORY: '/inventory',
   SETTINGS: '/settings',
   SETUP: '/setup',
   UNAUTHORIZED: '/unauthorized',

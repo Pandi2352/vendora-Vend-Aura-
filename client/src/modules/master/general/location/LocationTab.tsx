@@ -73,6 +73,7 @@ export function LocationTab() {
         rowLabel={(r) => r.code}
         onAdd={editor.openAdd}
         onEdit={editor.openEdit}
+        onDelete={list.remove && ((r) => list.remove!(r.id))}
       />
       <MasterFormDialog
         open={editor.open}

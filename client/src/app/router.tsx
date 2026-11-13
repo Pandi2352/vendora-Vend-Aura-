@@ -19,6 +19,7 @@ import {
   ReportsPage,
   SettingsPage,
   MasterPage,
+  InventoryPage,
   SetupPage,
   LazyPage,
 } from './lazyPages';
@@ -133,6 +134,18 @@ export const router = createBrowserRouter([
               <LazyPage>
                 <MasterPage />
               </LazyPage>
+            ),
+          },
+          {
+            path: ROUTES.INVENTORY,
+            element: (
+              <RequireRole roles={ROLE_GROUPS.MANAGEMENT}>
+                {
+                  <LazyPage>
+                    <InventoryPage />
+                  </LazyPage>
+                }
+              </RequireRole>
             ),
           },
           {
