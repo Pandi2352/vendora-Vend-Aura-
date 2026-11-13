@@ -29,7 +29,7 @@ describe('ThemeSwitcherDropdown', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
     expect(screen.getByRole('dialog', { name: /Theme switcher/i })).toBeInTheDocument();
-    expect(screen.getByText(/Color Palette \(12 Themes\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Color Palette \(\d+ Themes\)/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Emerald Luxe/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Sunset Amber/i })).toBeInTheDocument();
 

@@ -85,7 +85,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       config.sidebarStyle !== serverConfig.sidebarStyle ||
       config.navbarStyle !== serverConfig.navbarStyle ||
       config.fontFamily !== serverConfig.fontFamily ||
-      config.borderRadius !== serverConfig.borderRadius
+      config.borderRadius !== serverConfig.borderRadius ||
+      config.surfaceStyle !== serverConfig.surfaceStyle ||
+      config.accentIntensity !== serverConfig.accentIntensity ||
+      config.tableStriping !== serverConfig.tableStriping
     );
   }, [config, serverConfig]);
 

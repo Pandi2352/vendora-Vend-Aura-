@@ -51,7 +51,7 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
           'fixed lg:relative inset-y-0 left-0 z-40 flex flex-col border-r',
           'transition-[width,background-color] duration-200 shrink-0',
           'top-14 lg:top-0',
-          sidebarContainerClass(config.sidebarStyle),
+          sidebarContainerClass(config.sidebarStyle, config.surfaceStyle),
           showCollapsed ? 'w-16' : 'w-60',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}

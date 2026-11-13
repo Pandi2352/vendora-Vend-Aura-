@@ -26,12 +26,12 @@ export function TypographyStylingCard({
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-            Font Family & Typography ({FONT_OPTIONS.length} Styles)
+            Font Family & Retail Typography ({FONT_OPTIONS.length} Styles)
           </p>
-          <span className="text-xs text-zinc-500">Live preview in each card</span>
+          <span className="text-xs text-zinc-500">Rendered with real typography preview</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {FONT_OPTIONS.map((font) => {
             const isSelected = font.id === fontFamily;
             return (
@@ -40,24 +40,31 @@ export function TypographyStylingCard({
                 type="button"
                 onClick={() => onChangeFont(font.id)}
                 className={cn(
-                  'flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer bg-white',
+                  'flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer bg-white group',
                   isSelected
                     ? 'border-primary-500 ring-2 ring-primary-500/20 shadow-xs bg-primary-50/15'
                     : 'border-zinc-200 hover:border-zinc-300',
                 )}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-bold text-zinc-900">{font.label}</span>
-                  {isSelected && <Check className="w-4 h-4 text-primary-600 shrink-0" weight="bold" />}
+                  <span className="text-sm font-bold text-zinc-900 group-hover:text-primary-700 transition-colors">
+                    {font.label}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded-sm bg-zinc-100 text-zinc-600">
+                      {font.tag}
+                    </span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-primary-600 shrink-0" weight="bold" />}
+                  </div>
                 </div>
                 <p
-                  className="text-xs text-zinc-600 font-medium"
+                  className="text-xs text-zinc-600 font-medium line-clamp-1"
                   style={{ fontFamily: font.stack }}
                 >
                   {font.sample}
                 </p>
-                <span className="text-[0.6875rem] text-zinc-600 mt-1 font-mono">
-                  Aa Bb Gg 12345 ₹499.00
+                <span className="text-[0.6875rem] text-zinc-500 mt-1.5 font-mono">
+                  Invoice #089 · ₹499.00
                 </span>
               </button>
             );
@@ -100,4 +107,3 @@ export function TypographyStylingCard({
     </div>
   );
 }
-

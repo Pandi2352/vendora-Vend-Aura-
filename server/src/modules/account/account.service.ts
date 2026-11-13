@@ -293,6 +293,9 @@ export class AccountService {
       fontFamily: (p.fontFamily as string) || DEFAULT_THEME_CONFIG.fontFamily,
       fontSize: (p.fontSize as string) || DEFAULT_THEME_CONFIG.fontSize,
       borderRadius: (p.borderRadius as string) || DEFAULT_THEME_CONFIG.borderRadius,
+      surfaceStyle: (p.surfaceStyle as string) || DEFAULT_THEME_CONFIG.surfaceStyle,
+      accentIntensity: (p.accentIntensity as string) || DEFAULT_THEME_CONFIG.accentIntensity,
+      tableStriping: (p.tableStriping as string) || DEFAULT_THEME_CONFIG.tableStriping,
     };
   }
 
@@ -311,6 +314,9 @@ export class AccountService {
       ...(dto.fontFamily ? { fontFamily: dto.fontFamily } : {}),
       ...(dto.fontSize ? { fontSize: dto.fontSize } : {}),
       ...(dto.borderRadius ? { borderRadius: dto.borderRadius } : {}),
+      ...(dto.surfaceStyle ? { surfaceStyle: dto.surfaceStyle } : {}),
+      ...(dto.accentIntensity ? { accentIntensity: dto.accentIntensity } : {}),
+      ...(dto.tableStriping ? { tableStriping: dto.tableStriping } : {}),
     };
 
     await this.tenantModel.findByIdAndUpdate(tenantId, {

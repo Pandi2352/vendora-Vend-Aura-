@@ -54,6 +54,9 @@ export class UpdateCompanyProfileDto {
   @ApiPropertyOptional() @IsOptional() @IsString() fontFamily?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() fontSize?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() borderRadius?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() surfaceStyle?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() accentIntensity?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() tableStriping?: string;
 }
 
 export const DEFAULT_COMPANY_PROFILE = {
@@ -105,5 +108,8 @@ export const DEFAULT_COMPANY_PROFILE = {
   fontFamily: 'Plus Jakarta Sans',
   fontSize: 'default',
   borderRadius: 'modern',
+  surfaceStyle: 'flat',
+  accentIntensity: 'vibrant',
+  tableStriping: 'false',
 };
 

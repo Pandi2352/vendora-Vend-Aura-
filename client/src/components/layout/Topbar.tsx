@@ -39,7 +39,7 @@ export function Topbar({ onOpenMobileNav, onOpenSearch }: TopbarProps) {
   const fullscreen = useFullscreen();
 
   return (
-    <header className={cn('h-14 shrink-0 border-b flex items-center gap-2 pr-3 sm:pr-4 transition-colors', topbarContainerClass(config.navbarStyle))}>
+    <header className={cn('h-14 shrink-0 border-b flex items-center gap-2 pr-3 sm:pr-4 transition-colors', topbarContainerClass(config.navbarStyle, config.surfaceStyle))}>
       {/* Brand column lines up with the sidebar width */}
       <div
         className={cn(

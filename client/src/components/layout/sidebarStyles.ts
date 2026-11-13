@@ -1,31 +1,37 @@
 import { cn } from '../ui/cn';
-import type { SidebarStyle, NavbarStyle } from '../../lib/theme';
+import type { SidebarStyle, NavbarStyle, SurfaceStyle } from '../../lib/theme';
 
-export function sidebarContainerClass(style: SidebarStyle = 'default') {
+export function sidebarContainerClass(style: SidebarStyle = 'default', surface: SurfaceStyle = 'flat') {
+  const glass = surface === 'glass' ? 'backdrop-blur-md bg-opacity-90' : '';
+  const bordered = surface === 'bordered' ? 'border-r-2' : '';
+
   switch (style) {
     case 'dark':
-      return 'bg-zinc-950 border-zinc-800 text-zinc-100 shadow-sm';
+      return cn('bg-zinc-950 border-zinc-800 text-zinc-100 shadow-sm', glass, bordered);
     case 'brand':
-      return 'bg-primary-50/70 border-primary-200/60 text-primary-950';
+      return cn('bg-primary-50/70 border-primary-200/60 text-primary-950', glass, bordered);
     case 'contrast':
-      return 'bg-white border-zinc-200 text-zinc-800 shadow-xs';
+      return cn('bg-white border-zinc-200 text-zinc-800 shadow-xs', glass, bordered);
     case 'default':
     default:
-      return 'bg-shell border-shell-border text-shell-text';
+      return cn('bg-shell border-shell-border text-shell-text', glass, bordered);
   }
 }
 
-export function topbarContainerClass(style: NavbarStyle = 'default') {
+export function topbarContainerClass(style: NavbarStyle = 'default', surface: SurfaceStyle = 'flat') {
+  const glass = surface === 'glass' ? 'backdrop-blur-md bg-opacity-85' : '';
+  const bordered = surface === 'bordered' ? 'border-b-2' : '';
+
   switch (style) {
     case 'dark':
-      return 'bg-zinc-950 border-zinc-800 text-white shadow-sm';
+      return cn('bg-zinc-950 border-zinc-800 text-white shadow-sm', glass, bordered);
     case 'brand':
-      return 'bg-primary-600 border-primary-700 text-white shadow-sm';
+      return cn('bg-primary-600 border-primary-700 text-white shadow-sm', glass, bordered);
     case 'card':
-      return 'bg-white border-zinc-200 text-zinc-900 shadow-xs';
+      return cn('bg-white border-zinc-200 text-zinc-900 shadow-xs', glass, bordered);
     case 'default':
     default:
-      return 'bg-shell border-shell-border text-shell-text';
+      return cn('bg-shell border-shell-border text-shell-text', glass, bordered);
   }
 }
 

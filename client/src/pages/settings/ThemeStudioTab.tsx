@@ -3,6 +3,13 @@ import { Palette, FloppyDisk, ArrowCounterClockwise } from '@phosphor-icons/reac
 import { Card, CardHeader, Alert, Button } from '../../components/ui';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
+import {
+  THEME_PRESETS,
+  FONT_OPTIONS,
+  RADIUS_OPTIONS,
+  SIDEBAR_STYLES,
+  NAVBAR_STYLES,
+} from '../../lib/theme';
 import { ThemePresetSelector } from './theme/ThemePresetSelector';
 import { ShellStylingCard } from './theme/ShellStylingCard';
 import { TypographyStylingCard } from './theme/TypographyStylingCard';
@@ -24,6 +31,22 @@ export function ThemeStudioTab() {
     } else {
       setSaveError('Failed to save theme settings to the database. Please try again.');
     }
+  };
+
+  const handleShuffle = () => {
+    const randomTheme = THEME_PRESETS[Math.floor(Math.random() * THEME_PRESETS.length)];
+    const randomFont = FONT_OPTIONS[Math.floor(Math.random() * FONT_OPTIONS.length)];
+    const randomRadius = RADIUS_OPTIONS[Math.floor(Math.random() * RADIUS_OPTIONS.length)];
+    const randomSidebar = SIDEBAR_STYLES[Math.floor(Math.random() * SIDEBAR_STYLES.length)];
+    const randomNavbar = NAVBAR_STYLES[Math.floor(Math.random() * NAVBAR_STYLES.length)];
+
+    setTheme({
+      themeId: randomTheme.id,
+      fontFamily: randomFont.id,
+      borderRadius: randomRadius.id,
+      sidebarStyle: randomSidebar.id,
+      navbarStyle: randomNavbar.id,
+    });
   };
 
   return (
@@ -78,14 +101,19 @@ export function ThemeStudioTab() {
             <ThemePresetSelector
               selectedThemeId={config.themeId}
               onSelectTheme={(themeId) => setTheme({ themeId })}
+              onShuffle={handleShuffle}
             />
 
             <div className="border-t border-zinc-200 pt-5">
               <ShellStylingCard
                 sidebarStyle={config.sidebarStyle}
                 navbarStyle={config.navbarStyle}
+                surfaceStyle={config.surfaceStyle}
+                tableStriping={config.tableStriping}
                 onChangeSidebar={(sidebarStyle) => setTheme({ sidebarStyle })}
                 onChangeNavbar={(navbarStyle) => setTheme({ navbarStyle })}
+                onChangeSurface={(surfaceStyle) => setTheme({ surfaceStyle })}
+                onChangeStriping={(tableStriping) => setTheme({ tableStriping })}
               />
             </div>
 

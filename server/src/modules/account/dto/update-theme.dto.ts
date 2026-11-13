@@ -31,6 +31,21 @@ export class UpdateThemeDto {
   @IsOptional()
   @IsString()
   borderRadius?: string;
+
+  @ApiPropertyOptional({ example: 'flat' })
+  @IsOptional()
+  @IsString()
+  surfaceStyle?: string;
+
+  @ApiPropertyOptional({ example: 'vibrant' })
+  @IsOptional()
+  @IsString()
+  accentIntensity?: string;
+
+  @ApiPropertyOptional({ example: 'true' })
+  @IsOptional()
+  @IsString()
+  tableStriping?: string;
 }
 
 export interface ThemeConfig {
@@ -40,6 +55,9 @@ export interface ThemeConfig {
   fontFamily: string;
   fontSize: string;
   borderRadius: string;
+  surfaceStyle?: string;
+  accentIntensity?: string;
+  tableStriping?: string;
 }
 
 export const DEFAULT_THEME_CONFIG: ThemeConfig = {
@@ -49,5 +67,8 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   fontFamily: 'Plus Jakarta Sans',
   fontSize: 'default',
   borderRadius: 'modern',
+  surfaceStyle: 'flat',
+  accentIntensity: 'vibrant',
+  tableStriping: 'false',
 };
 

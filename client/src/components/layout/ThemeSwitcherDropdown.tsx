@@ -83,8 +83,8 @@ export function ThemeSwitcherDropdown() {
 
           {/* Color Themes Grid */}
           <div className="mb-3">
-            <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-zinc-500 mb-1.5">Color Palette (12 Themes)</p>
-            <div className="grid grid-cols-3 gap-1.5 max-h-48 overflow-y-auto pr-0.5">
+            <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-zinc-500 mb-1.5">Color Palette ({THEME_PRESETS.length} Themes)</p>
+            <div className="grid grid-cols-3 gap-1.5 max-h-52 overflow-y-auto pr-0.5">
               {THEME_PRESETS.map((preset) => {
                 const isSelected = preset.id === config.themeId;
                 return (

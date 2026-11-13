@@ -84,9 +84,9 @@ describe('ThemeStudioTab', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Font Family & Typography/i)).toBeInTheDocument();
+    expect(screen.getByText(/Font Family/i)).toBeInTheDocument();
     expect(screen.getByText('Outfit')).toBeInTheDocument();
     expect(screen.getByText('Lexend')).toBeInTheDocument();
-    expect(screen.getByText(/Corner Radius & Geometry/i)).toBeInTheDocument();
+    expect(screen.getByText(/Corner Radius/i)).toBeInTheDocument();
   });
 });

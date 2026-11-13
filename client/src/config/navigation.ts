@@ -109,18 +109,6 @@ export const NAVIGATION: NavItem[] = [
     sectionTitle: 'Access Control',
     children: [{ label: 'Staff & Cashiers', path: `${ROUTES.SETTINGS}?tab=users`, icon: ms('group') }],
   },
-  {
-    label: 'Administrator',
-    path: `${ROUTES.SETTINGS}?tab=general`,
-    icon: ms('admin_panel_settings'),
-    roles: ROLE_GROUPS.MANAGEMENT,
-  },
-  {
-    label: 'Theme & Appearance',
-    path: `${ROUTES.SETTINGS}?tab=appearance`,
-    icon: ms('palette'),
-    roles: ROLE_GROUPS.MANAGEMENT,
-  },
   { label: 'POS', path: ROUTES.POS, icon: ms('storefront'), badgeDot: true },
   { label: 'Home Delivery', path: `${ROUTES.ORDERS}?tab=delivery`, icon: ms('local_shipping') },
   { label: 'POS Utilities', path: `${ROUTES.ORDERS}?tab=utilities`, icon: ms('receipt_long') },
@@ -184,11 +172,13 @@ export function isPathActive(targetPath: string, currentPathname: string, curren
   // If current URL has a ?tab= parameter, the base target is only active if the tab is its explicit default.
   const currentTab = currentParams.get('tab');
   if (currentTab) {
+    if (targetBase === ROUTES.SETTINGS) {
+      return currentTab !== 'users';
+    }
     const defaultTab = DEFAULT_PAGE_TABS[targetBase];
     if (defaultTab) {
       return currentTab === defaultTab;
     }
-    // Specialized route tab (e.g. ?tab=users on /settings) should not activate the root target
     return false;
   }
 
