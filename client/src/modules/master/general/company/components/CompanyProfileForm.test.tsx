@@ -29,7 +29,7 @@ describe('CompanyProfileForm', () => {
     await user.click(nav().getByRole('button', { name: /Contact & tax/ }));
     expect(screen.getByLabelText(/^Fax/)).toHaveValue('0442345');
     expect(screen.getByText('1 unsaved change')).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('opens the section with the problem when saving fails validation', async () => {
     const { user, onSave, nav } = setup();

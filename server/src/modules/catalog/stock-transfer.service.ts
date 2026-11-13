@@ -21,7 +21,7 @@ export class StockTransferService {
     @InjectModel(Product.name) private readonly productModel: Model<ProductDocument>,
     @InjectModel(Outlet.name) private readonly outletModel: Model<OutletDocument>,
     @InjectModel(StockLedger.name) private readonly stockLedgerModel: Model<StockLedgerDocument>,
-  ) {}
+  ) { }
 
   async listTransfers(tenantIdStr: string, query: StockTransferQueryDto) {
     const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
