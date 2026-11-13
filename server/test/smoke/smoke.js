@@ -327,6 +327,53 @@ function check(name, cond, extra) {
   r = await call('POST', `/inventory/transfers/${cancelTransferId}/cancel`, {}, accessToken);
   check('cancel transfer ok (status=CANCELLED)', r.status === 201 && r.json.data.status === 'CANCELLED', r.json);
 
+  // ---- Staff & Cashiers Management (/users) ----
+  r = await call('GET', '/users', null, accessToken);
+  check('list staff users ok', r.status === 200 && Array.isArray(r.json.data), r.json);
+  r = await call('POST', '/users', {
+    username: 'smoke_mgr',
+    fullName: 'Smoke Store Manager',
+    email: 'mgr@smoke.in',
+    phone: '9876543219',
+    role: 'STORE_MANAGER',
+    password: 'ManagerPass123!',
+    outletIds: [ids.primaryOutlet],
+  }, accessToken);
+  check('staff user limit enforced on starter plan -> 400', r.status === 400 && /limit/i.test(r.json.message), r.json);
+
+  // ---- Daily Shifts History (/orders/shifts/history) ----
+  r = await call('GET', '/orders/shifts/history', null, accessToken);
+  check('list shift drawer history ok', r.status === 200 && (Array.isArray(r.json.data) || Array.isArray(r.json.data?.items)), r.json);
+
+  // ---- Home Delivery Orders & Rider Dispatch (/orders/delivery) ----
+  await call('POST', '/orders/shifts/open', { openingFloat: 500 }, accessToken);
+  r = await call('POST', '/orders', {
+    items: [{ productId: ids.rice, quantity: 1 }],
+    paymentMode: 'CASH',
+    cashTendered: 150,
+    isHomeDelivery: true,
+    deliveryAddress: '123 Anna Salai, Mount Road, Chennai - 600002',
+  }, accessToken);
+  check('create home delivery order ok', r.status === 201 && r.json.data?.isHomeDelivery === true, r.json);
+  const deliveryOrderId = r.json.data?.id || r.json.data?._id;
+
+  r = await call('GET', '/orders/delivery', null, accessToken);
+  check('list home delivery orders ok', r.status === 200 && r.json.data?.summary?.pendingDispatch >= 1, r.json);
+
+  if (deliveryOrderId) {
+    r = await call('PATCH', `/orders/${deliveryOrderId}/delivery`, {
+      deliveryStatus: 'OUT_FOR_DELIVERY',
+      deliveryRiderName: 'Ramesh Kumar',
+      deliveryRiderPhone: '9876500001',
+    }, accessToken);
+    check('dispatch delivery rider ok (status=OUT_FOR_DELIVERY)', r.status === 200 && r.json.data?.deliveryStatus === 'OUT_FOR_DELIVERY', r.json);
+
+    r = await call('PATCH', `/orders/${deliveryOrderId}/delivery`, {
+      deliveryStatus: 'DELIVERED',
+    }, accessToken);
+    check('mark delivery delivered ok (status=DELIVERED)', r.status === 200 && r.json.data?.deliveryStatus === 'DELIVERED', r.json);
+  }
+
   // roles: cashier can bill but not manage suppliers / see reports
   r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
   const cashierToken = r.json?.data?.accessToken;

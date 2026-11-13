@@ -18,6 +18,12 @@ interface AppModalsProps {
     cashTendered: number,
     customer?: CustomerItem | null,
     discount?: { couponCode: string; discountAmount: number } | null,
+    delivery?: {
+      isHomeDelivery: boolean;
+      deliveryAddress?: string;
+      deliveryRiderName?: string;
+      deliveryRiderPhone?: string;
+    } | null,
   ) => void;
   checkoutError: string;
   isSubmittingBill: boolean;

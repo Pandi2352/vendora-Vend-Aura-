@@ -2,18 +2,20 @@ import { useSearchParams } from 'react-router-dom';
 import { Tabs } from '../components/ui';
 import { OrdersHistoryView } from '../components/OrdersHistoryView';
 import { DiscountsView } from '../components/discounts/DiscountsView';
+import { HomeDeliveryTab } from '../components/orders/delivery/HomeDeliveryTab';
 import { useAuth } from '../hooks/useAuth';
 import { usePosSession } from '../hooks/usePosSession';
 
-type OrdersTab = 'bills' | 'discounts';
+type OrdersTab = 'bills' | 'discounts' | 'delivery';
 
-/** Bills history with reprint & merchandising discounts. */
+/** Bills history with reprint, merchandising discounts, and home delivery dispatch. */
 export function OrdersPage() {
   const { user } = useAuth();
   const { checkout } = usePosSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
-  const currentTab: OrdersTab = rawTab === 'discounts' ? 'discounts' : 'bills';
+  const currentTab: OrdersTab =
+    rawTab === 'discounts' || rawTab === 'delivery' ? rawTab : 'bills';
 
   const handleTabChange = (nextTab: OrdersTab) => {
     setSearchParams((prev) => {
@@ -37,16 +39,17 @@ export function OrdersPage() {
           items={[
             { value: 'bills', label: 'Store Bills & Invoices' },
             { value: 'discounts', label: 'Discounts & Offers' },
+            { value: 'delivery', label: 'Home Delivery & Dispatch' },
           ]}
         />
       </div>
 
       <div className="flex-1 flex flex-col overflow-y-auto">
-        {currentTab === 'bills' ? (
+        {currentTab === 'bills' && (
           <OrdersHistoryView currentUser={user} onReprintInvoice={checkout.showInvoice} />
-        ) : (
-          <DiscountsView />
         )}
+        {currentTab === 'discounts' && <DiscountsView />}
+        {currentTab === 'delivery' && <HomeDeliveryTab />}
       </div>
     </div>
   );

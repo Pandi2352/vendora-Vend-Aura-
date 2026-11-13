@@ -21,7 +21,7 @@ describe('CheckoutModal cash tender', () => {
   it('completes immediately with the default exact cash', async () => {
     const { user, onFinalize } = setup();
     await user.click(screen.getByRole('button', { name: /Complete & print bill/ }));
-    expect(onFinalize).toHaveBeenCalledWith('CASH', 450, null);
+    expect(onFinalize).toHaveBeenCalledWith('CASH', 450, null, null, null);
   });
 
   it('shows the short-cash error under the field when it is left, and blocks completion', async () => {
@@ -40,6 +40,6 @@ describe('CheckoutModal cash tender', () => {
     await user.click(screen.getByRole('button', { name: '+₹100' }));
     expect(screen.queryByText(/Cash tendered must be at least ₹450/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Complete & print bill/ }));
-    expect(onFinalize).toHaveBeenCalledWith('CASH', 500, null);
+    expect(onFinalize).toHaveBeenCalledWith('CASH', 500, null, null, null);
   });
 });

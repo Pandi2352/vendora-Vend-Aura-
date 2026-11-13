@@ -1,10 +1,10 @@
-import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Query, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { OrderReturnsService } from './order-returns.service';
 import { CashDrawerService } from './cash-drawer.service';
 import { OfflineSyncService } from './offline-sync.service';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto, UpdateDeliveryDto } from './dto/create-order.dto';
 import { CreateReturnDto } from './dto/create-return.dto';
 import { SyncOfflineOrdersDto } from './dto/sync-offline.dto';
 import { OpenShiftDto } from './dto/open-shift.dto';
@@ -61,6 +61,27 @@ export class OrdersController {
     @Query() query: PaginationDto,
   ) {
     return this.ordersService.getOrders(tenantId, query);
+  }
+
+  // ---- HOME DELIVERY & DISPATCH ----
+  @Get('delivery')
+  @ApiOperation({ summary: 'List home delivery orders by dispatch status' })
+  async listDeliveries(
+    @TenantId() tenantId: string,
+    @Query('status') status?: string,
+  ): Promise<{ data: { items: Record<string, any>[]; summary: Record<string, number> } }> {
+    return { data: await this.ordersService.listDeliveries(tenantId, status) };
+  }
+
+  @Patch(':id/delivery')
+  @ApiOperation({ summary: 'Update home delivery fulfillment status or assigned rider' })
+  async updateDelivery(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateDeliveryDto,
+  ) {
+    const data = await this.ordersService.updateDelivery(tenantId, id, dto);
+    return { message: 'Delivery status updated', data };
   }
 
   @Get('ledger')

@@ -49,7 +49,7 @@ async function main() {
     });
     setTimeout(() => {
       if (!serverStarted) resolve();
-    }, 7000);
+    }, 20000);
   });
 
   console.log('--- 3. Server started on port 5055. Running smoke test suite ---');

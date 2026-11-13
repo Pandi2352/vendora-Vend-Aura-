@@ -90,6 +90,30 @@ export class Order extends TenantBaseEntity {
   @Prop({ default: 'COMPLETED', enum: ['COMPLETED', 'CANCELLED'] })
   status: string;
 
+  @Prop({ default: false, index: true })
+  isHomeDelivery?: boolean;
+
+  @Prop({
+    enum: ['PENDING_DISPATCH', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'],
+    index: true,
+  })
+  deliveryStatus?: 'PENDING_DISPATCH' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
+
+  @Prop({ trim: true })
+  deliveryAddress?: string;
+
+  @Prop({ trim: true })
+  deliveryRiderName?: string;
+
+  @Prop({ trim: true })
+  deliveryRiderPhone?: string;
+
+  @Prop()
+  dispatchedAt?: Date;
+
+  @Prop()
+  deliveredAt?: Date;
+
   @Prop({ default: false })
   isOfflineSync: boolean;
 

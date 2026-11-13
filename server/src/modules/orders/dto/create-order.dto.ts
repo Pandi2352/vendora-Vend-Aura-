@@ -83,4 +83,27 @@ export class CreateOrderDto {
   @IsOptional() @IsNumber() sgst?: number;
   @IsOptional() @IsNumber() grandTotal?: number;
   @IsOptional() @IsNumber() changeDue?: number;
+  @IsOptional() isHomeDelivery?: boolean;
+  @IsOptional() @IsString() deliveryStatus?: 'PENDING_DISPATCH' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
+  @IsOptional() @IsString() deliveryAddress?: string;
+  @IsOptional() @IsString() deliveryRiderName?: string;
+  @IsOptional() @IsString() deliveryRiderPhone?: string;
+}
+
+export class UpdateDeliveryDto {
+  @IsOptional()
+  @IsIn(['PENDING_DISPATCH', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])
+  deliveryStatus?: 'PENDING_DISPATCH' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
+
+  @IsOptional()
+  @IsString()
+  deliveryRiderName?: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryRiderPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryAddress?: string;
 }

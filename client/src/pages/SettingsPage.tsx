@@ -9,14 +9,16 @@ import { StoreProfileCard } from './settings/StoreProfileCard';
 import { TerminalCard } from './settings/TerminalCard';
 import { PlanUsageCard } from './settings/PlanUsageCard';
 import { OutletsManagementCard } from './settings/OutletsManagementCard';
+import { UsersManagementCard } from './settings/UsersManagementCard';
 
-type SettingsTab = 'general' | 'pos' | 'store' | 'outlets';
+type SettingsTab = 'general' | 'pos' | 'store' | 'outlets' | 'users';
 
 const TABS: TabItem<SettingsTab>[] = [
   { value: 'general', label: 'General' },
   { value: 'pos', label: 'POS' },
   { value: 'store', label: 'Store' },
   { value: 'outlets', label: 'Branches & Transfers' },
+  { value: 'users', label: 'Staff & Cashiers' },
 ];
 
 /** Settings: device preferences on the left, terminal + plan on the right. Tab is kept in ?tab=. */
@@ -52,9 +54,9 @@ export function SettingsPage() {
       )}
       <Tabs items={TABS} value={tab} onChange={(next) => setParams({ tab: next }, { replace: true })} className="mb-4" />
 
-      {tab === 'outlets' ? (
-        <OutletsManagementCard />
-      ) : (
+      {tab === 'outlets' && <OutletsManagementCard />}
+      {tab === 'users' && <UsersManagementCard />}
+      {tab !== 'outlets' && tab !== 'users' && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
           <div className="space-y-4">
             {tab === 'general' && <AppearanceCard />}

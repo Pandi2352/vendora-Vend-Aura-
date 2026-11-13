@@ -10,7 +10,7 @@ import { Subscription, SubscriptionDocument } from '../subscription/schemas/subs
 import { Outlet, OutletDocument } from '../outlet/schemas/outlet.schema';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomerLedger, CustomerLedgerDocument } from '../customers/schemas/customer-ledger.schema';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto, UpdateDeliveryDto } from './dto/create-order.dto';
 import { SequenceService } from '../sequence/sequence.service';
 import {
   AuthenticatedUser,
@@ -141,6 +141,11 @@ export class OrdersService {
             changeDue,
             cashierName,
             status: 'COMPLETED',
+            isHomeDelivery: !!dto.isHomeDelivery || !!dto.deliveryAddress,
+            deliveryStatus: dto.isHomeDelivery || dto.deliveryAddress ? 'PENDING_DISPATCH' : undefined,
+            deliveryAddress: dto.deliveryAddress?.trim(),
+            deliveryRiderName: dto.deliveryRiderName?.trim(),
+            deliveryRiderPhone: dto.deliveryRiderPhone?.trim(),
             isOfflineSync: !!dto.offlineRef,
             offlineRef: dto.offlineRef,
           },
@@ -356,6 +361,67 @@ export class OrdersService {
       throw new BadRequestException('This shop has no outlet configured.');
     }
     return primary._id as Types.ObjectId;
+  }
+
+  async listDeliveries(
+    tenantIdStr: string,
+    status?: string,
+  ): Promise<{ items: Record<string, any>[]; summary: Record<string, number> }> {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const filter: Record<string, any> = { tenantId, isHomeDelivery: true };
+    if (status && status !== 'ALL') {
+      filter.deliveryStatus = status;
+    }
+    const [orders, counts] = await Promise.all([
+      this.orderModel.find(filter).sort({ createdAt: -1 }).limit(100).lean(),
+      this.orderModel.aggregate([
+        { $match: { tenantId, isHomeDelivery: true } },
+        { $group: { _id: '$deliveryStatus', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const summary = {
+      total: 0,
+      pendingDispatch: 0,
+      outForDelivery: 0,
+      delivered: 0,
+      cancelled: 0,
+    };
+    counts.forEach((c) => {
+      summary.total += c.count;
+      if (c._id === 'PENDING_DISPATCH') summary.pendingDispatch = c.count;
+      if (c._id === 'OUT_FOR_DELIVERY') summary.outForDelivery = c.count;
+      if (c._id === 'DELIVERED') summary.delivered = c.count;
+      if (c._id === 'CANCELLED') summary.cancelled = c.count;
+    });
+
+    return {
+      items: orders.map((o) => ({ ...o, id: String(o._id) })),
+      summary,
+    };
+  }
+
+  async updateDelivery(tenantIdStr: string, idStr: string, dto: UpdateDeliveryDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const id = ObjectIdUtil.toObjectId(idStr, 'order');
+    const order = await this.orderModel.findOne({ _id: id, tenantId });
+    if (!order) throw new NotFoundException('Order not found.');
+
+    if (dto.deliveryStatus) {
+      order.deliveryStatus = dto.deliveryStatus;
+      if (dto.deliveryStatus === 'OUT_FOR_DELIVERY' && !order.dispatchedAt) {
+        order.dispatchedAt = new Date();
+      }
+      if (dto.deliveryStatus === 'DELIVERED') {
+        order.deliveredAt = new Date();
+      }
+    }
+    if (dto.deliveryRiderName !== undefined) order.deliveryRiderName = dto.deliveryRiderName.trim();
+    if (dto.deliveryRiderPhone !== undefined) order.deliveryRiderPhone = dto.deliveryRiderPhone.trim();
+    if (dto.deliveryAddress !== undefined) order.deliveryAddress = dto.deliveryAddress.trim();
+
+    await order.save();
+    return { ...order.toObject(), id: String(order._id) };
   }
 
   private async findMaxInvoiceSeq(tenantId: Types.ObjectId, prefix: string, session?: ClientSession) {

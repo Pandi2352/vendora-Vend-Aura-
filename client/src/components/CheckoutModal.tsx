@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui';
-import { round2 } from '@/lib/totals';
-import { formatInr } from '@/utils';
+import { Button } from './ui';
+import { round2 } from '../lib/totals';
+import { formatInr } from '../utils';
 import { api, unwrap, getErrorMessage } from '../lib/api';
 import {
   X,
@@ -12,6 +12,7 @@ import {
   HandCoins,
   WarningCircle,
   Tag,
+  Truck,
 } from '@phosphor-icons/react';
 import type { CustomerItem, PaymentMode } from '../types/pos.types';
 import { CustomerTagSelector } from './checkout/CustomerTagSelector';
@@ -43,6 +44,12 @@ interface CheckoutModalProps {
     cashTendered: number,
     customer?: CustomerItem | null,
     discount?: { couponCode: string; discountAmount: number } | null,
+    delivery?: {
+      isHomeDelivery: boolean;
+      deliveryAddress?: string;
+      deliveryRiderName?: string;
+      deliveryRiderPhone?: string;
+    } | null,
   ) => void;
   error?: string;
   isSubmitting?: boolean;
@@ -63,6 +70,9 @@ export function CheckoutModal({
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedDiscount | null>(null);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [isHomeDelivery, setIsHomeDelivery] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryRider, setDeliveryRider] = useState('');
 
   const effectiveGrandTotal = appliedCoupon
     ? Math.max(0, round2(grandTotal - appliedCoupon.discountAmount))
@@ -138,14 +148,20 @@ export function CheckoutModal({
       return;
     }
     const finalTender = paymentMode === 'CASH' ? cashTendered : effectiveGrandTotal;
-    if (appliedCoupon) {
-      onFinalize(paymentMode, finalTender, selectedCustomer, {
-        couponCode: appliedCoupon.code,
-        discountAmount: appliedCoupon.discountAmount,
-      });
-    } else {
-      onFinalize(paymentMode, finalTender, selectedCustomer);
-    }
+    const discountPayload = appliedCoupon
+      ? {
+          couponCode: appliedCoupon.code,
+          discountAmount: appliedCoupon.discountAmount,
+        }
+      : null;
+    const deliveryPayload = isHomeDelivery
+      ? {
+          isHomeDelivery: true,
+          deliveryAddress: deliveryAddress.trim() || undefined,
+          deliveryRiderName: deliveryRider.trim() || undefined,
+        }
+      : null;
+    onFinalize(paymentMode, finalTender, selectedCustomer, discountPayload, deliveryPayload);
   };
 
   return (
@@ -262,6 +278,53 @@ export function CheckoutModal({
                 <WarningCircle weight="bold" className="w-3.5 h-3.5 shrink-0" />
                 {couponError}
               </p>
+            )}
+          </div>
+
+          {/* Home Delivery Fulfillment Section */}
+          <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/70 space-y-2">
+            <label htmlFor="checkout-home-delivery-toggle" className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                id="checkout-home-delivery-toggle"
+                type="checkbox"
+                checked={isHomeDelivery}
+                onChange={(e) => setIsHomeDelivery(e.target.checked)}
+                className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-zinc-300"
+              />
+              <span className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5">
+                <Truck weight="bold" className="w-3.5 h-3.5 text-primary-600" />
+                Dispatch as Home Delivery Order
+              </span>
+            </label>
+            {isHomeDelivery && (
+              <div className="space-y-2 pt-1 border-t border-zinc-200/60">
+                <div>
+                  <label htmlFor="checkout-delivery-address" className="block text-[11px] font-semibold text-zinc-600 mb-0.5">
+                    Delivery Address
+                  </label>
+                  <input
+                    id="checkout-delivery-address"
+                    type="text"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Door no, street, landmark, PIN"
+                    className="w-full h-8 px-2.5 rounded border border-zinc-300 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="checkout-rider-name" className="block text-[11px] font-semibold text-zinc-600 mb-0.5">
+                    Assigned Rider (Optional)
+                  </label>
+                  <input
+                    id="checkout-rider-name"
+                    type="text"
+                    value={deliveryRider}
+                    onChange={(e) => setDeliveryRider(e.target.value)}
+                    placeholder="Rider name (e.g. Ramesh)"
+                    className="w-full h-8 px-2.5 rounded border border-zinc-300 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
             )}
           </div>
 

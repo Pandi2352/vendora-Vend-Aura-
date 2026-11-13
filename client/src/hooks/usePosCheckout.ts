@@ -25,6 +25,12 @@ export function usePosCheckout({ user, cart, onCompleted, onShiftProblem }: UseP
       cashTendered: number,
       customer?: CustomerItem | null,
       discount?: { couponCode: string; discountAmount: number } | null,
+      delivery?: {
+        isHomeDelivery: boolean;
+        deliveryAddress?: string;
+        deliveryRiderName?: string;
+        deliveryRiderPhone?: string;
+      } | null,
     ) => {
       if (cart.length === 0 || isSubmitting) return false;
       setError('');
@@ -59,6 +65,10 @@ export function usePosCheckout({ user, cart, onCompleted, onShiftProblem }: UseP
           cashTendered: paymentMode === 'CASH' ? cashTendered : undefined,
           couponCode: discount?.couponCode || undefined,
           discountAmount: discount?.discountAmount || undefined,
+          isHomeDelivery: delivery?.isHomeDelivery || undefined,
+          deliveryAddress: delivery?.deliveryAddress || undefined,
+          deliveryRiderName: delivery?.deliveryRiderName || undefined,
+          deliveryRiderPhone: delivery?.deliveryRiderPhone || undefined,
         });
         setCompletedInvoice(orderToInvoice(unwrap<OrderItemRecord>(res), user));
         onCompleted();
