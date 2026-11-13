@@ -63,6 +63,9 @@ export class Tenant extends BaseEntity {
     };
     gstin?: string;
   };
+
+  @Prop({ type: Object, default: {} })
+  companyProfile?: Record<string, unknown>;
 }
 
 export const TenantSchema = SchemaFactory.createForClass(Tenant);

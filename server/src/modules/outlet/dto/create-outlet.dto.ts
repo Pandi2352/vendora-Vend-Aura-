@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateOutletDto {
   @ApiProperty({ description: 'Outlet or Branch name', example: 'Anna Nagar Branch' })
@@ -21,6 +21,56 @@ export class CreateOutletDto {
   @IsOptional()
   @IsString()
   email?: string;
+
+  @ApiPropertyOptional({ description: 'Person in charge' })
+  @IsOptional()
+  @IsString()
+  incharge?: string;
+
+  @ApiPropertyOptional({ description: 'Sort code' })
+  @IsOptional()
+  @IsString()
+  sortCode?: string;
+
+  @ApiPropertyOptional({ description: 'Address line 2' })
+  @IsOptional()
+  @IsString()
+  address2?: string;
+
+  @ApiPropertyOptional({ description: 'Address line 3' })
+  @IsOptional()
+  @IsString()
+  address3?: string;
+
+  @ApiPropertyOptional({ description: 'GSTIN' })
+  @IsOptional()
+  @IsString()
+  gstin?: string;
+
+  @ApiPropertyOptional({ description: 'State code' })
+  @IsOptional()
+  @IsString()
+  stateCode?: string;
+
+  @ApiPropertyOptional({ description: 'Fax number' })
+  @IsOptional()
+  @IsString()
+  fax?: string;
+
+  @ApiPropertyOptional({ description: 'Whether this location is a warehouse' })
+  @IsOptional()
+  @IsBoolean()
+  isWarehouse?: boolean;
+
+  @ApiPropertyOptional({ description: 'Warehouse ID this location draws from' })
+  @IsOptional()
+  @IsString()
+  warehouseId?: string | null;
+
+  @ApiPropertyOptional({ description: 'Active status' })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @ApiPropertyOptional({ description: 'Physical address object' })
   @IsOptional()

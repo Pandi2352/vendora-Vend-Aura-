@@ -1,13 +1,17 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { localAdapter } from './localAdapter';
+import { apiMasterAdapter } from './apiMasterAdapter';
 import type { MasterRecord } from './types';
 import { useMasterCollection } from './useMasterCollection';
 
-/** A Master list kept in this browser for the signed-in shop (see localAdapter). */
+/** Master collection wired to server API with local cache synchronization. */
 export function useLocalMaster<T extends MasterRecord>(resource: string) {
   const { user } = useAuth();
   const shopId = user?.shopId ?? 'unknown';
-  const adapter = useMemo(() => localAdapter<T>(shopId, resource), [shopId, resource]);
+  const adapter = useMemo(
+    () => apiMasterAdapter<T>(`/master/${resource}`, shopId, resource),
+    [shopId, resource],
+  );
   return useMasterCollection(adapter);
 }
+

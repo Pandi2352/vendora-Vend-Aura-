@@ -23,6 +23,7 @@ import { SequenceModule } from './modules/sequence/sequence.module';
 import { AccountModule } from './modules/account/account.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { FinanceModule } from './modules/finance/finance.module';
+import { MasterModule } from './modules/master/master.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 
@@ -59,6 +60,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     AccountModule,
     PaymentModule,
     FinanceModule,
+    MasterModule,
   ],
   controllers: [AppController],
   providers: [

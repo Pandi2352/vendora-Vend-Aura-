@@ -45,8 +45,17 @@ export class OutletService {
       isPrimary: activeCount === 0,
       phone: dto.phone?.trim() || '',
       email: dto.email?.trim().toLowerCase() || '',
+      incharge: dto.incharge?.trim() || '',
+      sortCode: dto.sortCode?.trim().toUpperCase() || '',
+      address2: dto.address2?.trim() || '',
+      address3: dto.address3?.trim() || '',
+      gstin: dto.gstin?.trim().toUpperCase() || '',
+      stateCode: dto.stateCode?.trim() || '',
+      fax: dto.fax?.trim() || '',
+      isWarehouse: dto.isWarehouse ?? false,
+      warehouseId: dto.warehouseId ? ObjectIdUtil.toObjectIdOrNull(dto.warehouseId) : undefined,
       address: dto.address || {},
-      isActive: true,
+      isActive: dto.isActive ?? true,
     });
 
     return outlet;
@@ -56,9 +65,16 @@ export class OutletService {
     const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
     const outletId = ObjectIdUtil.toObjectId(outletIdStr, 'outlet');
 
+    const updatePayload: Record<string, unknown> = { ...dto };
+    if (dto.code) updatePayload.code = dto.code.trim().toUpperCase();
+    if (dto.name) updatePayload.name = dto.name.trim();
+    if (dto.warehouseId !== undefined) {
+      updatePayload.warehouseId = dto.warehouseId ? ObjectIdUtil.toObjectIdOrNull(dto.warehouseId) : null;
+    }
+
     const outlet = await this.outletModel.findOneAndUpdate(
       { _id: outletId, tenantId },
-      { $set: dto },
+      { $set: updatePayload },
       { new: true },
     );
 

@@ -9,10 +9,19 @@ interface OutletDto {
   name: string;
   phone?: string;
   isActive?: boolean;
+  incharge?: string;
+  sortCode?: string;
+  address2?: string;
+  address3?: string;
+  gstin?: string;
+  stateCode?: string;
+  fax?: string;
+  isWarehouse?: boolean;
+  warehouseId?: string;
   address?: { street?: string; city?: string; state?: string; pincode?: string };
 }
 
-/** Location fields the outlets API does not store yet; kept in this browser per outlet. */
+/** Location fields cached in this browser per outlet. */
 type LocationExtras = Omit<
   MasterValues<Location>,
   'code' | 'name' | 'phone' | 'address1' | 'city' | 'state' | 'pincode'
@@ -40,6 +49,16 @@ const toPayload = (v: MasterValues<Location>) => ({
   code: v.code,
   name: v.name,
   phone: v.phone || undefined,
+  incharge: v.incharge || undefined,
+  sortCode: v.sortCode || undefined,
+  address2: v.address2 || undefined,
+  address3: v.address3 || undefined,
+  gstin: v.gstin || undefined,
+  stateCode: v.stateCode || undefined,
+  fax: v.fax || undefined,
+  isWarehouse: v.isWarehouse ?? false,
+  warehouseId: v.warehouseId || undefined,
+  isActive: v.active ?? true,
   address: {
     street: v.address1 || undefined,
     city: v.city || undefined,
@@ -48,7 +67,7 @@ const toPayload = (v: MasterValues<Location>) => ({
   },
 });
 
-/** The fields kept in the browser (everything the outlets API does not store). */
+/** The fields kept in the browser cache. */
 function split(v: MasterValues<Location>): LocationExtras {
   return {
     incharge: v.incharge,
@@ -66,9 +85,16 @@ function split(v: MasterValues<Location>): LocationExtras {
 
 function toLocation(o: OutletDto, extras: Partial<LocationExtras> = {}): Location {
   return {
-    isWarehouse: false,
-    active: o.isActive ?? true,
-    ...extras,
+    isWarehouse: o.isWarehouse ?? extras.isWarehouse ?? false,
+    active: o.isActive ?? extras.active ?? true,
+    incharge: o.incharge ?? extras.incharge ?? '',
+    sortCode: o.sortCode ?? extras.sortCode ?? '',
+    address2: o.address2 ?? extras.address2 ?? '',
+    address3: o.address3 ?? extras.address3 ?? '',
+    gstin: o.gstin ?? extras.gstin ?? '',
+    stateCode: o.stateCode ?? extras.stateCode ?? '',
+    fax: o.fax ?? extras.fax ?? '',
+    warehouseId: o.warehouseId ?? extras.warehouseId ?? null,
     id: o._id,
     code: o.code,
     name: o.name,

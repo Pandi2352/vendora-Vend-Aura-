@@ -9,6 +9,7 @@ import { Product, ProductDocument } from '../catalog/schemas/product.schema';
 import { Category, CategoryDocument } from '../catalog/schemas/category.schema';
 import { Supplier, SupplierDocument } from '../suppliers/schemas/supplier.schema';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
+import { DEFAULT_COMPANY_PROFILE, UpdateCompanyProfileDto } from './dto/update-company-profile.dto';
 import { AuthenticatedUser, ObjectIdUtil } from '../../common';
 import { SUBSCRIPTION_PLANS, SubscriptionPlanCode } from '../../shared';
 
@@ -62,6 +63,7 @@ export class AccountService {
         status: tenant.status,
         timezone: tenant.settings?.timezone,
         currency: tenant.settings?.currency,
+        companyProfile: tenant.companyProfile ?? null,
       },
       terminal: {
         outletName: outlet?.name ?? 'Main Branch',
@@ -223,5 +225,55 @@ export class AccountService {
         },
       },
     };
+  }
+
+  /** Retrieve the detailed company profile settings for the store */
+  async getCompanyProfile(tenantIdStr: string) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const tenant = await this.tenantModel.findById(tenantId).lean();
+    if (!tenant) throw new NotFoundException('Shop not found.');
+
+    const p = (tenant.companyProfile || {}) as Record<string, unknown>;
+    return {
+      ...DEFAULT_COMPANY_PROFILE,
+      companyName: tenant.businessName || '',
+      phone: tenant.phone || '',
+      email: tenant.email || '',
+      currency: tenant.settings?.currency || 'INR',
+      gstin: tenant.settings?.gstin || '',
+      addressLine1: tenant.settings?.address?.street || '',
+      city: tenant.settings?.address?.city || '',
+      state: tenant.settings?.address?.state || 'Tamil Nadu',
+      postalCode: tenant.settings?.address?.pincode || '',
+      country: tenant.settings?.address?.country || 'India',
+      ...p,
+    };
+  }
+
+  /** Update store profile and sync top-level tenant fields */
+  async updateCompanyProfile(tenantIdStr: string, dto: UpdateCompanyProfileDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const updateObj: Record<string, unknown> = { companyProfile: dto };
+
+    if (dto.companyName && typeof dto.companyName === 'string') updateObj.businessName = dto.companyName;
+    if (dto.phone && typeof dto.phone === 'string') updateObj.phone = dto.phone;
+    if (dto.email && typeof dto.email === 'string') updateObj.email = dto.email;
+    if (dto.currency && typeof dto.currency === 'string') updateObj['settings.currency'] = dto.currency;
+    if (dto.gstin !== undefined) updateObj['settings.gstin'] = dto.gstin;
+
+    if (dto.addressLine1 !== undefined) updateObj['settings.address.street'] = dto.addressLine1;
+    if (dto.city !== undefined) updateObj['settings.address.city'] = dto.city;
+    if (dto.state !== undefined) updateObj['settings.address.state'] = dto.state;
+    if (dto.postalCode !== undefined) updateObj['settings.address.pincode'] = dto.postalCode;
+    if (dto.country !== undefined) updateObj['settings.address.country'] = dto.country;
+
+    const tenant = await this.tenantModel.findByIdAndUpdate(
+      tenantId,
+      { $set: updateObj },
+      { new: true },
+    );
+    if (!tenant) throw new NotFoundException('Shop not found.');
+
+    return this.getCompanyProfile(tenantIdStr);
   }
 }

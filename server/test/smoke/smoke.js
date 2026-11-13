@@ -161,6 +161,58 @@ function check(name, cond, extra) {
   r = await call('GET', `/suppliers/${supplierId}/payments`, null, accessToken);
   check('supplier payment ledger', r.status === 200 && r.json.data.length === 1 && r.json.data[0].balanceAfter === 440, r.json);
 
+  // ---- General Master APIs ----
+  // 1. Company Profile
+  r = await call('GET', '/account/company-profile', null, accessToken);
+  check('company profile read ok', r.status === 200 && r.json.data.companyCode, r.json);
+  r = await call('PUT', '/account/company-profile', { companyCode: 'CMP-01', companyName: 'Smoke Mart Updated', city: 'Madurai' }, accessToken);
+  check('company profile update ok', r.status === 200 && r.json.data.companyName === 'Smoke Mart Updated', r.json);
+
+  // 2. Warehouses
+  r = await call('POST', '/master/warehouses', { code: 'WH99', name: 'Smoke Godown', handlingPercent: 5 }, accessToken);
+  check('create warehouse ok', r.status === 201 && r.json.data.code === 'WH99', r.json);
+  const warehouseId = r.json.data._id || r.json.data.id;
+  r = await call('POST', '/master/warehouses', { code: 'WH99', name: 'Duplicate' }, accessToken);
+  check('duplicate warehouse code -> 409', r.status === 409, r.json);
+  r = await call('GET', '/master/warehouses', null, accessToken);
+  check('list warehouses ok', r.status === 200 && r.json.data.some((w) => w.code === 'WH99'), r.json);
+  r = await call('PATCH', `/master/warehouses/${warehouseId}`, { name: 'Smoke Godown North' }, accessToken);
+  check('patch warehouse ok', r.status === 200 && r.json.data.name === 'Smoke Godown North', r.json);
+  r = await call('DELETE', `/master/warehouses/${warehouseId}`, null, accessToken);
+  check('delete warehouse ok', r.status === 200, r.json);
+
+  // 3. Territories
+  r = await call('POST', '/master/territories', { code: 'SZ', name: 'South Zone', isGroup: true }, accessToken);
+  check('create territory group ok', r.status === 201 && r.json.data.code === 'SZ', r.json);
+  const territoryGroupId = r.json.data._id || r.json.data.id;
+  r = await call('POST', '/master/territories', { code: 'MDU', name: 'Madurai', parentId: territoryGroupId }, accessToken);
+  check('create child territory ok', r.status === 201 && r.json.data.code === 'MDU', r.json);
+  const childTerritoryId = r.json.data._id || r.json.data.id;
+  r = await call('DELETE', `/master/territories/${territoryGroupId}`, null, accessToken);
+  check('delete territory group with children -> 400', r.status === 400, r.json);
+  r = await call('DELETE', `/master/territories/${childTerritoryId}`, null, accessToken);
+  check('delete child territory ok', r.status === 200, r.json);
+  r = await call('DELETE', `/master/territories/${territoryGroupId}`, null, accessToken);
+  check('delete empty territory group ok', r.status === 200, r.json);
+
+  // 4. Reasons
+  r = await call('POST', '/master/reasons', { code: 'RSN01', description: 'Defective item', transactionType: 'sales-return', effect: 'addition' }, accessToken);
+  check('create reason ok', r.status === 201 && r.json.data.code === 'RSN01', r.json);
+  const reasonId = r.json.data._id || r.json.data.id;
+  r = await call('GET', '/master/reasons', null, accessToken);
+  check('list reasons ok', r.status === 200 && r.json.data.some((x) => x.code === 'RSN01'), r.json);
+  r = await call('DELETE', `/master/reasons/${reasonId}`, null, accessToken);
+  check('delete reason ok', r.status === 200, r.json);
+
+  // 5. Params
+  r = await call('POST', '/master/params', { code: 'BILL_COPIES', description: 'Copies', module: 'billing', valueType: 'number', value: '2' }, accessToken);
+  check('create param ok', r.status === 201 && r.json.data.code === 'BILL_COPIES', r.json);
+  const paramId = r.json.data._id || r.json.data.id;
+  r = await call('GET', '/master/params', null, accessToken);
+  check('list params ok', r.status === 200 && r.json.data.some((x) => x.code === 'BILL_COPIES'), r.json);
+  r = await call('DELETE', `/master/params/${paramId}`, null, accessToken);
+  check('delete param ok', r.status === 200, r.json);
+
   // roles: cashier can bill but not manage suppliers / see reports
   r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
   const cashierToken = r.json?.data?.accessToken;

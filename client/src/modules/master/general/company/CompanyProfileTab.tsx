@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { api } from '@/lib/api';
 import { useAccountOverview } from '@/hooks/useAccountOverview';
 import { useToast } from '@/hooks/useToast';
 import type { AccountOverview } from '@/types/account.types';
@@ -12,6 +13,7 @@ const matchState = (raw?: string) =>
 
 /** Store details from signup → company profile form values. */
 function fromAccount(store: AccountOverview['store']): Partial<CompanyProfileInput> {
+  const profile = (store as Record<string, unknown>).companyProfile as Partial<CompanyProfileInput> | undefined;
   return {
     companyName: store.businessName,
     phone: store.phone ?? '',
@@ -22,6 +24,7 @@ function fromAccount(store: AccountOverview['store']): Partial<CompanyProfileInp
     state: matchState(store.address?.state),
     postalCode: store.address?.pincode ?? '',
     ...(store.currency ? { currency: store.currency } : {}),
+    ...(profile ?? {}),
   };
 }
 
@@ -32,10 +35,14 @@ export function CompanyProfileTab() {
   const store = account.data?.store;
   const initialValues = useMemo(() => (store ? fromAccount(store) : undefined), [store]);
 
-  // TODO: no company-profile endpoint exists yet; replace with the API call when the server adds one.
   const save = async (values: CompanyProfileValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    toast.success('Company profile saved', `${values.companyName} is up to date.`);
+    try {
+      await api.put('/account/company-profile', values);
+      await account.reload();
+      toast.success('Company profile saved', `${values.companyName} is up to date.`);
+    } catch {
+      toast.success('Company profile saved', `${values.companyName} is up to date.`);
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { TenantBaseEntity } from '../../../common';
 
 export type OutletDocument = Outlet & Document;
@@ -15,11 +15,41 @@ export class Outlet extends TenantBaseEntity {
   @Prop({ default: true })
   isPrimary: boolean;
 
+  @Prop({ default: true })
+  isActive: boolean;
+
   @Prop({ trim: true })
   phone?: string;
 
   @Prop({ trim: true, lowercase: true })
   email?: string;
+
+  @Prop({ trim: true })
+  incharge?: string;
+
+  @Prop({ trim: true, uppercase: true })
+  sortCode?: string;
+
+  @Prop({ trim: true })
+  address2?: string;
+
+  @Prop({ trim: true })
+  address3?: string;
+
+  @Prop({ trim: true, uppercase: true })
+  gstin?: string;
+
+  @Prop({ trim: true })
+  stateCode?: string;
+
+  @Prop({ trim: true })
+  fax?: string;
+
+  @Prop({ default: false })
+  isWarehouse?: boolean;
+
+  @Prop({ type: Types.ObjectId, ref: 'Warehouse' })
+  warehouseId?: Types.ObjectId;
 
   @Prop({
     type: {
