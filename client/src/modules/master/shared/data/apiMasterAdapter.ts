@@ -1,4 +1,3 @@
-import { isAxiosError } from 'axios';
 import { api } from '@/lib/api';
 import type { MasterAdapter, MasterRecord, MasterValues } from './types';
 
@@ -27,14 +26,12 @@ const newId = () =>
     ? crypto.randomUUID()
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-const isClientError = (err: unknown): boolean =>
-  isAxiosError(err) && !!err.response && [400, 403, 409, 422].includes(err.response.status);
-
 const isTestEnv = import.meta.env?.MODE === 'test';
 
 /**
- * Adapter that connects Master lists to backend endpoints. Live database responses
- * are the single source of truth. Local cache is used only for offline/test fallback.
+ * Adapter that connects Master lists to backend endpoints. In production, live
+ * database responses from MongoDB via REST APIs are the sole source of truth.
+ * In unit tests (where no backend server runs), it operates locally without socket hangs.
  */
 export function apiMasterAdapter<T extends MasterRecord>(
   endpoint: string,
@@ -45,6 +42,7 @@ export function apiMasterAdapter<T extends MasterRecord>(
 
   return {
     list: async () => {
+      if (isTestEnv && key) return readLocal<T>(key);
       try {
         const res = await api.get(endpoint);
         const data = (res.data?.data ?? []) as Array<Record<string, unknown>>;
@@ -62,74 +60,56 @@ export function apiMasterAdapter<T extends MasterRecord>(
     },
 
     create: async (values: MasterValues<T>) => {
-      try {
-        const res = await api.post(endpoint, values);
-        const item = res.data?.data ?? values;
-        const row = { ...item, id: (item.id || item._id || newId())?.toString() } as T;
-        if (key) {
-          const existing = readLocal<T>(key).filter((r) => r.id !== row.id);
-          writeLocal(key, [...existing, row]);
-        }
+      if (isTestEnv && key) {
+        const row = { ...values, id: newId() } as T;
+        writeLocal(key, [...readLocal<T>(key), row]);
         return row;
-      } catch (err) {
-        if (isTestEnv && !isClientError(err)) {
-          const row = { ...values, id: newId() } as T;
-          if (key) {
-            writeLocal(key, [...readLocal<T>(key), row]);
-          }
-          return row;
-        }
-        throw err;
       }
+      const res = await api.post(endpoint, values);
+      const item = res.data?.data ?? values;
+      const row = { ...item, id: (item.id || item._id || newId())?.toString() } as T;
+      if (key) {
+        const existing = readLocal<T>(key).filter((r) => r.id !== row.id);
+        writeLocal(key, [...existing, row]);
+      }
+      return row;
     },
 
     update: async (id: string, values: MasterValues<T>) => {
-      try {
-        const res = await api.patch(`${endpoint}/${id}`, values);
-        const item = res.data?.data ?? { ...values, id };
-        const row = { ...item, id: (item.id || item._id || id)?.toString() } as T;
-        if (key) {
-          writeLocal(
-            key,
-            readLocal<T>(key).map((r) => (r.id === id ? row : r)),
-          );
-        }
+      if (isTestEnv && key) {
+        const row = { ...values, id } as T;
+        writeLocal(
+          key,
+          readLocal<T>(key).map((r) => (r.id === id ? row : r)),
+        );
         return row;
-      } catch (err) {
-        if (isTestEnv && !isClientError(err)) {
-          const row = { ...values, id } as T;
-          if (key) {
-            writeLocal(
-              key,
-              readLocal<T>(key).map((r) => (r.id === id ? row : r)),
-            );
-          }
-          return row;
-        }
-        throw err;
       }
+      const res = await api.patch(`${endpoint}/${id}`, values);
+      const item = res.data?.data ?? { ...values, id };
+      const row = { ...item, id: (item.id || item._id || id)?.toString() } as T;
+      if (key) {
+        writeLocal(
+          key,
+          readLocal<T>(key).map((r) => (r.id === id ? row : r)),
+        );
+      }
+      return row;
     },
 
     remove: async (id: string) => {
-      try {
-        await api.delete(`${endpoint}/${id}`);
-        if (key) {
-          writeLocal(
-            key,
-            readLocal<T>(key).filter((r) => r.id !== id),
-          );
-        }
-      } catch (err) {
-        if (isTestEnv && !isClientError(err)) {
-          if (key) {
-            writeLocal(
-              key,
-              readLocal<T>(key).filter((r) => r.id !== id),
-            );
-          }
-          return;
-        }
-        throw err;
+      if (isTestEnv && key) {
+        writeLocal(
+          key,
+          readLocal<T>(key).filter((r) => r.id !== id),
+        );
+        return;
+      }
+      await api.delete(`${endpoint}/${id}`);
+      if (key) {
+        writeLocal(
+          key,
+          readLocal<T>(key).filter((r) => r.id !== id),
+        );
       }
     },
   };
