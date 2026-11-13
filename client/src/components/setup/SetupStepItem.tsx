@@ -47,7 +47,7 @@ export function SetupStepItem({
         {/* Circular Milestone Node */}
         <div className="relative z-10 shrink-0">
           {completed ? (
-            <div className="w-7.5 h-7.5 rounded-full bg-[#16a34a] text-white flex items-center justify-center shadow-xs">
+            <div className="w-7.5 h-7.5 rounded-full bg-[#16a34a] text-white flex items-center justify-center">
               <Check weight="bold" className="w-3.5 h-3.5 text-white" />
             </div>
           ) : isOptional ? (
@@ -57,8 +57,10 @@ export function SetupStepItem({
           ) : (
             <div
               className={cn(
-                'w-7.5 h-7.5 rounded-full text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs',
-                isHighlighted ? 'bg-[#005bbf] ring-4 ring-blue-500/15' : 'bg-[#475569]',
+                'w-7.5 h-7.5 rounded-full border font-mono font-bold text-xs flex items-center justify-center',
+                isHighlighted
+                  ? 'bg-primary-600 border-primary-600 text-white ring-4 ring-primary-100'
+                  : 'bg-primary-50 border-primary-200 text-primary-700',
               )}
             >
               {stepNumber}
@@ -131,7 +133,7 @@ export function SetupStepItem({
             className={cn(
               'h-9 px-6 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer',
               isPrimaryAction
-                ? 'bg-[#005bbf] hover:bg-[#004fa8] text-white font-bold shadow-xs hover:scale-[1.01] active:scale-[0.99]'
+                ? 'bg-primary-600 hover:bg-primary-700 text-white font-bold'
                 : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 font-medium border border-slate-200 hover:border-slate-300',
             )}
           >
