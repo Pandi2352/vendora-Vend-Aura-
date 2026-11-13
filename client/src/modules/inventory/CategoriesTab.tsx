@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PencilSimple, Plus, Trash, ArrowClockwise } from '@phosphor-icons/react';
 import { api, getErrorMessage, unwrap } from '@/lib/api';
-import { Badge, Button } from '@/components/ui';
+import { Badge, Button, Tabs, type TabItem } from '@/components/ui';
 import { DataTable, RowActions, type Column, type RowAction } from '@/components/tables';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/hooks/useToast';
 import { CategoryFormModal, type CategoryItem } from './CategoryFormModal';
+import { BrandsView } from './BrandsView';
+
+type TaxonomySection = 'categories' | 'brands';
+
+const TAXONOMY_TABS: TabItem<TaxonomySection>[] = [
+  { value: 'categories', label: 'Product Categories' },
+  { value: 'brands', label: 'Brand & Manufacturer Master' },
+];
 
 export function CategoriesTab() {
+  const [section, setSection] = useState<TaxonomySection>('categories');
   const toast = useToast();
   const confirm = useConfirm();
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -105,48 +114,62 @@ export function CategoriesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-zinc-500">
-          Define taxonomy and product groupings used across billing, inventory, and merchandising reports.
-        </p>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => void loadCategories()}
-            disabled={loading}
-            icon={<ArrowClockwise className={loading ? 'animate-spin' : ''} />}
-          >
-            Refresh
-          </Button>
-          <Button onClick={() => setIsAddOpen(true)} icon={<Plus weight="bold" />}>
-            Add Category
-          </Button>
-        </div>
+      <div className="bg-white p-2.5 rounded-md border border-zinc-200">
+        <Tabs<TaxonomySection>
+          items={TAXONOMY_TABS}
+          value={section}
+          onChange={setSection}
+        />
       </div>
 
-      <DataTable
-        rows={categories}
-        columns={columns}
-        rowKey={(c) => c.id}
-        loading={loading}
-        searchText={(c) => `${c.name} ${c.slug}`}
-        searchPlaceholder="Search categories…"
-        emptyTitle="No categories created yet"
-        emptyDescription='Click "Add Category" above to create product taxonomy.'
-      />
+      {section === 'brands' ? (
+        <BrandsView />
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-zinc-500">
+              Define taxonomy and product groupings used across billing, inventory, and merchandising reports.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => void loadCategories()}
+                disabled={loading}
+                icon={<ArrowClockwise className={loading ? 'animate-spin' : ''} />}
+              >
+                Refresh
+              </Button>
+              <Button onClick={() => setIsAddOpen(true)} icon={<Plus weight="bold" />}>
+                Add Category
+              </Button>
+            </div>
+          </div>
 
-      <CategoryFormModal
-        isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        onSaved={() => void loadCategories()}
-      />
+          <DataTable
+            rows={categories}
+            columns={columns}
+            rowKey={(c) => c.id}
+            loading={loading}
+            searchText={(c) => `${c.name} ${c.slug}`}
+            searchPlaceholder="Search categories…"
+            emptyTitle="No categories created yet"
+            emptyDescription='Click "Add Category" above to create product taxonomy.'
+          />
 
-      <CategoryFormModal
-        isOpen={!!editingCategory}
-        category={editingCategory}
-        onClose={() => setEditingCategory(null)}
-        onSaved={() => void loadCategories()}
-      />
+          <CategoryFormModal
+            isOpen={isAddOpen}
+            onClose={() => setIsAddOpen(false)}
+            onSaved={() => void loadCategories()}
+          />
+
+          <CategoryFormModal
+            isOpen={!!editingCategory}
+            category={editingCategory}
+            onClose={() => setEditingCategory(null)}
+            onSaved={() => void loadCategories()}
+          />
+        </>
+      )}
     </div>
   );
 }

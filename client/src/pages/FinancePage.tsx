@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, ArrowsClockwise, Wallet, Scales, ChartLineUp } from '@phosphor-icons/react';
 import { api } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
@@ -13,7 +14,11 @@ type TabKey = 'expenses' | 'trial-balance' | 'profit-loss';
 
 export function FinancePage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabKey>('expenses');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const activeTab: TabKey =
+    rawTab === 'trial-balance' || rawTab === 'profit-loss' ? rawTab : 'expenses';
+
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
 
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
@@ -23,6 +28,18 @@ export function FinancePage() {
   const [loading, setLoading] = useState(false);
 
   const primaryOutletId = user?.outletIds?.[0] || '';
+
+  const handleTabChange = (nextTab: TabKey) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nextTab === 'expenses') {
+        next.delete('tab');
+      } else {
+        next.set('tab', nextTab);
+      }
+      return next;
+    });
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -95,7 +112,7 @@ export function FinancePage() {
       <div className="border-b border-zinc-200">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setActiveTab('expenses')}
+            onClick={() => handleTabChange('expenses')}
             className={`px-3 py-2 text-xs font-bold border-b-2 cursor-pointer transition-colors flex items-center gap-1.5 ${
               activeTab === 'expenses'
                 ? 'border-red-600 text-red-600'
@@ -107,7 +124,7 @@ export function FinancePage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('trial-balance')}
+            onClick={() => handleTabChange('trial-balance')}
             className={`px-3 py-2 text-xs font-bold border-b-2 cursor-pointer transition-colors flex items-center gap-1.5 ${
               activeTab === 'trial-balance'
                 ? 'border-red-600 text-red-600'
@@ -119,7 +136,7 @@ export function FinancePage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('profit-loss')}
+            onClick={() => handleTabChange('profit-loss')}
             className={`px-3 py-2 text-xs font-bold border-b-2 cursor-pointer transition-colors flex items-center gap-1.5 ${
               activeTab === 'profit-loss'
                 ? 'border-red-600 text-red-600'

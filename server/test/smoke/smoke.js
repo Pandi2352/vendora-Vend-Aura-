@@ -374,6 +374,26 @@ function check(name, cond, extra) {
     check('mark delivery delivered ok (status=DELIVERED)', r.status === 200 && r.json.data?.deliveryStatus === 'DELIVERED', r.json);
   }
 
+  // ---- Brands Master (/catalog/brands) ----
+  r = await call('POST', '/catalog/brands', { name: 'Smoke Brand Co', code: 'SMKBRD', description: 'Test brand', displayOrder: 1 }, accessToken);
+  check('create brand ok', r.status === 201 && r.json.data?.name === 'Smoke Brand Co', r.json);
+  const smokeBrandId = r.json.data?._id || r.json.data?.id;
+
+  r = await call('GET', '/catalog/brands', null, accessToken);
+  check('list brands ok', r.status === 200 && Array.isArray(r.json.data) && r.json.data.some((b) => b.name === 'Smoke Brand Co'), r.json);
+
+  if (smokeBrandId) {
+    r = await call('PATCH', `/catalog/brands/${smokeBrandId}`, { description: 'Updated test brand description' }, accessToken);
+    check('update brand ok', r.status === 200 && r.json.data?.description === 'Updated test brand description', r.json);
+
+    r = await call('DELETE', `/catalog/brands/${smokeBrandId}`, null, accessToken);
+    check('delete brand ok', r.status === 200, r.json);
+  }
+
+  // ---- Returns Search (/orders/returns?search=...) ----
+  r = await call('GET', '/orders/returns?search=RET-', null, accessToken);
+  check('returns search ok', r.status === 200 && (Array.isArray(r.json.data) || Array.isArray(r.json.data?.items)), r.json);
+
   // roles: cashier can bill but not manage suppliers / see reports
   r = await call('POST', '/auth/login', { shopId: 'smoke', username: 'smoke_cashier', password: 'Cashier123!' });
   const cashierToken = r.json?.data?.accessToken;

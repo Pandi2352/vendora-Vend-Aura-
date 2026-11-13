@@ -53,7 +53,7 @@ export class OrdersService {
     @InjectModel(Customer.name) private readonly customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerLedger.name) private readonly customerLedgerModel: Model<CustomerLedgerDocument>,
     private readonly sequenceService: SequenceService,
-  ) {}
+  ) { }
 
   /**
    * Finalizes a POS bill. Prices, tax and totals come from the catalog, never
@@ -168,9 +168,19 @@ export class OrdersService {
   }
 
   async getOrders(tenantId: string, query: PaginationDto) {
+    const filter: Record<string, any> = { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') };
+    if (query.search?.trim()) {
+      const q = query.search.trim();
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { invoiceNumber: { $regex: escaped, $options: 'i' } },
+        { customerName: { $regex: escaped, $options: 'i' } },
+        { customerPhone: { $regex: escaped, $options: 'i' } },
+      ];
+    }
     const result = await PaginationUtil.paginate(
       this.orderModel,
-      { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') },
+      filter,
       { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
     );
     return { ...result, data: result.data.map(toDocumentView) };

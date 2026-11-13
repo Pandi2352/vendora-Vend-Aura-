@@ -51,7 +51,7 @@ export const NAVIGATION: NavItem[] = [
     sectionTitle: 'Merchandising',
     children: [
       { label: 'Discounts & Offers', path: `${ROUTES.ORDERS}?tab=discounts`, icon: ms('sell') },
-      { label: 'Customer Khata', path: ROUTES.CUSTOMERS, icon: ms('group') },
+      { label: 'Customer Khata', path: `${ROUTES.CUSTOMERS}?tab=khata`, icon: ms('group') },
     ],
   },
   {
@@ -61,7 +61,7 @@ export const NAVIGATION: NavItem[] = [
     sectionTitle: 'Purchase & Inward',
     children: [
       { label: 'Suppliers Directory', path: ROUTES.SUPPLIERS, icon: ms('group') },
-      { label: 'Inward Stock (GRN)', path: `${ROUTES.SUPPLIERS}?action=inward`, icon: ms('local_shipping') },
+      { label: 'Inward Stock (GRN)', path: `${ROUTES.SUPPLIERS}?tab=inwards&action=inward`, icon: ms('local_shipping') },
     ],
   },
   {
@@ -117,7 +117,7 @@ export const NAVIGATION: NavItem[] = [
   },
   { label: 'POS', path: ROUTES.POS, icon: ms('storefront'), badgeDot: true },
   { label: 'Home Delivery', path: `${ROUTES.ORDERS}?tab=delivery`, icon: ms('local_shipping') },
-  { label: 'POS Utilities', path: ROUTES.ORDERS, icon: ms('receipt_long') },
+  { label: 'POS Utilities', path: `${ROUTES.ORDERS}?tab=utilities`, icon: ms('receipt_long') },
   { label: 'Settings', path: ROUTES.SETTINGS, icon: ms('settings') },
 ];
 

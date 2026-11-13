@@ -67,7 +67,10 @@ export function SetupPage() {
   }, []);
 
   useEffect(() => {
-    fetchChecklist();
+    void fetchChecklist();
+    const handleFocus = () => void fetchChecklist();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [fetchChecklist]);
 
   if (loading && !data) {
@@ -126,7 +129,7 @@ export function SetupPage() {
             count={steps.outlet.count}
             completed={steps.outlet.completed}
             actionLabel="View"
-            onAction={() => navigate(ROUTES.MASTER)}
+            onAction={() => navigate(`${ROUTES.MASTER}?macro=general&tab=location`)}
           />
 
           {/* Step 3: Item masters */}
@@ -138,7 +141,7 @@ export function SetupPage() {
             completed={steps.itemMasters.completed}
             subMasters={steps.itemMasters.subMasters}
             actionLabel="View"
-            onAction={() => navigate(ROUTES.POS)}
+            onAction={() => navigate(`${ROUTES.INVENTORY}?tab=categories`)}
           />
 
           {/* Step 4: First supplier */}
@@ -160,7 +163,7 @@ export function SetupPage() {
             count={steps.item.count}
             completed={steps.item.completed}
             actionLabel={steps.item.completed ? 'View' : 'Add item >'}
-            onAction={() => navigate(ROUTES.POS)}
+            onAction={() => navigate(ROUTES.INVENTORY)}
           />
 
           {/* Step 6: Opening stock */}
@@ -171,7 +174,7 @@ export function SetupPage() {
             count={steps.openingStock.count}
             completed={steps.openingStock.completed}
             actionLabel="View"
-            onAction={() => navigate(ROUTES.POS)}
+            onAction={() => navigate(`${ROUTES.INVENTORY}?tab=stock`)}
           />
 
           {/* Step 7: Staff (Optional) */}
@@ -182,7 +185,7 @@ export function SetupPage() {
             completed={steps.staff.completed}
             isOptional
             actionLabel="Add staff >"
-            onAction={() => navigate(ROUTES.SETTINGS)}
+            onAction={() => navigate(`${ROUTES.SETTINGS}?tab=users`)}
           />
 
           {/* Step 8: Ring a test bill */}

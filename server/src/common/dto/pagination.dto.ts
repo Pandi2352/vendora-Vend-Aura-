@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -17,6 +17,11 @@ export class PaginationDto {
   @Min(1)
   @Max(100)
   limit: number = 20;
+
+  @ApiPropertyOptional({ description: 'Optional text search query' })
+  @IsOptional()
+  @IsString()
+  search?: string;
 
   get skip(): number {
     return (this.page - 1) * this.limit;

@@ -19,10 +19,12 @@ interface SuppliersViewProps {
 type SubTab = 'suppliers' | 'inwards';
 
 export function SuppliersView({ products, onInwardStockCompleted }: SuppliersViewProps) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const subTab: SubTab = rawTab === 'inwards' ? 'inwards' : 'suppliers';
+
   const [suppliers, setSuppliers] = useState<SupplierItem[]>([]);
   const [purchases, setPurchases] = useState<PurchaseItemRecord[]>([]);
-  const [subTab, setSubTab] = useState<SubTab>('suppliers');
   const [loading, setLoading] = useState(false);
   const [suppliersError, setSuppliersError] = useState<string | null>(null);
   const [purchasesError, setPurchasesError] = useState<string | null>(null);
@@ -31,14 +33,33 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
   const [isInwardModalOpen, setIsInwardModalOpen] = useState(false);
   const [supplierToPay, setSupplierToPay] = useState<SupplierItem | null>(null);
 
+  const handleSubTabChange = (nextTab: SubTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nextTab === 'suppliers') {
+        next.delete('tab');
+      } else {
+        next.set('tab', nextTab);
+      }
+      return next;
+    });
+  };
+
+  const handleCloseInwardModal = () => {
+    setIsInwardModalOpen(false);
+    if (searchParams.get('action') === 'inward') {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('action');
+        return next;
+      });
+    }
+  };
+
   useEffect(() => {
     const action = searchParams.get('action');
-    const tab = searchParams.get('tab');
     if (action === 'inward') {
       setIsInwardModalOpen(true);
-    }
-    if (tab === 'inwards') {
-      setSubTab('inwards');
     }
   }, [searchParams]);
 
@@ -119,7 +140,7 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
       <Tabs<SubTab>
         className="mb-4 self-start"
         value={subTab}
-        onChange={setSubTab}
+        onChange={handleSubTabChange}
         items={[
           { value: 'suppliers', label: `Suppliers Directory (${suppliers.length})` },
           { value: 'inwards', label: `Inward GRN Shipments (${purchases.length})` },
@@ -144,7 +165,7 @@ export function SuppliersView({ products, onInwardStockCompleted }: SuppliersVie
         isOpen={isInwardModalOpen}
         suppliers={suppliers}
         products={products}
-        onClose={() => setIsInwardModalOpen(false)}
+        onClose={handleCloseInwardModal}
         onInwardSuccess={handleInwardSuccess}
       />
 

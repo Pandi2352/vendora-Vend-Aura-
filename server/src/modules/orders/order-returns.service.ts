@@ -156,9 +156,14 @@ export class OrderReturnsService {
   }
 
   async getReturns(tenantId: string, query: PaginationDto) {
+    const filter: Record<string, unknown> = { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') };
+    if (query.search?.trim()) {
+      const regex = new RegExp(query.search.trim(), 'i');
+      filter.$or = [{ returnNumber: regex }, { originalInvoiceNumber: regex }];
+    }
     const result = await PaginationUtil.paginate(
       this.returnModel,
-      { tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant') },
+      filter,
       { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
     );
     return { ...result, data: result.data.map(toDocumentView) };

@@ -3,19 +3,22 @@ import { Tabs } from '../components/ui';
 import { OrdersHistoryView } from '../components/OrdersHistoryView';
 import { DiscountsView } from '../components/discounts/DiscountsView';
 import { HomeDeliveryTab } from '../components/orders/delivery/HomeDeliveryTab';
+import { PosUtilitiesTab } from '../components/orders/PosUtilitiesTab';
 import { useAuth } from '../hooks/useAuth';
 import { usePosSession } from '../hooks/usePosSession';
 
-type OrdersTab = 'bills' | 'discounts' | 'delivery';
+type OrdersTab = 'bills' | 'discounts' | 'delivery' | 'utilities';
 
-/** Bills history with reprint, merchandising discounts, and home delivery dispatch. */
+/** Bills history with reprint, merchandising discounts, home delivery, and POS utilities. */
 export function OrdersPage() {
   const { user } = useAuth();
   const { checkout } = usePosSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
   const currentTab: OrdersTab =
-    rawTab === 'discounts' || rawTab === 'delivery' ? rawTab : 'bills';
+    rawTab === 'discounts' || rawTab === 'delivery' || rawTab === 'utilities'
+      ? rawTab
+      : 'bills';
 
   const handleTabChange = (nextTab: OrdersTab) => {
     setSearchParams((prev) => {
@@ -40,6 +43,7 @@ export function OrdersPage() {
             { value: 'bills', label: 'Store Bills & Invoices' },
             { value: 'discounts', label: 'Discounts & Offers' },
             { value: 'delivery', label: 'Home Delivery & Dispatch' },
+            { value: 'utilities', label: 'POS Utilities & Register Desk' },
           ]}
         />
       </div>
@@ -50,6 +54,7 @@ export function OrdersPage() {
         )}
         {currentTab === 'discounts' && <DiscountsView />}
         {currentTab === 'delivery' && <HomeDeliveryTab />}
+        {currentTab === 'utilities' && <PosUtilitiesTab />}
       </div>
     </div>
   );

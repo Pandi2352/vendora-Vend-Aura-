@@ -8,6 +8,7 @@ import { StockTransferController } from './stock-transfer.controller';
 import { StockTransferService } from './stock-transfer.service';
 import { Product, ProductSchema } from './schemas/product.schema';
 import { Category, CategorySchema } from './schemas/category.schema';
+import { Brand, BrandSchema } from './schemas/brand.schema';
 import { StockWastage, StockWastageSchema } from './schemas/stock-wastage.schema';
 import { StockAudit, StockAuditSchema } from './schemas/stock-audit.schema';
 import { StockTransfer, StockTransferSchema } from './schemas/stock-transfer.schema';
@@ -19,6 +20,7 @@ import { Outlet, OutletSchema } from '../outlet/schemas/outlet.schema';
     MongooseModule.forFeature([
       { name: Product.name, schema: ProductSchema },
       { name: Category.name, schema: CategorySchema },
+      { name: Brand.name, schema: BrandSchema },
       { name: StockWastage.name, schema: StockWastageSchema },
       { name: StockAudit.name, schema: StockAuditSchema },
       { name: StockTransfer.name, schema: StockTransferSchema },

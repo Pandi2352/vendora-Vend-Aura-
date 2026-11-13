@@ -23,3 +23,12 @@ export const categorySchema = z.object({
 
 export type CategoryFormValues = z.infer<typeof categorySchema>;
 
+export const brandSchema = z.object({
+  name: rules.text('Brand name', { min: 2, max: 80 }),
+  code: rules.optionalText('Brand code', { max: 30 }),
+  description: rules.optionalText('Description', { max: 200 }),
+  displayOrder: rules.number('Display order', { min: 0, integer: true }),
+});
+
+export type BrandFormValues = z.infer<typeof brandSchema>;
+

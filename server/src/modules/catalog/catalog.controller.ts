@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { CatalogQueryDto } from './dto/catalog-query.dto';
 import { CreateProductDto, UpdateProductDto } from './dto/create-product.dto';
 import { CreateCategoryDto, UpdateCategoryDto, UpdateOpeningStockDto } from './dto/create-category.dto';
+import { CreateBrandDto, UpdateBrandDto } from './dto/create-brand.dto';
 import { CatalogService } from './catalog.service';
 import { TenantId } from '../../common';
 
@@ -77,5 +78,35 @@ export class CatalogController {
   @ApiOperation({ summary: 'Update product opening stock and cost price' })
   async updateOpeningStock(@TenantId() tenantId: string, @Body() dto: UpdateOpeningStockDto) {
     return { message: 'Opening stock updated', data: await this.catalogService.updateOpeningStock(tenantId, dto) };
+  }
+
+  // --- Brands ---
+  @Get('brands')
+  @ApiOperation({ summary: 'Get brands for a store tenant' })
+  @ApiResponse({ status: 200, description: 'List of tenant brands returned' })
+  async getBrands(@TenantId() tenantId: string) {
+    return { data: await this.catalogService.getBrandsByTenant(tenantId) };
+  }
+
+  @Post('brands')
+  @ApiOperation({ summary: 'Create a new brand' })
+  async createBrand(@TenantId() tenantId: string, @Body() dto: CreateBrandDto) {
+    return { message: 'Brand created', data: await this.catalogService.createBrand(tenantId, dto) };
+  }
+
+  @Patch('brands/:id')
+  @ApiOperation({ summary: 'Update a brand' })
+  async updateBrand(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateBrandDto,
+  ) {
+    return { message: 'Brand updated', data: await this.catalogService.updateBrand(tenantId, id, dto) };
+  }
+
+  @Delete('brands/:id')
+  @ApiOperation({ summary: 'Delete a brand' })
+  async deleteBrand(@TenantId() tenantId: string, @Param('id') id: string) {
+    return this.catalogService.deleteBrand(tenantId, id);
   }
 }

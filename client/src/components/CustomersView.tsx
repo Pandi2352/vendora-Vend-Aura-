@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowClockwise, UserPlus, UsersThree } from '@phosphor-icons/react';
 import { api, unwrap, getErrorMessage } from '@/lib/api';
-import { Button } from '@/components/ui';
+import { Button, Tabs } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import type { CustomerItem, CustomerStatementItem } from '@/types/pos.types';
 import { CustomersKpiStrip } from './customers/CustomersKpiStrip';
@@ -10,6 +11,8 @@ import { AddCustomerModal } from './customers/AddCustomerModal';
 import { EditCustomerModal } from './customers/EditCustomerModal';
 import { RecordRepaymentModal } from './customers/RecordRepaymentModal';
 import { PassbookModal } from './customers/PassbookModal';
+
+type CustomersTab = 'all' | 'khata';
 
 /** Customer list is owned by App (useCatalogCustomers) so checkout sees the same, fresh data. */
 interface CustomersViewProps {
@@ -21,12 +24,28 @@ interface CustomersViewProps {
 
 export function CustomersView({ customers, loading, onRefreshCustomers, shopName }: CustomersViewProps) {
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const currentTab: CustomersTab = rawTab === 'khata' ? 'khata' : 'all';
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [customerToEdit, setCustomerToEdit] = useState<CustomerItem | null>(null);
   const [customerToRepay, setCustomerToRepay] = useState<CustomerItem | null>(null);
   const [statementCustomer, setStatementCustomer] = useState<CustomerItem | null>(null);
   const [statement, setStatement] = useState<CustomerStatementItem[]>([]);
   const [loadingStatement, setLoadingStatement] = useState(false);
+
+  const handleTabChange = (nextTab: CustomersTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nextTab === 'all') {
+        next.delete('tab');
+      } else {
+        next.set('tab', nextTab);
+      }
+      return next;
+    });
+  };
 
   const openStatementModal = async (customer: CustomerItem) => {
     setStatementCustomer(customer);
@@ -46,6 +65,11 @@ export function CustomersView({ customers, loading, onRefreshCustomers, shopName
   const totalOutstandingKhata = customers.reduce((sum, c) => sum + c.currentCreditBalance, 0);
   const totalLifetimeSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
   const customersWithDues = customers.filter((c) => c.currentCreditBalance > 0).length;
+
+  const displayedCustomers =
+    currentTab === 'khata'
+      ? customers.filter((c) => c.currentCreditBalance > 0)
+      : customers;
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-50 overflow-y-auto p-4 sm:p-6 font-sans">
@@ -82,8 +106,18 @@ export function CustomersView({ customers, loading, onRefreshCustomers, shopName
         customersCount={customers.length}
       />
 
+      <Tabs<CustomersTab>
+        className="mb-4 self-start"
+        value={currentTab}
+        onChange={handleTabChange}
+        items={[
+          { value: 'all', label: 'All Customers Directory' },
+          { value: 'khata', label: `Khata Outstanding Dues (${customersWithDues})` },
+        ]}
+      />
+
       <CustomersTable
-        customers={customers}
+        customers={displayedCustomers}
         loading={loading}
         shopName={shopName}
         onEdit={setCustomerToEdit}

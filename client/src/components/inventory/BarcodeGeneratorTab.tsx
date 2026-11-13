@@ -33,7 +33,7 @@ export function BarcodeGeneratorTab() {
   useEffect(() => {
     setIsLoading(true);
     api
-      .get('/products', { params: { limit: 100 } })
+      .get('/catalog/products', { params: { limit: 100 } })
       .then((res) => {
         const data = unwrap<ProductItem[]>(res) || [];
         setProducts(data);

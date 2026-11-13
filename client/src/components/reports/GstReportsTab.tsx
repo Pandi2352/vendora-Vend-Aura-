@@ -1,4 +1,5 @@
-import { Files, Calculator } from '@phosphor-icons/react';
+import { Files, Calculator, DownloadSimple } from '@phosphor-icons/react';
+import { Button } from '../ui';
 import type { Gstr1Data, Gstr3bData } from '../../types/reports.types';
 
 interface GstReportsTabProps {
@@ -8,6 +9,37 @@ interface GstReportsTabProps {
 }
 
 export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) {
+  const handleExportGstr1Json = () => {
+    if (!gstr1) return;
+    const blob = new Blob([JSON.stringify(gstr1, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GSTR-1-Report-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportGstr3bCsv = () => {
+    if (!gstr3b) return;
+    const lines = [
+      'GSTR-3B Tax Computation Summary',
+      `Generated At,${new Date().toISOString()}`,
+      '',
+      'Section,Taxable Value (INR),CGST,SGST,IGST,Total Tax',
+      `Outward Taxable Supplies (3.1),${gstr3b.outwardTaxableSupplies.taxableValue},${gstr3b.outwardTaxableSupplies.cgst},${gstr3b.outwardTaxableSupplies.sgst},0,${gstr3b.outwardTaxableSupplies.totalTax}`,
+      `Eligible Input Tax Credit (ITC - 4),${gstr3b.eligibleItcPurchases.taxableValue},${gstr3b.eligibleItcPurchases.totalItc / 2},${gstr3b.eligibleItcPurchases.totalItc / 2},0,${gstr3b.eligibleItcPurchases.totalItc}`,
+      `Net GST Liability,${gstr3b.outwardTaxableSupplies.taxableValue},${gstr3b.netGstPayable.netCgstPayable},${gstr3b.netGstPayable.netSgstPayable},0,${gstr3b.netGstPayable.netTotalPayable}`,
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GSTR-3B-Summary-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="py-20 text-center text-zinc-400 text-xs">
@@ -23,6 +55,32 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
 
   return (
     <div className="space-y-4">
+      {/* Top Action Bar with Exports */}
+      <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-white border border-zinc-200 rounded-md">
+        <div className="text-xs">
+          <span className="font-bold text-zinc-900">GST Compliance Filing Desk</span>
+          <span className="text-zinc-400 ml-1.5 hidden sm:inline">Export portal-ready GSTR-1 and GSTR-3B tax data</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExportGstr1Json}
+            icon={<DownloadSimple className="w-3.5 h-3.5" />}
+          >
+            Export GSTR-1 (JSON)
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExportGstr3bCsv}
+            icon={<DownloadSimple className="w-3.5 h-3.5" />}
+          >
+            Export GSTR-3B (CSV)
+          </Button>
+        </div>
+      </div>
+
       {/* 1. GSTR-3B Net Tax Liability Strip */}
       <div className="p-4 bg-primary-50 rounded-md border border-primary-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>

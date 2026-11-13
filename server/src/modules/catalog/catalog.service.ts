@@ -5,8 +5,10 @@ import { NumberUtil, ObjectIdUtil, StringUtil, withId } from '../../common';
 import { CatalogQueryDto } from './dto/catalog-query.dto';
 import { CreateProductDto, UpdateProductDto } from './dto/create-product.dto';
 import { CreateCategoryDto, UpdateCategoryDto, UpdateOpeningStockDto } from './dto/create-category.dto';
+import { CreateBrandDto, UpdateBrandDto } from './dto/create-brand.dto';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { Category, CategoryDocument } from './schemas/category.schema';
+import { Brand, BrandDocument } from './schemas/brand.schema';
 import { BusinessType } from '../../shared';
 import { getStarterCatalogData } from './starter-catalog.data';
 
@@ -17,6 +19,7 @@ export class CatalogService {
   constructor(
     @InjectModel(Product.name) private readonly productModel: Model<ProductDocument>,
     @InjectModel(Category.name) private readonly categoryModel: Model<CategoryDocument>,
+    @InjectModel(Brand.name) private readonly brandModel: Model<BrandDocument>,
   ) {}
 
   /** Get all products for a specific tenant with optional category/search filters */
@@ -233,5 +236,85 @@ export class CatalogService {
     }
 
     this.logger.log(`✓ Seeded ${products.length} starter products for Tenant [${tenantId}] (${businessType})`);
+  }
+
+  /** Get all brands for a tenant */
+  async getBrandsByTenant(tenantId: string) {
+    const brands = await this.brandModel
+      .find({
+        tenantId: ObjectIdUtil.toObjectId(tenantId, 'tenant'),
+        isActive: true,
+        isDeleted: { $ne: true },
+      })
+      .sort({ displayOrder: 1, name: 1 })
+      .lean();
+    return brands.map(withId);
+  }
+
+  /** Create a brand */
+  async createBrand(tenantIdStr: string, dto: CreateBrandDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const name = dto.name.trim();
+
+    const exists = await this.brandModel.findOne({ tenantId, name, isDeleted: { $ne: true } }).lean();
+    if (exists) {
+      throw new ConflictException(`A brand named "${name}" already exists.`);
+    }
+
+    const brand = await this.brandModel.create({
+      tenantId,
+      name,
+      code: dto.code?.trim().toUpperCase(),
+      description: dto.description?.trim(),
+      displayOrder: dto.displayOrder ?? 0,
+      isActive: true,
+    });
+    return withId(brand.toObject());
+  }
+
+  /** Update an existing brand */
+  async updateBrand(tenantIdStr: string, idStr: string, dto: UpdateBrandDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const id = ObjectIdUtil.toObjectId(idStr, 'brand');
+
+    if (dto.name) {
+      const name = dto.name.trim();
+      const duplicate = await this.brandModel.findOne({
+        tenantId,
+        name,
+        _id: { $ne: id },
+        isDeleted: { $ne: true },
+      }).lean();
+      if (duplicate) {
+        throw new ConflictException(`A brand named "${name}" already exists.`);
+      }
+    }
+
+    const payload: Record<string, unknown> = { ...dto };
+    if (dto.name) payload.name = dto.name.trim();
+    if (dto.code) payload.code = dto.code.trim().toUpperCase();
+    if (dto.description !== undefined) payload.description = dto.description?.trim();
+
+    const brand = await this.brandModel.findOneAndUpdate(
+      { _id: id, tenantId, isDeleted: { $ne: true } },
+      { $set: payload },
+      { new: true },
+    ).lean();
+    if (!brand) throw new NotFoundException('Brand not found.');
+    return withId(brand);
+  }
+
+  /** Delete a brand */
+  async deleteBrand(tenantIdStr: string, idStr: string) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const id = ObjectIdUtil.toObjectId(idStr, 'brand');
+
+    const brand = await this.brandModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { $set: { isDeleted: true, isActive: false } },
+      { new: true },
+    ).lean();
+    if (!brand) throw new NotFoundException('Brand not found.');
+    return { message: 'Brand deleted successfully' };
   }
 }
