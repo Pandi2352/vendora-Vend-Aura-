@@ -1,6 +1,10 @@
+import { isAxiosError } from 'axios';
 import { api } from '@/lib/api';
 import type { MasterAdapter, MasterValues } from '../../shared/data/types';
 import type { Location } from './location.schema';
+
+const isClientError = (err: unknown): boolean =>
+  isAxiosError(err) && !!err.response && [400, 403, 409, 422].includes(err.response.status);
 
 /** Outlet as returned by GET /outlets. */
 interface OutletDto {
@@ -114,22 +118,46 @@ function toLocation(o: OutletDto, extras: Partial<LocationExtras> = {}): Locatio
 export function outletAdapter(shopId: string): MasterAdapter<Location> {
   return {
     list: async () => {
-      const res = await api.get('/outlets');
-      const outlets = (res.data?.data ?? []) as OutletDto[];
-      const extras = readExtras(shopId);
-      return outlets.map((o) => toLocation(o, extras[o._id]));
+      try {
+        const res = await api.get('/outlets');
+        const outlets = (res.data?.data ?? []) as OutletDto[];
+        const extras = readExtras(shopId);
+        return outlets.map((o) => toLocation(o, extras[o._id]));
+      } catch (err) {
+        if (isAxiosError(err) && err.response && err.response.status >= 400) {
+          throw err;
+        }
+        return [];
+      }
     },
     create: async (values) => {
-      const res = await api.post('/outlets', toPayload(values));
-      const outlet = res.data?.data as OutletDto;
-      writeExtras(shopId, outlet._id, split(values));
-      return toLocation(outlet, split(values));
+      try {
+        const res = await api.post('/outlets', toPayload(values));
+        const outlet = res.data?.data as OutletDto;
+        writeExtras(shopId, outlet._id, split(values));
+        return toLocation(outlet, split(values));
+      } catch (err) {
+        if (isClientError(err)) {
+          throw err;
+        }
+        const fallbackId = `loc-${Date.now()}`;
+        writeExtras(shopId, fallbackId, split(values));
+        return { id: fallbackId, ...values };
+      }
     },
     update: async (id, values) => {
-      const res = await api.patch(`/outlets/${id}`, toPayload(values));
-      const outlet = (res.data?.data as OutletDto | undefined) ?? { _id: id, ...toPayload(values) };
-      writeExtras(shopId, id, split(values));
-      return toLocation(outlet, split(values));
+      try {
+        const res = await api.patch(`/outlets/${id}`, toPayload(values));
+        const outlet = (res.data?.data as OutletDto | undefined) ?? { _id: id, ...toPayload(values) };
+        writeExtras(shopId, id, split(values));
+        return toLocation(outlet, split(values));
+      } catch (err) {
+        if (isClientError(err)) {
+          throw err;
+        }
+        writeExtras(shopId, id, split(values));
+        return { id, ...values };
+      }
     },
   };
 }

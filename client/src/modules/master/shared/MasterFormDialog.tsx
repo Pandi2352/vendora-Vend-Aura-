@@ -6,6 +6,7 @@ import { Form, FormSection, SwitchField, useAppForm } from '@/components/forms';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { useToast } from '@/hooks/useToast';
+import { getErrorMessage } from '@/lib/api';
 
 interface MasterFormDialogProps<Schema extends z.ZodType<FieldValues, FieldValues>> {
   open: boolean;
@@ -51,9 +52,14 @@ export function MasterFormDialog<Schema extends z.ZodType<FieldValues, FieldValu
   }, [open, initial]);
 
   const submit = async (values: z.output<Schema>) => {
-    await onSubmit(values);
-    toast.success(`${capital(noun)} ${editing ? 'updated' : 'added'}`);
-    onClose();
+    try {
+      await onSubmit(values);
+      toast.success(`${capital(noun)} ${editing ? 'updated' : 'added'}`);
+      onClose();
+    } catch (err) {
+      toast.error(`Could not save ${noun}`, getErrorMessage(err));
+      throw err;
+    }
   };
 
   return (

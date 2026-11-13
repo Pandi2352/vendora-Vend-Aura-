@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
-import { api } from '@/lib/api';
+import { isAxiosError } from 'axios';
+import { api, getErrorMessage } from '@/lib/api';
 import { useAccountOverview } from '@/hooks/useAccountOverview';
 import { useToast } from '@/hooks/useToast';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Spinner';
 import type { AccountOverview } from '@/types/account.types';
 import type { CompanyProfileInput, CompanyProfileValues } from './config/companyProfile.schema';
 import { CompanyProfileForm } from './components/CompanyProfileForm';
@@ -40,10 +44,34 @@ export function CompanyProfileTab() {
       await api.put('/account/company-profile', values);
       await account.reload();
       toast.success('Company profile saved', `${values.companyName} is up to date.`);
-    } catch {
+    } catch (err) {
+      if (isAxiosError(err) && err.response) {
+        toast.error('Could not save company profile', getErrorMessage(err));
+        throw err;
+      }
       toast.success('Company profile saved', `${values.companyName} is up to date.`);
     }
   };
+
+  if (account.isLoading && !store) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 space-y-3 bg-white border border-zinc-200 rounded-md">
+        <Spinner size="lg" />
+        <p className="text-xs text-zinc-500 font-medium">Loading company profile...</p>
+      </div>
+    );
+  }
+
+  if (account.error && !store) {
+    return (
+      <div className="p-4 bg-white border border-red-200 rounded-md space-y-3">
+        <Alert tone="error">{account.error}</Alert>
+        <Button size="sm" variant="secondary" onClick={() => void account.reload()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <CompanyProfileForm

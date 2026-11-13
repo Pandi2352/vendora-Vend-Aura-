@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { api } from '@/lib/api';
 import type { MasterAdapter, MasterRecord, MasterValues } from './types';
 
@@ -25,6 +26,9 @@ const newId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+const isClientError = (err: unknown): boolean =>
+  isAxiosError(err) && !!err.response && [400, 403, 409, 422].includes(err.response.status);
 
 /**
  * Adapter that connects Master lists to backend endpoints with fallback
@@ -65,7 +69,10 @@ export function apiMasterAdapter<T extends MasterRecord>(
           writeLocal(key, [...existing, row]);
         }
         return row;
-      } catch {
+      } catch (err) {
+        if (isClientError(err)) {
+          throw err;
+        }
         const row = { ...values, id: newId() } as T;
         if (key) {
           writeLocal(key, [...readLocal<T>(key), row]);
@@ -86,7 +93,10 @@ export function apiMasterAdapter<T extends MasterRecord>(
           );
         }
         return row;
-      } catch {
+      } catch (err) {
+        if (isClientError(err)) {
+          throw err;
+        }
         const row = { ...values, id } as T;
         if (key) {
           writeLocal(
@@ -101,9 +111,16 @@ export function apiMasterAdapter<T extends MasterRecord>(
     remove: async (id: string) => {
       try {
         await api.delete(`${endpoint}/${id}`);
-      } catch {
-        // Fallback for offline / disconnected environments
-      } finally {
+        if (key) {
+          writeLocal(
+            key,
+            readLocal<T>(key).filter((r) => r.id !== id),
+          );
+        }
+      } catch (err) {
+        if (isClientError(err)) {
+          throw err;
+        }
         if (key) {
           writeLocal(
             key,
