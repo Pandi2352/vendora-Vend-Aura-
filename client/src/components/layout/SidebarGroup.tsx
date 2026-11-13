@@ -1,7 +1,7 @@
 import { useId } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { CaretDown } from '@phosphor-icons/react';
-import { isNavItemActive, type NavItem } from '../../config/navigation';
+import { isNavItemActive, isPathActive, type NavItem } from '../../config/navigation';
 import { cn } from '../ui/cn';
 import { navChildClass, navIconClass, navRowClass } from './sidebarStyles';
 
@@ -19,8 +19,8 @@ interface SidebarGroupProps {
  * which section is open (one at a time; the current page's section by default).
  */
 export function SidebarGroup({ item, open, onToggle, onNavigate }: SidebarGroupProps) {
-  const { pathname } = useLocation();
-  const containsActive = isNavItemActive(item, pathname);
+  const { pathname, search } = useLocation();
+  const containsActive = isNavItemActive(item, pathname, search);
   const listId = useId();
   const Icon = item.icon;
 
@@ -47,13 +47,21 @@ export function SidebarGroup({ item, open, onToggle, onNavigate }: SidebarGroupP
 
       {open && (
         <ul id={listId} className="relative mt-0.5 mb-1 ml-[1.1875rem] pl-3 border-l border-shell-border space-y-0.5">
-          {item.children!.map((child) => (
-            <li key={child.label}>
-              <NavLink to={child.path!} onClick={onNavigate} className={({ isActive }) => navChildClass(isActive)}>
-                <span className="truncate">{child.label}</span>
-              </NavLink>
-            </li>
-          ))}
+          {item.children!.map((child) => {
+            const active = isPathActive(child.path!, pathname, search);
+            return (
+              <li key={child.label}>
+                <Link
+                  to={child.path!}
+                  onClick={onNavigate}
+                  aria-current={active ? 'page' : undefined}
+                  className={navChildClass(active)}
+                >
+                  <span className="truncate">{child.label}</span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

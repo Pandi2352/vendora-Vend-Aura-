@@ -129,20 +129,90 @@ export function navigationForRole(role: string | undefined, items: NavItem[] = N
     .filter((item) => !item.children || item.children.length > 0);
 }
 
-/** True when the item or any of its children matches the current path. */
-export function isNavItemActive(item: NavItem, pathname: string): boolean {
-  if (item.path) {
-    const pure = item.path.split('?')[0];
-    if (pure && (pathname === pure || pathname.startsWith(`${pure}/`))) return true;
+/**
+ * Default tab identifiers for pages where the base path has no ?tab= query.
+ * If the current URL has a tab other than the default, the base path is NOT active.
+ */
+const DEFAULT_PAGE_TABS: Record<string, string> = {
+  [ROUTES.INVENTORY]: 'catalog',
+  [ROUTES.ORDERS]: 'bills',
+  [ROUTES.CUSTOMERS]: 'all',
+  [ROUTES.SUPPLIERS]: 'suppliers',
+  [ROUTES.DASHBOARD]: 'overview',
+  [ROUTES.REPORTS_INVENTORY]: 'valuation',
+};
+
+/**
+ * Checks if a specific target navigation path is active given the current pathname and search query.
+ * Accurately handles multi-tab pages so only the exact matching menu/sub-menu item is active.
+ */
+export function isPathActive(targetPath: string, currentPathname: string, currentSearch = ''): boolean {
+  if (!targetPath) return false;
+  const [targetBase, targetQuery] = targetPath.split('?');
+  if (!targetBase) return false;
+
+  // Pathname must match (exact match, or sub-path)
+  if (currentPathname !== targetBase && !currentPathname.startsWith(`${targetBase}/`)) {
+    return false;
   }
-  return !!item.children?.some((child) => isNavItemActive(child, pathname));
+
+  const currentParams = new URLSearchParams(currentSearch || '');
+
+  // 1. Target specifies query parameters (e.g. ?tab=categories or ?tab=inwards&action=inward)
+  if (targetQuery) {
+    const pairs = targetQuery.split('&');
+    for (const pair of pairs) {
+      if (!pair) continue;
+      const [rawKey, rawVal] = pair.split('=');
+      const key = decodeURIComponent(rawKey);
+      const val = decodeURIComponent(rawVal || '');
+      if (currentParams.get(key) !== val) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // 2. Target has NO query parameters (base route like /inventory, /orders, /customers, /suppliers, /dashboard).
+  // If current URL has a ?tab= parameter, the base target is only active if the tab is its explicit default.
+  const currentTab = currentParams.get('tab');
+  if (currentTab) {
+    const defaultTab = DEFAULT_PAGE_TABS[targetBase];
+    if (defaultTab) {
+      return currentTab === defaultTab;
+    }
+    // Specialized route tab (e.g. ?tab=users on /settings) should not activate the root target
+    return false;
+  }
+
+  return true;
+}
+
+/** True when the item itself or any of its children matches the current path & search query. */
+export function isNavItemActive(item: NavItem, pathname: string, search = ''): boolean {
+  if (item.path && isPathActive(item.path, pathname, search)) {
+    return true;
+  }
+  return !!item.children?.some((child) => isNavItemActive(child, pathname, search));
+}
+
+/** Determines the active parent accordion section in the sidebar. */
+export function findActiveSection(items: NavItem[], pathname: string, search = ''): string | null {
+  const sections = items.filter((item) => item.children && isNavItemActive(item, pathname, search));
+  if (sections.length === 0) return null;
+  if (sections.length === 1) return sections[0].label;
+
+  // When both General Master (index of masters) and a specialized group (e.g. Inventory Master, Purchase) match,
+  // prefer the dedicated group.
+  const specific = sections.find((s) => s.label !== 'General Master');
+  return (specific || sections[0]).label;
 }
 
 /** Label trail for the current path, e.g. ['Reports', 'GST Reports']. */
-export function breadcrumbTrail(pathname: string, items: NavItem[] = NAVIGATION): string[] {
+export function breadcrumbTrail(pathname: string, search = '', items: NavItem[] = NAVIGATION): string[] {
   for (const item of items) {
-    if (!isNavItemActive(item, pathname)) continue;
-    const childTrail = item.children ? breadcrumbTrail(pathname, item.children) : [];
+    if (!isNavItemActive(item, pathname, search)) continue;
+    const childTrail = item.children ? breadcrumbTrail(pathname, search, item.children) : [];
     return [item.label, ...childTrail];
   }
   return [];

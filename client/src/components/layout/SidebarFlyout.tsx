@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
-import { NavLink } from 'react-router-dom';
-import type { NavItem } from '../../config/navigation';
+import { Link, useLocation } from 'react-router-dom';
+import { isNavItemActive, isPathActive, type NavItem } from '../../config/navigation';
 import { useFlyout } from '../../hooks/useFlyout';
 import { cn } from '../ui/cn';
 
@@ -24,6 +24,8 @@ export function SidebarFlyout({
   onPointerLeave,
   onNavigate,
 }: SidebarFlyoutProps) {
+  const { pathname, search } = useLocation();
+
   return createPortal(
     <div
       ref={panelRef}
@@ -37,45 +39,44 @@ export function SidebarFlyout({
       <p className="px-3 pt-1 pb-2 text-[0.625rem] font-bold uppercase tracking-wider text-shell-muted whitespace-nowrap">
         {title}
       </p>
-      {items.map((item) =>
-        item.children ? (
-          <NestedFlyoutItem key={item.label} item={item} onNavigate={onNavigate} />
-        ) : (
-          <NavLink
+      {items.map((item) => {
+        if (item.children) {
+          return <NestedFlyoutItem key={item.label} item={item} onNavigate={onNavigate} />;
+        }
+        const active = isPathActive(item.path!, pathname, search);
+        return (
+          <Link
             key={item.label}
             to={item.path!}
             role="menuitem"
             onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                'group flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.8125rem] transition-colors whitespace-nowrap',
-                isActive
-                  ? 'bg-primary-50 text-primary-700 font-semibold'
-                  : 'text-shell-text font-medium hover:bg-shell-hover',
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon
-                  className={cn(
-                    'shrink-0 transition-colors ms-hover-fill',
-                    isActive ? 'text-primary-600 ms-fill' : 'text-shell-muted group-hover:text-shell-text',
-                  )}
-                />
-                <span className="whitespace-nowrap">{item.label}</span>
-              </>
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'group flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.8125rem] transition-colors whitespace-nowrap',
+              active
+                ? 'bg-primary-50 text-primary-700 font-semibold'
+                : 'text-shell-text font-medium hover:bg-shell-hover',
             )}
-          </NavLink>
-        ),
-      )}
+          >
+            <item.icon
+              className={cn(
+                'shrink-0 transition-colors ms-hover-fill',
+                active ? 'text-primary-600 ms-fill' : 'text-shell-muted group-hover:text-shell-text',
+              )}
+            />
+            <span className="whitespace-nowrap">{item.label}</span>
+          </Link>
+        );
+      })}
     </div>,
     document.body,
   );
 }
 
 function NestedFlyoutItem({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
+  const { pathname, search } = useLocation();
   const flyout = useFlyout<HTMLButtonElement>();
+  const active = isNavItemActive(item, pathname, search);
 
   return (
     <>
@@ -90,7 +91,11 @@ function NestedFlyoutItem({ item, onNavigate }: { item: NavItem; onNavigate: () 
         onClick={flyout.toggle}
         className={cn(
           'group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.8125rem] font-medium transition-colors cursor-pointer whitespace-nowrap',
-          flyout.isOpen ? 'bg-shell-hover text-shell-text' : 'text-shell-text hover:bg-shell-hover',
+          flyout.isOpen
+            ? 'bg-shell-hover text-shell-text'
+            : active
+              ? 'text-primary-700 font-semibold'
+              : 'text-shell-text hover:bg-shell-hover',
         )}
       >
         <item.icon className="shrink-0 text-shell-muted ms-hover-fill" />

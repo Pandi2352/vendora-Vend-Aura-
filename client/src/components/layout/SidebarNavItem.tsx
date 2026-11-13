@@ -1,5 +1,5 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { isNavItemActive, type NavItem } from '../../config/navigation';
+import { Link, useLocation } from 'react-router-dom';
+import { isNavItemActive, isPathActive, type NavItem } from '../../config/navigation';
 import { useFlyout } from '../../hooks/useFlyout';
 import { cn } from '../ui/cn';
 import { SidebarFlyout } from './SidebarFlyout';
@@ -35,30 +35,29 @@ function BadgeDot({ collapsed }: { collapsed: boolean }) {
 }
 
 function SidebarLink({ item, collapsed, onNavigate }: Pick<SidebarNavItemProps, 'item' | 'collapsed' | 'onNavigate'>) {
+  const { pathname, search } = useLocation();
+  const active = isPathActive(item.path!, pathname, search);
   const Icon = item.icon;
   return (
-    <NavLink
+    <Link
       to={item.path!}
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       aria-label={collapsed ? item.label : undefined}
-      className={({ isActive }) => navRowClass(isActive, collapsed)}
+      aria-current={active ? 'page' : undefined}
+      className={navRowClass(active, collapsed)}
     >
-      {({ isActive }) => (
-        <>
-          <Icon className={navIconClass(isActive)} />
-          {!collapsed && <span className="flex-1 text-left truncate">{item.label}</span>}
-          {item.badgeDot && <BadgeDot collapsed={collapsed} />}
-        </>
-      )}
-    </NavLink>
+      <Icon className={navIconClass(active)} />
+      {!collapsed && <span className="flex-1 text-left truncate">{item.label}</span>}
+      {item.badgeDot && <BadgeDot collapsed={collapsed} />}
+    </Link>
   );
 }
 
 function CollapsedSection({ item, onNavigate }: Pick<SidebarNavItemProps, 'item' | 'onNavigate'>) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const flyout = useFlyout<HTMLButtonElement>();
-  const active = isNavItemActive(item, pathname);
+  const active = isNavItemActive(item, pathname, search);
   const Icon = item.icon;
 
   return (

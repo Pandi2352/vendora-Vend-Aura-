@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { isNavItemActive, navigationForRole } from '../../config/navigation';
+import { findActiveSection, navigationForRole } from '../../config/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../ui/cn';
 import { SidebarNavItem } from './SidebarNavItem';
@@ -20,9 +20,9 @@ interface SidebarProps {
 export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) {
   const { user } = useAuth();
   const items = navigationForRole(user?.role);
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   // Section holding the current page; it opens by default and on navigation.
-  const currentSection = items.find((item) => item.children && isNavItemActive(item, pathname))?.label ?? null;
+  const currentSection = findActiveSection(items, pathname, search);
   // Accordion: at most one section open, opening one closes the other.
   const [openSection, setOpenSection] = useState<string | null>(currentSection);
 
