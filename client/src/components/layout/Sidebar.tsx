@@ -1,7 +1,10 @@
-import { navigationForRole } from '../../config/navigation';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { isNavItemActive, navigationForRole } from '../../config/navigation';
 import { useAuth } from '../../hooks/useAuth';
-import { SidebarNavItem } from './SidebarNavItem';
 import { cn } from '../ui/cn';
+import { SidebarNavItem } from './SidebarNavItem';
+import { SidebarUserCard } from './SidebarUserCard';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -10,10 +13,22 @@ interface SidebarProps {
   onCloseMobile: () => void;
 }
 
-/** Left navigation: expanded (icons + labels) or collapsed (icons only); off-canvas drawer on small screens. */
+/**
+ * Left navigation on the light shell: expanded (sections open inline) or
+ * collapsed (icon rail with flyouts); off-canvas drawer on small screens.
+ */
 export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const items = navigationForRole(user?.role);
+  const { pathname } = useLocation();
+  // Section holding the current page; it opens by default and on navigation.
+  const currentSection = items.find((item) => item.children && isNavItemActive(item, pathname))?.label ?? null;
+  // Accordion: at most one section open, opening one closes the other.
+  const [openSection, setOpenSection] = useState<string | null>(currentSection);
+
+  useEffect(() => {
+    if (currentSection) setOpenSection(currentSection);
+  }, [currentSection]);
   // The mobile drawer always shows labels.
   const showCollapsed = collapsed && !mobileOpen;
 
@@ -24,7 +39,7 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
           type="button"
           aria-label="Close menu"
           onClick={onCloseMobile}
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
         />
       )}
       <aside
@@ -37,30 +52,21 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
-        <nav className="flex-1 overflow-y-auto scrollbar-shell p-2.5 space-y-1">
+        <nav className="flex-1 overflow-y-auto scrollbar-shell p-2 space-y-0.5">
           {items.map((item) => (
-            <SidebarNavItem key={item.label} item={item} collapsed={showCollapsed} onNavigate={onCloseMobile} />
+            <SidebarNavItem
+              key={item.label}
+              item={item}
+              collapsed={showCollapsed}
+              onNavigate={onCloseMobile}
+              open={openSection === item.label}
+              onToggle={() => setOpenSection((current) => (current === item.label ? null : item.label))}
+            />
           ))}
         </nav>
 
-        <div className="border-t border-[#1a2a47] p-2.5">
-          <button
-            type="button"
-            onClick={logout}
-            title={showCollapsed ? 'Sign out' : undefined}
-            aria-label="Sign out"
-            className={cn(
-              'group w-full flex items-center gap-3 h-9 rounded-lg text-xs font-bold text-[#cbd5e6] hover:bg-[#1a2b4c] hover:text-white transition-colors cursor-pointer',
-              showCollapsed ? 'justify-center' : 'px-3',
-            )}
-          >
-            <span className="ms text-[16px] text-[#7b89a3] group-hover:text-white ms-hover-fill shrink-0 transition-colors">
-              logout
-            </span>
-            {!showCollapsed && (
-              <span className="truncate">Sign out · Administrator</span>
-            )}
-          </button>
+        <div className="border-t border-shell-border">
+          <SidebarUserCard collapsed={showCollapsed} />
         </div>
       </aside>
     </>

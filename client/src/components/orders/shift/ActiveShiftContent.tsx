@@ -34,13 +34,13 @@ export function ActiveShiftContent({ activeShift, defaultOpeningFloat, onOpenShi
 
   return (
     <div className="space-y-4">
-      <div className="p-3 rounded-md bg-ink text-white flex justify-between items-center text-xs">
+      <div className="p-3 rounded-md bg-primary-50 border border-primary-200 flex justify-between items-center text-xs">
         <div>
-          <span className="font-mono font-bold text-primary-300">{activeShift.shiftNumber}</span>
-          <span className="text-zinc-400 ml-2">Cashier: {activeShift.cashierName}</span>
+          <span className="font-mono font-bold text-primary-700">{activeShift.shiftNumber}</span>
+          <span className="text-zinc-600 ml-2">Cashier: {activeShift.cashierName}</span>
         </div>
-        <div className="flex items-center gap-1 text-[0.6875rem] text-zinc-300 font-mono">
-          <Clock className="w-3.5 h-3.5 text-zinc-400" />
+        <div className="flex items-center gap-1 text-[0.6875rem] text-zinc-600 font-mono">
+          <Clock className="w-3.5 h-3.5 text-zinc-500" />
           <span>{formatTime(activeShift.openedAt)}</span>
         </div>
       </div>

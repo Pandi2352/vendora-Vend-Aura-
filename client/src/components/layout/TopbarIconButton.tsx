@@ -14,7 +14,7 @@ export function TopbarIconButton({ label, children, className, ...rest }: Topbar
       aria-label={label}
       title={label}
       className={cn(
-        'inline-flex items-center justify-center w-9 h-9 rounded-md text-shell-text hover:bg-shell-hover transition-colors cursor-pointer [&>svg]:w-[18px] [&>svg]:h-[18px]',
+        'inline-flex items-center justify-center w-9 h-9 rounded-md text-shell-text hover:bg-shell-hover transition-colors cursor-pointer [&>svg]:w-[1.125rem] [&>svg]:h-[1.125rem]',
         className,
       )}
       {...rest}

@@ -49,7 +49,7 @@ export function UserMenu() {
             <p className="text-xs text-zinc-500 truncate">
               {ROLE_LABELS[user?.role ?? ''] ?? user?.role} · {user?.businessName}
             </p>
-            <p className="text-[11px] text-zinc-400 font-mono mt-0.5 truncate">{user?.username}</p>
+            <p className="text-[0.6875rem] text-zinc-400 font-mono mt-0.5 truncate">{user?.username}</p>
           </div>
           <Link
             to={ROUTES.SETTINGS}

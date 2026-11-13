@@ -58,12 +58,20 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
             icon: theme === 'dark' ? <Sun /> : <Moon />,
             onSelect: toggleTheme,
           },
-          { id: 'action:logout', label: 'Sign out', keywords: ['log out', 'logout'], icon: <SignOut />, onSelect: logout },
+          {
+            id: 'action:logout',
+            label: 'Sign out',
+            keywords: ['log out', 'logout'],
+            icon: <SignOut />,
+            onSelect: logout,
+          },
         ],
       },
     ],
     [user?.role, navigate, sidebarCollapsed, toggleSidebar, theme, toggleTheme, logout],
   );
 
-  return <CommandPalette open={open} onOpenChange={onOpenChange} groups={groups} placeholder="Search pages and actions…" />;
+  return (
+    <CommandPalette open={open} onOpenChange={onOpenChange} groups={groups} placeholder="Search pages and actions…" />
+  );
 }

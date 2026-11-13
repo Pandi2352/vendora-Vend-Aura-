@@ -114,9 +114,9 @@ export function CheckoutModal({
           />
 
           {/* Amount Due Banner */}
-          <div className="p-3.5 rounded-md bg-ink text-white text-center">
-            <span className="text-[0.6875rem] text-zinc-400 uppercase tracking-wider block">Total Amount Due</span>
-            <span className="font-mono font-black text-2xl text-white mt-0.5 block">
+          <div className="p-3.5 rounded-md bg-primary-50 border border-primary-200 text-center">
+            <span className="text-[0.6875rem] text-primary-700 font-bold uppercase tracking-wider block">Total Amount Due</span>
+            <span className="font-mono font-black text-2xl text-zinc-900 mt-0.5 block">
               ₹{grandTotal.toLocaleString('en-IN')}
             </span>
           </div>

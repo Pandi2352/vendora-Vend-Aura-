@@ -6,7 +6,7 @@ interface BrandMarkProps {
   compact?: boolean;
 }
 
-/** RetailPOS swirl mark + wordmark, for the dark app shell. */
+/** RetailPOS swirl mark + wordmark, for the app shell (light, or navy in dark theme). */
 export function BrandMark({ subtitle, compact = false }: BrandMarkProps) {
   return (
     <div className="flex items-center gap-2.5 min-w-0 select-none">
@@ -24,10 +24,10 @@ export function BrandMark({ subtitle, compact = false }: BrandMarkProps) {
       </span>
       {!compact && (
         <span className="min-w-0 leading-tight">
-          <span className="block text-[11px] font-bold text-shell-muted">
-            Retail<span className="text-red-400">POS</span>
+          <span className="block text-[0.6875rem] font-bold text-shell-muted">
+            Retail<span className="text-red-600">POS</span>
           </span>
-          <span className={cn('block text-[15px] font-extrabold text-white truncate max-w-[160px]')}>
+          <span className={cn('block text-[0.9375rem] font-extrabold text-shell-text truncate max-w-[10rem]')}>
             {subtitle || 'Vendora'}
           </span>
         </span>

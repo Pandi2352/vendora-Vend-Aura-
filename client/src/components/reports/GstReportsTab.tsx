@@ -24,35 +24,35 @@ export function GstReportsTab({ gstr1, gstr3b, isLoading }: GstReportsTabProps) 
   return (
     <div className="space-y-4">
       {/* 1. GSTR-3B Net Tax Liability Strip */}
-      <div className="p-4 bg-ink text-white rounded-md border border-zinc-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="p-4 bg-primary-50 rounded-md border border-primary-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Calculator weight="bold" className="w-5 h-5 text-red-500" />
-            <h4 className="font-bold text-sm text-zinc-100">GSTR-3B Monthly Tax Computation</h4>
+            <Calculator weight="bold" className="w-5 h-5 text-primary-600" />
+            <h4 className="font-bold text-sm text-zinc-900">GSTR-3B Monthly Tax Computation</h4>
           </div>
-          <p className="text-[0.6875rem] text-zinc-400 mt-0.5">
+          <p className="text-[0.6875rem] text-zinc-600 mt-0.5">
             Outward Sales Tax minus Eligible Purchase Input Tax Credit (ITC)
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <div className="p-2 bg-ink border border-zinc-800 rounded-md">
-            <span className="text-[0.625rem] text-zinc-400 block">Outward Tax (3.1)</span>
-            <span className="font-mono font-bold text-zinc-100">₹{gstr3b.outwardTaxableSupplies.totalTax.toLocaleString('en-IN')}</span>
+          <div className="p-2 bg-white border border-zinc-200 rounded-md">
+            <span className="text-[0.625rem] text-zinc-500 block">Outward Tax (3.1)</span>
+            <span className="font-mono font-bold text-zinc-900">₹{gstr3b.outwardTaxableSupplies.totalTax.toLocaleString('en-IN')}</span>
           </div>
 
           <span className="text-zinc-500 font-bold">-</span>
 
-          <div className="p-2 bg-ink border border-zinc-800 rounded-md">
-            <span className="text-[0.625rem] text-zinc-400 block">Eligible ITC (Table 4)</span>
-            <span className="font-mono font-bold text-emerald-400">₹{gstr3b.eligibleItcPurchases.totalItc.toLocaleString('en-IN')}</span>
+          <div className="p-2 bg-white border border-zinc-200 rounded-md">
+            <span className="text-[0.625rem] text-zinc-500 block">Eligible ITC (Table 4)</span>
+            <span className="font-mono font-bold text-emerald-700">₹{gstr3b.eligibleItcPurchases.totalItc.toLocaleString('en-IN')}</span>
           </div>
 
           <span className="text-zinc-500 font-bold">=</span>
 
-          <div className="p-2.5 bg-red-950/80 border border-red-800 rounded-md">
-            <span className="text-[0.625rem] text-red-300 block font-bold">Net GST Payable</span>
-            <span className="font-mono font-black text-sm text-white">₹{gstr3b.netGstPayable.netTotalPayable.toLocaleString('en-IN')}</span>
+          <div className="p-2.5 bg-red-50 border border-red-200 rounded-md">
+            <span className="text-[0.625rem] text-red-700 block font-bold">Net GST Payable</span>
+            <span className="font-mono font-black text-sm text-red-800">₹{gstr3b.netGstPayable.netTotalPayable.toLocaleString('en-IN')}</span>
           </div>
         </div>
       </div>

@@ -53,13 +53,13 @@ export function InventoryAnalyticsTab({ data, isLoading }: InventoryAnalyticsTab
           <div className="text-[0.625rem] text-zinc-400 font-mono mt-0.5">Expected Gross Value</div>
         </div>
 
-        <div className="p-3 bg-ink border border-zinc-900 rounded-md text-white">
-          <div className="flex items-center justify-between text-zinc-400 mb-1">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+          <div className="flex items-center justify-between text-zinc-600 mb-1">
             <span className="text-[0.6875rem] font-bold">Potential Gross Profit</span>
-            <span className="text-[0.625rem] font-bold text-emerald-400">Warehouse</span>
+            <span className="text-[0.625rem] font-bold text-emerald-700">Warehouse</span>
           </div>
-          <div className="text-base font-black font-mono text-emerald-400">₹{s.potentialGrossProfit.toLocaleString('en-IN')}</div>
-          <div className="text-[0.625rem] text-zinc-400 font-mono mt-0.5">Upon 100% Stock Turn</div>
+          <div className="text-base font-black font-mono text-emerald-700">₹{s.potentialGrossProfit.toLocaleString('en-IN')}</div>
+          <div className="text-[0.625rem] text-zinc-500 font-mono mt-0.5">Upon 100% Stock Turn</div>
         </div>
       </div>
 

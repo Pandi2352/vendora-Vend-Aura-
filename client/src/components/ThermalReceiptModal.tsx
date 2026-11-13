@@ -187,7 +187,7 @@ function ThermalReceipt({
           </button>
           <button
             onClick={handlePrint}
-            className="px-4 py-1.5 rounded-md bg-ink hover:bg-ink-soft text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Printer weight="bold" className="w-3.5 h-3.5" />
             <span>Print Receipt</span>

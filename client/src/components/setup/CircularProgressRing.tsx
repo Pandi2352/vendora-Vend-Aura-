@@ -24,7 +24,7 @@ export function CircularProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          className="stroke-white/10 fill-none"
+          className="stroke-primary-100 fill-none"
           strokeWidth={strokeWidth}
         />
         {/* Progress stroke */}
@@ -32,7 +32,7 @@ export function CircularProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          className="stroke-pink-500 fill-none transition-all duration-700 ease-out"
+          className="stroke-primary-600 fill-none transition-all duration-700 ease-out"
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
@@ -40,9 +40,9 @@ export function CircularProgressRing({
         />
       </svg>
       {/* Centered progress text */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-white select-none">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-900 select-none">
         <span className="font-mono font-black text-xl leading-none">{completed}</span>
-        <span className="text-[0.625rem] font-bold text-white/60 tracking-wider mt-0.5">OF {total}</span>
+        <span className="text-[0.625rem] font-bold text-zinc-500 tracking-wider mt-0.5">OF {total}</span>
       </div>
     </div>
   );

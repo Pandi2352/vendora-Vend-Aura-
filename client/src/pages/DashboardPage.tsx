@@ -55,14 +55,14 @@ export function DashboardPage() {
       </div>
 
       {dashboard.recentOrders.length === 0 && (
-        <div className="rounded-lg bg-slate-900 border border-slate-800 p-4 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+        <div className="rounded-md bg-primary-50 border border-primary-200 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary-600/20 border border-primary-500/40 text-primary-400 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-md bg-white border border-primary-200 text-primary-600 flex items-center justify-center shrink-0">
               <RocketLaunch className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">Store Setup Guide</h3>
-              <p className="text-xs text-slate-400">Complete your initial store setup checklist before your first bill.</p>
+              <h3 className="font-bold text-sm text-zinc-900">Store Setup Guide</h3>
+              <p className="text-xs text-zinc-600">Complete your initial store setup checklist before your first bill.</p>
             </div>
           </div>
           <Link

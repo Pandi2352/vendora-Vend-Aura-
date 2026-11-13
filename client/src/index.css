@@ -18,13 +18,13 @@
   --color-primary-800: #0e3f8f;
   --color-primary-900: #123873;
 
-  /* App shell (sidebar + top bar): exact dark navy palette matching reference UI */
-  --color-shell: #101c33;
-  --color-shell-raised: #162544;
-  --color-shell-hover: #1a2b4c;
-  --color-shell-border: #1a2a47;
-  --color-shell-text: #cbd5e6;
-  --color-shell-muted: #7b89a3;
+  /* App shell (sidebar + top bar): soft warm light grey; dark theme switches it to navy (see .dark). */
+  --color-shell: #f8f8f7;
+  --color-shell-raised: #ffffff;
+  --color-shell-hover: #edecea;
+  --color-shell-border: #e6e4e1;
+  --color-shell-text: #3f3f46;
+  --color-shell-muted: #71717a;
 
   /* Solid dark surfaces used for dark buttons / chips inside pages. */
   --color-ink: #18181b;
@@ -50,7 +50,8 @@ html {
   font-family: "Material Symbols Outlined";
   font-weight: 400;
   font-style: normal;
-  font-size: 16px;
+  /* rem, so icons follow the UI size setting like the text around them */
+  font-size: 1rem;
   line-height: 1;
   letter-spacing: normal;
   text-transform: none;
@@ -103,6 +104,13 @@ body {
  */
 .dark {
   color-scheme: dark;
+
+  --color-shell: #101c33;
+  --color-shell-raised: #162544;
+  --color-shell-hover: #1a2b4c;
+  --color-shell-border: #1a2a47;
+  --color-shell-text: #cbd5e6;
+  --color-shell-muted: #7b89a3;
 
   --color-white: #121c2c;
   --color-zinc-50: #0b1320;

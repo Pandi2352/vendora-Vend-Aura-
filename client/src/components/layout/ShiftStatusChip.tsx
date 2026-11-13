@@ -15,8 +15,8 @@ export function ShiftStatusChip() {
       className={cn(
         'hidden md:inline-flex items-center gap-2 h-9 px-3 rounded-md border text-xs font-bold transition-colors cursor-pointer',
         isShiftOpen
-          ? 'border-emerald-700/60 text-emerald-300 hover:bg-shell-hover'
-          : 'border-amber-600/60 text-amber-300 hover:bg-shell-hover',
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+          : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
       )}
     >
       <Vault className="w-4 h-4" />

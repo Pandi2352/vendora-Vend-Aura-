@@ -105,7 +105,7 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
             <button
               onClick={() => setBillingCycle('MONTHLY')}
               className={`px-3 py-1 font-semibold rounded-sm transition-colors cursor-pointer ${
-                billingCycle === 'MONTHLY' ? 'bg-zinc-950 text-white' : 'text-zinc-600 hover:text-zinc-900'
+                billingCycle === 'MONTHLY' ? 'bg-white text-primary-700 border border-primary-200' : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
               Monthly Billing
@@ -113,7 +113,7 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
             <button
               onClick={() => setBillingCycle('ANNUAL')}
               className={`px-3 py-1 font-semibold rounded-sm transition-colors cursor-pointer flex items-center gap-1 ${
-                billingCycle === 'ANNUAL' ? 'bg-zinc-950 text-white' : 'text-zinc-600 hover:text-zinc-900'
+                billingCycle === 'ANNUAL' ? 'bg-white text-primary-700 border border-primary-200' : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
               <span>Annual Billing</span>

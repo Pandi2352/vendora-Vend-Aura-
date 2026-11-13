@@ -63,7 +63,7 @@ export function Topbar({ onOpenMobileNav, onOpenSearch }: TopbarProps) {
         type="button"
         onClick={onOpenSearch}
         aria-keyshortcuts="Control+K Meta+K"
-        className="hidden sm:inline-flex items-center gap-2 h-9 w-44 lg:w-60 px-3 rounded-md border border-shell-border text-shell-muted text-sm hover:bg-shell-hover hover:text-shell-text transition-colors cursor-pointer"
+        className="hidden sm:inline-flex items-center gap-2 h-9 w-44 lg:w-60 px-3 rounded-md border border-shell-border bg-shell-raised text-shell-muted text-sm hover:border-zinc-300 hover:text-shell-text transition-colors cursor-pointer"
       >
         <MagnifyingGlass className="w-4 h-4 shrink-0" />
         <span className="flex-1 text-left">Search…</span>
@@ -77,20 +77,23 @@ export function Topbar({ onOpenMobileNav, onOpenSearch }: TopbarProps) {
 
       <a
         href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Support request · ${user?.shopId ?? ''}`)}`}
-        className="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-md border border-primary-500/60 bg-primary-600/20 text-white text-sm font-bold hover:bg-primary-600/35 transition-colors"
+        className="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-md border border-primary-200 bg-primary-50 text-primary-700 text-sm font-bold hover:bg-primary-100 transition-colors"
       >
         <Headset className="w-4 h-4" /> Support
       </a>
 
-      <span className="hidden md:inline-flex items-center gap-2 h-9 px-3 rounded-md border border-shell-border text-shell-text text-sm font-semibold">
+      <span className="hidden md:inline-flex items-center gap-2 h-9 px-3 rounded-md border border-shell-border bg-shell-raised text-shell-text text-sm font-semibold">
         <Storefront className="w-4 h-4" />
-        <span className="max-w-[140px] truncate">{user?.store?.outletCode ?? 'Main Branch'}</span>
+        <span className="max-w-[8.75rem] truncate">{user?.store?.outletCode ?? 'Main Branch'}</span>
       </span>
 
       <ShiftStatusChip />
       <NetworkStatusChip />
 
-      <TopbarIconButton label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} onClick={toggleTheme}>
+      <TopbarIconButton
+        label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+        onClick={toggleTheme}
+      >
         {theme === 'dark' ? <Sun /> : <Moon />}
       </TopbarIconButton>
 

@@ -71,13 +71,13 @@ export function ExecutiveOverviewTab({ data, isLoading }: ExecutiveOverviewTabPr
           <div className="text-[0.625rem] text-zinc-400 font-mono mt-0.5">Basket Size</div>
         </div>
 
-        <div className="p-3 bg-ink border border-zinc-900 rounded-md text-white">
-          <div className="flex items-center justify-between text-zinc-400 mb-1">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+          <div className="flex items-center justify-between text-zinc-600 mb-1">
             <span className="text-[0.6875rem] font-bold">Est. Gross Profit</span>
-            <TrendUp weight="bold" className="w-3.5 h-3.5 text-emerald-400" />
+            <TrendUp weight="bold" className="w-3.5 h-3.5 text-emerald-600" />
           </div>
-          <div className="text-base font-black font-mono text-emerald-400">₹{s.estimatedGrossProfit.toLocaleString('en-IN')}</div>
-          <div className="text-[0.625rem] text-zinc-400 font-mono mt-0.5">{s.grossMarginPercent}% Margin on COGS</div>
+          <div className="text-base font-black font-mono text-emerald-700">₹{s.estimatedGrossProfit.toLocaleString('en-IN')}</div>
+          <div className="text-[0.625rem] text-zinc-500 font-mono mt-0.5">{s.grossMarginPercent}% Margin on COGS</div>
         </div>
       </div>
 

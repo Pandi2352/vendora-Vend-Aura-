@@ -32,9 +32,11 @@ export function SidebarFlyout({
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
       style={{ top: position.top, left: position.left }}
-      className="fixed z-[100] w-max min-w-[155px] max-w-[240px] bg-shell border border-shell-border rounded-md p-2 shadow-2xl animate-flyout-in"
+      className="fixed z-[100] w-max min-w-[9.6875rem] max-w-[15rem] bg-shell-raised border border-shell-border rounded-md p-1.5 animate-flyout-in"
     >
-      <p className="px-3 pt-1 pb-2 text-[10px] font-bold uppercase tracking-wider text-shell-muted whitespace-nowrap">{title}</p>
+      <p className="px-3 pt-1 pb-2 text-[0.625rem] font-bold uppercase tracking-wider text-shell-muted whitespace-nowrap">
+        {title}
+      </p>
       {items.map((item) =>
         item.children ? (
           <NestedFlyoutItem key={item.label} item={item} onNavigate={onNavigate} />
@@ -46,8 +48,10 @@ export function SidebarFlyout({
             onClick={onNavigate}
             className={({ isActive }) =>
               cn(
-                'group flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-bold transition-colors whitespace-nowrap',
-                isActive ? 'bg-[#2563eb] text-white font-bold' : 'text-[#cbd5e6] hover:bg-[#1a2b4c] hover:text-white',
+                'group flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.8125rem] transition-colors whitespace-nowrap',
+                isActive
+                  ? 'bg-primary-50 text-primary-700 font-semibold'
+                  : 'text-shell-text font-medium hover:bg-shell-hover',
               )
             }
           >
@@ -56,7 +60,7 @@ export function SidebarFlyout({
                 <item.icon
                   className={cn(
                     'shrink-0 transition-colors ms-hover-fill',
-                    isActive ? 'text-white ms-fill' : 'text-[#7b89a3] group-hover:text-white',
+                    isActive ? 'text-primary-600 ms-fill' : 'text-shell-muted group-hover:text-shell-text',
                   )}
                 />
                 <span className="whitespace-nowrap">{item.label}</span>
@@ -85,13 +89,13 @@ function NestedFlyoutItem({ item, onNavigate }: { item: NavItem; onNavigate: () 
         onPointerLeave={flyout.scheduleClose}
         onClick={flyout.toggle}
         className={cn(
-          'group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-bold transition-colors cursor-pointer whitespace-nowrap',
-          flyout.isOpen ? 'bg-[#1a2b4c] text-white' : 'text-[#cbd5e6] hover:bg-[#1a2b4c] hover:text-white',
+          'group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.8125rem] font-medium transition-colors cursor-pointer whitespace-nowrap',
+          flyout.isOpen ? 'bg-shell-hover text-shell-text' : 'text-shell-text hover:bg-shell-hover',
         )}
       >
-        <item.icon className="shrink-0 ms-hover-fill" />
+        <item.icon className="shrink-0 text-shell-muted ms-hover-fill" />
         <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
-        <span className="ms text-[16px] text-shell-muted group-hover:text-white">chevron_right</span>
+        <span className="ms text-[1rem] text-shell-muted group-hover:text-shell-text">chevron_right</span>
       </button>
       {flyout.position && (
         <SidebarFlyout
