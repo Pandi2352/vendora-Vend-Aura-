@@ -47,3 +47,4 @@ export const FREIGHT_DEFAULTS = {
   applicableOn: 'all',
   active: true,
 } as unknown as FreightInput;
+

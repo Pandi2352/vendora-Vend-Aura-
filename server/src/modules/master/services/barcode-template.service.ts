@@ -84,3 +84,4 @@ export class BarcodeTemplateService {
     return { success: true };
   }
 }
+

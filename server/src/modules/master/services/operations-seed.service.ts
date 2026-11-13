@@ -205,3 +205,4 @@ export class OperationsSeedService {
     this.logger.log(`✓ Seeded default vouchers for tenant [${tenantId.toString()}]`);
   }
 }
+

@@ -39,3 +39,4 @@ export class BarcodeTemplate extends TenantBaseEntity {
 
 export const BarcodeTemplateSchema = SchemaFactory.createForClass(BarcodeTemplate);
 BarcodeTemplateSchema.index({ tenantId: 1, code: 1 }, { unique: true });
+

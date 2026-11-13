@@ -84,3 +84,4 @@ export class FreightService {
     return { success: true };
   }
 }
+

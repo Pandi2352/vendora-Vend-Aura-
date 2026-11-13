@@ -30,3 +30,4 @@ export class Voucher extends TenantBaseEntity {
 
 export const VoucherSchema = SchemaFactory.createForClass(Voucher);
 VoucherSchema.index({ tenantId: 1, code: 1 }, { unique: true });
+

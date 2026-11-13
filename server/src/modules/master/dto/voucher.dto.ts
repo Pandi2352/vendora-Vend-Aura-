@@ -78,3 +78,4 @@ export class UpdateVoucherDto {
   @IsBoolean()
   active?: boolean;
 }
+

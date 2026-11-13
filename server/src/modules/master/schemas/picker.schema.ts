@@ -24,3 +24,4 @@ export class Picker extends TenantBaseEntity {
 
 export const PickerSchema = SchemaFactory.createForClass(Picker);
 PickerSchema.index({ tenantId: 1, code: 1 }, { unique: true });
+

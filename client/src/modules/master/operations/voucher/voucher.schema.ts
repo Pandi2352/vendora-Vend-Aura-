@@ -39,3 +39,4 @@ export const VOUCHER_DEFAULTS = {
   validityDays: 90,
   active: true,
 } as unknown as VoucherInput;
+

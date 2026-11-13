@@ -76,3 +76,4 @@ export class UpdateFreightDto {
   @IsBoolean()
   active?: boolean;
 }
+

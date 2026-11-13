@@ -108,3 +108,4 @@ export class UpdateBarcodeTemplateDto {
   @IsBoolean()
   active?: boolean;
 }
+

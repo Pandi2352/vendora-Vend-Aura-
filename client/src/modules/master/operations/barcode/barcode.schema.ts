@@ -46,3 +46,4 @@ export const BARCODE_DEFAULTS = {
   showStoreName: true,
   active: true,
 } as unknown as BarcodeInput;
+

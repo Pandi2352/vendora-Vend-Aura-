@@ -30,3 +30,4 @@ export class Freight extends TenantBaseEntity {
 
 export const FreightSchema = SchemaFactory.createForClass(Freight);
 FreightSchema.index({ tenantId: 1, code: 1 }, { unique: true });
+

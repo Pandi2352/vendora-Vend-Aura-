@@ -54,3 +54,4 @@ export class UpdatePickerDto {
   @IsBoolean()
   active?: boolean;
 }
+
