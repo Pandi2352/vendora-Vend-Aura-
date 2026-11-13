@@ -168,6 +168,12 @@ function check(name, cond, extra) {
   r = await call('PUT', '/account/company-profile', { companyCode: 'CMP-01', companyName: 'Smoke Mart Updated', city: 'Madurai' }, accessToken);
   check('company profile update ok', r.status === 200 && r.json.data.companyName === 'Smoke Mart Updated', r.json);
 
+  // 1b. Tenant Theme & Appearance
+  r = await call('GET', '/account/theme', null, accessToken);
+  check('read tenant theme ok', r.status === 200 && r.json.data.themeId === 'default', r.json);
+  r = await call('PATCH', '/account/theme', { themeId: 'emerald', sidebarStyle: 'dark', navbarStyle: 'brand', fontFamily: 'Outfit', borderRadius: 'rounded' }, accessToken);
+  check('update tenant theme ok', r.status === 200 && r.json.data.themeId === 'emerald' && r.json.data.sidebarStyle === 'dark' && r.json.data.fontFamily === 'Outfit', r.json);
+
   // 2. Warehouses
   r = await call('POST', '/master/warehouses', { code: 'WH99', name: 'Smoke Godown', handlingPercent: 5 }, accessToken);
   check('create warehouse ok', r.status === 201 && r.json.data.code === 'WH99', r.json);

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Patch, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AccountService } from './account.service';
 import { UpdateCompanyProfileDto } from './dto/update-company-profile.dto';
+import { UpdateThemeDto } from './dto/update-theme.dto';
 import { AuthenticatedUser, CurrentUser, TenantId } from '../../common';
 
 @ApiTags('Store Account & Plan')
@@ -28,7 +29,6 @@ export class AccountController {
     return { data: await this.accountService.getCompanyProfile(tenantId) };
   }
 
-  @Put('company-profile')
   @Patch('company-profile')
   @ApiOperation({ summary: 'Update company and store profile configuration' })
   async updateCompanyProfile(
@@ -36,6 +36,37 @@ export class AccountController {
     @Body() dto: UpdateCompanyProfileDto,
   ) {
     return { data: await this.accountService.updateCompanyProfile(tenantId, dto) };
+  }
+
+  @Put('company-profile')
+  async updateCompanyProfilePut(
+    @TenantId() tenantId: string,
+    @Body() dto: UpdateCompanyProfileDto,
+  ) {
+    return this.updateCompanyProfile(tenantId, dto);
+  }
+
+  @Get('theme')
+  @ApiOperation({ summary: 'Get current tenant theme and UI customization settings' })
+  async getTheme(@TenantId() tenantId: string) {
+    return { data: await this.accountService.getTheme(tenantId) };
+  }
+
+  @Patch('theme')
+  @ApiOperation({ summary: 'Update tenant theme and UI customization settings' })
+  async updateTheme(
+    @TenantId() tenantId: string,
+    @Body() dto: UpdateThemeDto,
+  ) {
+    return { data: await this.accountService.updateTheme(tenantId, dto) };
+  }
+
+  @Put('theme')
+  async updateThemePut(
+    @TenantId() tenantId: string,
+    @Body() dto: UpdateThemeDto,
+  ) {
+    return this.updateTheme(tenantId, dto);
   }
 }
 

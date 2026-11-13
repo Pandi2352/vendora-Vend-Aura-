@@ -12,6 +12,7 @@ import {
 } from '@phosphor-icons/react';
 import { useAuth } from '../../hooks/useAuth';
 import { usePreferences } from '../../hooks/usePreferences';
+import { useTheme } from '../../hooks/useTheme';
 import { useFullscreen } from '../../hooks/useFullscreen';
 import { ROUTES } from '../../config/routes';
 import { SUPPORT_EMAIL } from '../../lib/config';
@@ -19,7 +20,9 @@ import { BrandMark } from './BrandMark';
 import { ShiftStatusChip } from './ShiftStatusChip';
 import { NetworkStatusChip } from './NetworkStatusChip';
 import { TopbarIconButton } from './TopbarIconButton';
+import { ThemeSwitcherDropdown } from './ThemeSwitcherDropdown';
 import { UserMenu } from './UserMenu';
+import { topbarContainerClass } from './sidebarStyles';
 import { cn } from '../ui/cn';
 import { CommandHotkeyHint } from '../ui/command/Kbd';
 
@@ -32,10 +35,11 @@ interface TopbarProps {
 export function Topbar({ onOpenMobileNav, onOpenSearch }: TopbarProps) {
   const { user } = useAuth();
   const { theme, toggleTheme, sidebarCollapsed, toggleSidebar } = usePreferences();
+  const { config } = useTheme();
   const fullscreen = useFullscreen();
 
   return (
-    <header className="h-14 shrink-0 bg-shell border-b border-shell-border flex items-center gap-2 pr-3 sm:pr-4">
+    <header className={cn('h-14 shrink-0 border-b flex items-center gap-2 pr-3 sm:pr-4 transition-colors', topbarContainerClass(config.navbarStyle))}>
       {/* Brand column lines up with the sidebar width */}
       <div
         className={cn(
@@ -89,6 +93,8 @@ export function Topbar({ onOpenMobileNav, onOpenSearch }: TopbarProps) {
 
       <ShiftStatusChip />
       <NetworkStatusChip />
+
+      <ThemeSwitcherDropdown />
 
       <TopbarIconButton
         label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}

@@ -47,6 +47,13 @@ export class UpdateCompanyProfileDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() paymodeDiscount?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() memberModule?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() allowMultipleDiscount?: boolean;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() themeId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() sidebarStyle?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() navbarStyle?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() fontFamily?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() fontSize?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() borderRadius?: string;
 }
 
 export const DEFAULT_COMPANY_PROFILE = {
@@ -92,5 +99,11 @@ export const DEFAULT_COMPANY_PROFILE = {
   paymodeDiscount: false,
   memberModule: false,
   allowMultipleDiscount: false,
+  themeId: 'default',
+  sidebarStyle: 'default',
+  navbarStyle: 'default',
+  fontFamily: 'Plus Jakarta Sans',
+  fontSize: 'default',
+  borderRadius: 'modern',
 };
 

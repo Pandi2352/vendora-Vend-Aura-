@@ -4,6 +4,7 @@ import { Alert, PageHeader, Tabs, type TabItem } from '../components/ui';
 import { useAccountOverview } from '../hooks/useAccountOverview';
 import { api } from '../lib/api';
 import { AppearanceCard } from './settings/AppearanceCard';
+import { ThemeStudioTab } from './settings/ThemeStudioTab';
 import { PosPreferencesCard } from './settings/PosPreferencesCard';
 import { StoreProfileCard } from './settings/StoreProfileCard';
 import { TerminalCard } from './settings/TerminalCard';
@@ -11,10 +12,11 @@ import { PlanUsageCard } from './settings/PlanUsageCard';
 import { OutletsManagementCard } from './settings/OutletsManagementCard';
 import { UsersManagementCard } from './settings/UsersManagementCard';
 
-type SettingsTab = 'general' | 'pos' | 'store' | 'outlets' | 'users';
+type SettingsTab = 'general' | 'appearance' | 'pos' | 'store' | 'outlets' | 'users';
 
 const TABS: TabItem<SettingsTab>[] = [
   { value: 'general', label: 'General' },
+  { value: 'appearance', label: 'Theme & Appearance' },
   { value: 'pos', label: 'POS' },
   { value: 'store', label: 'Store' },
   { value: 'outlets', label: 'Branches & Transfers' },
@@ -54,9 +56,10 @@ export function SettingsPage() {
       )}
       <Tabs items={TABS} value={tab} onChange={(next) => setParams({ tab: next }, { replace: true })} className="mb-4" />
 
+      {tab === 'appearance' && <ThemeStudioTab />}
       {tab === 'outlets' && <OutletsManagementCard />}
       {tab === 'users' && <UsersManagementCard />}
-      {tab !== 'outlets' && tab !== 'users' && (
+      {tab !== 'appearance' && tab !== 'outlets' && tab !== 'users' && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
           <div className="space-y-4">
             {tab === 'general' && <AppearanceCard />}

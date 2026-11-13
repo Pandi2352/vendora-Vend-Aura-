@@ -115,6 +115,12 @@ export const NAVIGATION: NavItem[] = [
     icon: ms('admin_panel_settings'),
     roles: ROLE_GROUPS.MANAGEMENT,
   },
+  {
+    label: 'Theme & Appearance',
+    path: `${ROUTES.SETTINGS}?tab=appearance`,
+    icon: ms('palette'),
+    roles: ROLE_GROUPS.MANAGEMENT,
+  },
   { label: 'POS', path: ROUTES.POS, icon: ms('storefront'), badgeDot: true },
   { label: 'Home Delivery', path: `${ROUTES.ORDERS}?tab=delivery`, icon: ms('local_shipping') },
   { label: 'POS Utilities', path: `${ROUTES.ORDERS}?tab=utilities`, icon: ms('receipt_long') },
@@ -140,6 +146,7 @@ const DEFAULT_PAGE_TABS: Record<string, string> = {
   [ROUTES.SUPPLIERS]: 'suppliers',
   [ROUTES.DASHBOARD]: 'overview',
   [ROUTES.REPORTS_INVENTORY]: 'valuation',
+  [ROUTES.SETTINGS]: 'general',
 };
 
 /**

@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { isNavItemActive, isPathActive, type NavItem } from '../../config/navigation';
 import { useFlyout } from '../../hooks/useFlyout';
+import { useTheme } from '../../hooks/useTheme';
 import { cn } from '../ui/cn';
 import { SidebarFlyout } from './SidebarFlyout';
 import { SidebarGroup } from './SidebarGroup';
@@ -36,6 +37,7 @@ function BadgeDot({ collapsed }: { collapsed: boolean }) {
 
 function SidebarLink({ item, collapsed, onNavigate }: Pick<SidebarNavItemProps, 'item' | 'collapsed' | 'onNavigate'>) {
   const { pathname, search } = useLocation();
+  const { config } = useTheme();
   const active = isPathActive(item.path!, pathname, search);
   const Icon = item.icon;
   return (
@@ -45,9 +47,9 @@ function SidebarLink({ item, collapsed, onNavigate }: Pick<SidebarNavItemProps, 
       title={collapsed ? item.label : undefined}
       aria-label={collapsed ? item.label : undefined}
       aria-current={active ? 'page' : undefined}
-      className={navRowClass(active, collapsed)}
+      className={navRowClass(active, collapsed, config.sidebarStyle)}
     >
-      <Icon className={navIconClass(active)} />
+      <Icon className={navIconClass(active, config.sidebarStyle)} />
       {!collapsed && <span className="flex-1 text-left truncate">{item.label}</span>}
       {item.badgeDot && <BadgeDot collapsed={collapsed} />}
     </Link>
@@ -56,6 +58,7 @@ function SidebarLink({ item, collapsed, onNavigate }: Pick<SidebarNavItemProps, 
 
 function CollapsedSection({ item, onNavigate }: Pick<SidebarNavItemProps, 'item' | 'onNavigate'>) {
   const { pathname, search } = useLocation();
+  const { config } = useTheme();
   const flyout = useFlyout<HTMLButtonElement>();
   const active = isNavItemActive(item, pathname, search);
   const Icon = item.icon;
@@ -72,9 +75,9 @@ function CollapsedSection({ item, onNavigate }: Pick<SidebarNavItemProps, 'item'
         onPointerEnter={flyout.open}
         onPointerLeave={flyout.scheduleClose}
         onClick={flyout.toggle}
-        className={cn(navRowClass(active, true), flyout.isOpen && !active && 'bg-shell-hover')}
+        className={cn(navRowClass(active, true, config.sidebarStyle), flyout.isOpen && !active && 'bg-shell-hover')}
       >
-        <Icon className={navIconClass(active)} />
+        <Icon className={navIconClass(active, config.sidebarStyle)} />
         {item.badgeDot && <BadgeDot collapsed />}
       </button>
       {flyout.position && (

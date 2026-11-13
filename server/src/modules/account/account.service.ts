@@ -10,6 +10,7 @@ import { Category, CategoryDocument } from '../catalog/schemas/category.schema';
 import { Supplier, SupplierDocument } from '../suppliers/schemas/supplier.schema';
 import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { DEFAULT_COMPANY_PROFILE, UpdateCompanyProfileDto } from './dto/update-company-profile.dto';
+import { DEFAULT_THEME_CONFIG, UpdateThemeDto } from './dto/update-theme.dto';
 import { AuthenticatedUser, ObjectIdUtil } from '../../common';
 import { SUBSCRIPTION_PLANS, SubscriptionPlanCode } from '../../shared';
 
@@ -275,5 +276,47 @@ export class AccountService {
     if (!tenant) throw new NotFoundException('Shop not found.');
 
     return this.getCompanyProfile(tenantIdStr);
+  }
+
+  /** Retrieve the tenant UI theme and styling preferences */
+  async getTheme(tenantIdStr: string) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const tenant = await this.tenantModel.findById(tenantId).lean();
+    if (!tenant) throw new NotFoundException('Shop not found.');
+
+    const p = (tenant.companyProfile || {}) as Record<string, unknown>;
+    return {
+      ...DEFAULT_THEME_CONFIG,
+      themeId: (p.themeId as string) || DEFAULT_THEME_CONFIG.themeId,
+      sidebarStyle: (p.sidebarStyle as string) || DEFAULT_THEME_CONFIG.sidebarStyle,
+      navbarStyle: (p.navbarStyle as string) || DEFAULT_THEME_CONFIG.navbarStyle,
+      fontFamily: (p.fontFamily as string) || DEFAULT_THEME_CONFIG.fontFamily,
+      fontSize: (p.fontSize as string) || DEFAULT_THEME_CONFIG.fontSize,
+      borderRadius: (p.borderRadius as string) || DEFAULT_THEME_CONFIG.borderRadius,
+    };
+  }
+
+  /** Update tenant UI theme and styling preferences in MongoDB */
+  async updateTheme(tenantIdStr: string, dto: UpdateThemeDto) {
+    const tenantId = ObjectIdUtil.toObjectId(tenantIdStr, 'tenant');
+    const tenant = await this.tenantModel.findById(tenantId).lean();
+    if (!tenant) throw new NotFoundException('Shop not found.');
+
+    const currentProfile = (tenant.companyProfile || {}) as Record<string, unknown>;
+    const updatedProfile = {
+      ...currentProfile,
+      ...(dto.themeId ? { themeId: dto.themeId } : {}),
+      ...(dto.sidebarStyle ? { sidebarStyle: dto.sidebarStyle } : {}),
+      ...(dto.navbarStyle ? { navbarStyle: dto.navbarStyle } : {}),
+      ...(dto.fontFamily ? { fontFamily: dto.fontFamily } : {}),
+      ...(dto.fontSize ? { fontSize: dto.fontSize } : {}),
+      ...(dto.borderRadius ? { borderRadius: dto.borderRadius } : {}),
+    };
+
+    await this.tenantModel.findByIdAndUpdate(tenantId, {
+      $set: { companyProfile: updatedProfile },
+    });
+
+    return this.getTheme(tenantIdStr);
   }
 }

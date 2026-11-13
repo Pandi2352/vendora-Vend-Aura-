@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CaretDown } from '@phosphor-icons/react';
 import { isNavItemActive, isPathActive, type NavItem } from '../../config/navigation';
+import { useTheme } from '../../hooks/useTheme';
 import { cn } from '../ui/cn';
 import { navChildClass, navIconClass, navRowClass } from './sidebarStyles';
 
@@ -20,6 +21,7 @@ interface SidebarGroupProps {
  */
 export function SidebarGroup({ item, open, onToggle, onNavigate }: SidebarGroupProps) {
   const { pathname, search } = useLocation();
+  const { config } = useTheme();
   const containsActive = isNavItemActive(item, pathname, search);
   const listId = useId();
   const Icon = item.icon;
@@ -31,9 +33,12 @@ export function SidebarGroup({ item, open, onToggle, onNavigate }: SidebarGroupP
         aria-expanded={open}
         aria-controls={listId}
         onClick={onToggle}
-        className={cn(navRowClass(false), containsActive && !open && 'text-primary-700')}
+        className={cn(
+          navRowClass(false, false, config.sidebarStyle),
+          containsActive && !open && (config.sidebarStyle === 'dark' || config.sidebarStyle === 'brand' ? 'text-primary-400 font-semibold' : 'text-primary-700 font-semibold'),
+        )}
       >
-        <Icon className={navIconClass(containsActive && !open)} />
+        <Icon className={navIconClass(containsActive && !open, config.sidebarStyle)} />
         <span className="flex-1 text-left truncate">{item.label}</span>
         {item.badgeDot && <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" aria-hidden />}
         <CaretDown
@@ -55,7 +60,7 @@ export function SidebarGroup({ item, open, onToggle, onNavigate }: SidebarGroupP
                   to={child.path!}
                   onClick={onNavigate}
                   aria-current={active ? 'page' : undefined}
-                  className={navChildClass(active)}
+                  className={navChildClass(active, config.sidebarStyle)}
                 >
                   <span className="truncate">{child.label}</span>
                 </Link>

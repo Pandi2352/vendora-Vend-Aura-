@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { findActiveSection, navigationForRole } from '../../config/navigation';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { cn } from '../ui/cn';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarUserCard } from './SidebarUserCard';
+import { sidebarContainerClass } from './sidebarStyles';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -19,6 +21,7 @@ interface SidebarProps {
  */
 export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) {
   const { user } = useAuth();
+  const { config } = useTheme();
   const items = navigationForRole(user?.role);
   const { pathname, search } = useLocation();
   // Section holding the current page; it opens by default and on navigation.
@@ -45,9 +48,10 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
       <aside
         aria-label="Main navigation"
         className={cn(
-          'fixed lg:relative inset-y-0 left-0 z-40 flex flex-col bg-shell border-r border-shell-border',
-          'transition-[width] duration-200 shrink-0',
+          'fixed lg:relative inset-y-0 left-0 z-40 flex flex-col border-r',
+          'transition-[width,background-color] duration-200 shrink-0',
           'top-14 lg:top-0',
+          sidebarContainerClass(config.sidebarStyle),
           showCollapsed ? 'w-16' : 'w-60',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}

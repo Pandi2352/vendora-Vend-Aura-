@@ -1,7 +1,9 @@
-import { Palette, Sun, Moon } from '@phosphor-icons/react';
+import { Palette, Sun, Moon, Sparkle, ArrowRight } from '@phosphor-icons/react';
+import { Link } from 'react-router-dom';
 import { Card, CardHeader, OptionTile, Toggle } from '../../components/ui';
 import { usePreferences } from '../../hooks/usePreferences';
 import { CUSTOM_SCALE_RANGE, UI_SIZE_OPTIONS, type ThemeMode } from '../../lib/preferences';
+import { ROUTES } from '../../config/routes';
 
 const THEMES: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
   { value: 'light', label: 'Light', icon: <Sun /> },
@@ -20,7 +22,7 @@ export function AppearanceCard() {
       <CardHeader icon={<Palette />} title="Appearance" />
 
       <SectionLabel>Theme</SectionLabel>
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-3">
         {THEMES.map((t) => (
           <OptionTile
             key={t.value}
@@ -31,6 +33,20 @@ export function AppearanceCard() {
           />
         ))}
       </div>
+
+      <Link
+        to={`${ROUTES.SETTINGS}?tab=appearance`}
+        className="flex items-center justify-between p-3 mb-5 rounded-lg border border-primary-200 bg-primary-50/70 text-primary-900 text-xs font-semibold hover:bg-primary-100/70 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Sparkle className="w-4 h-4 text-primary-600" />
+          <span>Customize Brand Colors, Fonts & Navigation Bar</span>
+        </div>
+        <div className="flex items-center gap-1 text-primary-700 font-bold">
+          <span>Theme Studio</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </div>
+      </Link>
 
       <SectionLabel>UI size</SectionLabel>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
