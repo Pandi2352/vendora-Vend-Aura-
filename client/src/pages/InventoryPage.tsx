@@ -4,13 +4,18 @@ import { Tabs } from '@/components/ui';
 import { ItemCatalogTab } from '@/modules/inventory/ItemCatalogTab';
 import { CategoriesTab } from '@/modules/inventory/CategoriesTab';
 import { OpeningStockTab } from '@/modules/inventory/OpeningStockTab';
+import { StockTransfersTab } from '@/components/transfers/StockTransfersTab';
+import { BarcodeGeneratorTab } from '@/components/inventory/BarcodeGeneratorTab';
 
-type InventoryTab = 'catalog' | 'categories' | 'stock';
+type InventoryTab = 'catalog' | 'categories' | 'stock' | 'transfers' | 'barcodes';
 
 export function InventoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
-  const currentTab: InventoryTab = rawTab === 'categories' || rawTab === 'stock' ? rawTab : 'catalog';
+  const currentTab: InventoryTab =
+    rawTab === 'categories' || rawTab === 'stock' || rawTab === 'transfers' || rawTab === 'barcodes'
+      ? rawTab
+      : 'catalog';
 
   const handleTabChange = (tabId: InventoryTab) => {
     setSearchParams((prev) => {
@@ -32,7 +37,7 @@ export function InventoryPage() {
           <span>Inventory Master & Catalog</span>
         </h2>
         <p className="text-xs text-zinc-500 mt-0.5">
-          Manage product inventory, retail pricing, multi-tier categories, and opening stock counts.
+          Manage product inventory, retail pricing, inter-branch stock transfers (STN), and barcode sticker generation.
         </p>
       </div>
 
@@ -44,12 +49,16 @@ export function InventoryPage() {
           { value: 'catalog', label: 'Item Catalog' },
           { value: 'categories', label: 'Categories & Brands' },
           { value: 'stock', label: 'Opening Stock' },
+          { value: 'transfers', label: 'Inter-Branch Transfers (STN)' },
+          { value: 'barcodes', label: 'Barcode Stickers' },
         ]}
       />
 
       {currentTab === 'catalog' && <ItemCatalogTab />}
       {currentTab === 'categories' && <CategoriesTab />}
       {currentTab === 'stock' && <OpeningStockTab />}
+      {currentTab === 'transfers' && <StockTransfersTab />}
+      {currentTab === 'barcodes' && <BarcodeGeneratorTab />}
     </div>
   );
 }

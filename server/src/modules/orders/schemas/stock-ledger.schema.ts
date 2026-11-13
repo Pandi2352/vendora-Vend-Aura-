@@ -23,6 +23,8 @@ export class StockLedger extends TenantBaseEntity {
       'INWARD_RETURN',
       'PHYSICAL_AUDIT',
       'WASTAGE_WRITE_OFF',
+      'OUTWARD_TRANSFER',
+      'INWARD_TRANSFER',
     ],
     index: true,
   })
@@ -34,7 +36,9 @@ export class StockLedger extends TenantBaseEntity {
     | 'RETURN'
     | 'INWARD_RETURN'
     | 'PHYSICAL_AUDIT'
-    | 'WASTAGE_WRITE_OFF';
+    | 'WASTAGE_WRITE_OFF'
+    | 'OUTWARD_TRANSFER'
+    | 'INWARD_TRANSFER';
 
   @Prop({ default: 0, min: 0 })
   quantityDebit: number; // Stock reduction (sale)
@@ -45,8 +49,8 @@ export class StockLedger extends TenantBaseEntity {
   @Prop({ required: true })
   balanceAfter: number; // Balance after transaction
 
-  @Prop({ required: true, enum: ['ORDER', 'GRN', 'ADJUSTMENT', 'MANUAL', 'AUDIT', 'WASTAGE'] })
-  referenceType: 'ORDER' | 'GRN' | 'ADJUSTMENT' | 'MANUAL' | 'AUDIT' | 'WASTAGE';
+  @Prop({ required: true, enum: ['ORDER', 'GRN', 'ADJUSTMENT', 'MANUAL', 'AUDIT', 'WASTAGE', 'TRANSFER'] })
+  referenceType: 'ORDER' | 'GRN' | 'ADJUSTMENT' | 'MANUAL' | 'AUDIT' | 'WASTAGE' | 'TRANSFER';
 
   @Prop({ required: true })
   referenceId: string;

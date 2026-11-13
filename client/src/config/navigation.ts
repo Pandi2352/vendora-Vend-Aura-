@@ -41,6 +41,7 @@ export const NAVIGATION: NavItem[] = [
       { label: 'Item Catalog', path: ROUTES.INVENTORY, icon: ms('inventory_2') },
       { label: 'Categories & Brands', path: `${ROUTES.INVENTORY}?tab=categories`, icon: ms('category') },
       { label: 'Opening Stock', path: `${ROUTES.INVENTORY}?tab=stock`, icon: ms('assignment') },
+      { label: 'Barcode Generator', path: `${ROUTES.INVENTORY}?tab=barcodes`, icon: ms('qr_code_2') },
     ],
   },
   {
@@ -99,7 +100,7 @@ export const NAVIGATION: NavItem[] = [
     icon: ms('sync_alt'),
     roles: ROLE_GROUPS.MANAGEMENT,
     sectionTitle: 'Outlet Stock Transfers',
-    children: [{ label: 'Inter-Branch Transfers', path: `${ROUTES.SETTINGS}?tab=outlets`, icon: ms('sync_alt') }],
+    children: [{ label: 'Inter-Branch Transfers', path: `${ROUTES.INVENTORY}?tab=transfers`, icon: ms('sync_alt') }],
   },
   {
     label: 'Users & Roles',
