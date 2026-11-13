@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Check, CreditCard, Sparkle } from '@phosphor-icons/react';
-import { api } from '../../lib/api';
+import { api, getErrorMessage } from '../../lib/api';
 
 interface PlanUpgradeModalProps {
   isOpen: boolean;
@@ -22,14 +22,26 @@ const UPGRADE_PLANS = [
     monthlyPrice: 1799,
     annualPrice: 17990,
     isPopular: true,
-    features: ['2 Store Locations', '5 Cashier Accounts', '50,000 bills/mo', 'Full Khata & CRM', 'GST Reports (GSTR-1/3B)'],
+    features: [
+      '2 Store Locations',
+      '5 Cashier Accounts',
+      '50,000 bills/mo',
+      'Full Khata & CRM',
+      'GST Reports (GSTR-1/3B)',
+    ],
   },
   {
     code: 'BUSINESS',
     name: 'Business',
     monthlyPrice: 3499,
     annualPrice: 34990,
-    features: ['5 Store Locations', 'Unlimited Users', 'Unlimited Bills', 'Multi-Outlet Transfers', 'Executive Analytics'],
+    features: [
+      '5 Store Locations',
+      'Unlimited Users',
+      'Unlimited Bills',
+      'Multi-Outlet Transfers',
+      'Executive Analytics',
+    ],
   },
 ];
 
@@ -61,8 +73,8 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
       } else {
         throw new Error('No checkout URL returned from server.');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to start Stripe checkout.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to start Stripe checkout.'));
       setIsRedirecting(false);
     }
   };
@@ -76,10 +88,13 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
             <Sparkle weight="bold" className="w-5 h-5 text-red-600" />
             <div>
               <h3 className="font-bold text-sm text-zinc-950">Upgrade Store Subscription</h3>
-              <p className="text-[11px] text-zinc-500">Scale your store with secure, instant Stripe billing</p>
+              <p className="text-[0.6875rem] text-zinc-500">Scale your store with secure, instant Stripe billing</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-700 rounded-md hover:bg-zinc-100 cursor-pointer">
+          <button
+            onClick={onClose}
+            className="p-1 text-zinc-400 hover:text-zinc-700 rounded-md hover:bg-zinc-100 cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -102,14 +117,18 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
               }`}
             >
               <span>Annual Billing</span>
-              <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.2 rounded-full font-bold">Save 20%</span>
+              <span className="text-[0.625rem] bg-red-600 text-white px-1.5 py-0.2 rounded-full font-bold">
+                Save 20%
+              </span>
             </button>
           </div>
         </div>
 
         {/* Plan Cards Grid */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3">
-          {error && <div className="p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs">{error}</div>}
+          {error && (
+            <div className="p-2.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs">{error}</div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {UPGRADE_PLANS.map((plan) => {
@@ -120,17 +139,26 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
               return (
                 <div
                   key={plan.code}
+                  role="button"
+                  tabIndex={isCurrent ? -1 : 0}
+                  aria-pressed={isSelected}
+                  aria-disabled={isCurrent || undefined}
                   onClick={() => !isCurrent && setSelectedPlan(plan.code)}
-                  className={`p-3.5 rounded-md border text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+                  onKeyDown={(e) => {
+                    if (isCurrent || (e.key !== 'Enter' && e.key !== ' ')) return;
+                    e.preventDefault();
+                    setSelectedPlan(plan.code);
+                  }}
+                  className={`p-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 rounded-md border text-left transition-all cursor-pointer relative flex flex-col justify-between ${
                     isSelected
                       ? 'border-red-600 bg-red-50/20 ring-1 ring-red-600'
                       : isCurrent
-                      ? 'border-zinc-200 bg-zinc-50 opacity-60 cursor-default'
-                      : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                        ? 'border-zinc-200 bg-zinc-50 opacity-60 cursor-default'
+                        : 'border-zinc-200 hover:border-zinc-300 bg-white'
                   }`}
                 >
                   {plan.isPopular && (
-                    <span className="absolute -top-2 right-3 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">
+                    <span className="absolute -top-2 right-3 bg-red-600 text-white text-[0.5625rem] font-bold px-2 py-0.5 rounded-full uppercase">
                       Popular
                     </span>
                   )}
@@ -138,12 +166,12 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
                     <h4 className="font-bold text-xs text-zinc-900">{plan.name}</h4>
                     <div className="mt-1 mb-2">
                       <span className="text-lg font-black font-mono text-zinc-950">₹{price}</span>
-                      <span className="text-[10px] text-zinc-400">/mo</span>
+                      <span className="text-[0.625rem] text-zinc-400">/mo</span>
                       {billingCycle === 'ANNUAL' && (
-                        <div className="text-[10px] text-zinc-500 font-mono">Billed ₹{plan.annualPrice}/yr</div>
+                        <div className="text-[0.625rem] text-zinc-500 font-mono">Billed ₹{plan.annualPrice}/yr</div>
                       )}
                     </div>
-                    <ul className="space-y-1.5 pt-2 border-t border-zinc-100 text-[11px] text-zinc-600">
+                    <ul className="space-y-1.5 pt-2 border-t border-zinc-100 text-[0.6875rem] text-zinc-600">
                       {plan.features.map((f, i) => (
                         <li key={i} className="flex items-center gap-1.5">
                           <Check className="w-3 h-3 text-red-600 shrink-0" />
@@ -155,9 +183,13 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
 
                   <div className="mt-4 pt-2">
                     {isCurrent ? (
-                      <span className="text-[10px] text-zinc-400 font-semibold block text-center">Current Plan</span>
+                      <span className="text-[0.625rem] text-zinc-400 font-semibold block text-center">
+                        Current Plan
+                      </span>
                     ) : (
-                      <span className={`text-[11px] font-bold block text-center ${isSelected ? 'text-red-600' : 'text-zinc-500'}`}>
+                      <span
+                        className={`text-[0.6875rem] font-bold block text-center ${isSelected ? 'text-red-600' : 'text-zinc-500'}`}
+                      >
                         {isSelected ? '✓ Selected' : 'Select Plan'}
                       </span>
                     )}
@@ -172,7 +204,7 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
         <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-zinc-400 text-xs">
             <CreditCard weight="bold" className="w-4 h-4 text-zinc-500" />
-            <span className="text-[11px]">Powered by Stripe Test Checkout</span>
+            <span className="text-[0.6875rem]">Powered by Stripe Test Checkout</span>
           </div>
 
           <div className="flex gap-2">
@@ -196,4 +228,3 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlanCode }: PlanUpgra
     </div>
   );
 }
-

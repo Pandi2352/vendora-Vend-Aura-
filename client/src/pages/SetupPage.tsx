@@ -72,7 +72,7 @@ export function SetupPage() {
 
   if (loading && !data) {
     return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center gap-3">
+      <div className="min-h-[25rem] flex flex-col items-center justify-center gap-3">
         <Spinner size="lg" />
         <p className="text-sm text-slate-500 font-medium">Checking your store setup progress…</p>
       </div>

@@ -1,26 +1,10 @@
-import { createContext, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle, Info, Warning, WarningCircle, X } from '@phosphor-icons/react';
 import { cn } from '../ui/cn';
+import { ToastContext, type ToastApi, type ToastItem, type ToastTone } from './ToastContext';
 
-export type ToastTone = 'success' | 'error' | 'warning' | 'info';
-
-interface ToastItem {
-  id: number;
-  tone: ToastTone;
-  title: string;
-  description?: string;
-}
-
-export interface ToastApi {
-  show: (toast: Omit<ToastItem, 'id'>, durationMs?: number) => void;
-  success: (title: string, description?: string) => void;
-  error: (title: string, description?: string) => void;
-  warning: (title: string, description?: string) => void;
-  info: (title: string, description?: string) => void;
-}
-
-export const ToastContext = createContext<ToastApi | null>(null);
+export type { ToastApi, ToastTone } from './ToastContext';
 
 const TONES: Record<ToastTone, { icon: ReactNode; className: string }> = {
   success: { icon: <CheckCircle weight="fill" />, className: 'border-emerald-200 text-emerald-700' },

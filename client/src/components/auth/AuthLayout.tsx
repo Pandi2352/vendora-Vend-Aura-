@@ -40,7 +40,7 @@ export function AuthLayout({ title, description, children, cardFooter }: AuthLay
 
           {children}
 
-          {cardFooter && <div className="pt-3 border-t border-zinc-100 text-[11px]">{cardFooter}</div>}
+          {cardFooter && <div className="pt-3 border-t border-zinc-100 text-[0.6875rem]">{cardFooter}</div>}
         </div>
 
         <div className="text-center text-xs text-zinc-500">

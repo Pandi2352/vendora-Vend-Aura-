@@ -65,7 +65,7 @@ function RepaymentForm({
     <Form form={form} onSubmit={handleSubmit}>
       <div className="p-3 mb-4 bg-zinc-50 rounded-md border border-zinc-200 text-xs">
         <div className="font-bold text-zinc-900">{customer.name}</div>
-        <div className="text-zinc-500 font-mono text-[11px]">{customer.phone}</div>
+        <div className="text-zinc-500 font-mono text-[0.6875rem]">{customer.phone}</div>
         <div className="mt-1.5 pt-1.5 border-t border-zinc-200 flex justify-between items-center">
           <span className="text-zinc-500">Current outstanding</span>
           <span className="font-mono font-black text-red-600">{formatInr(outstanding)}</span>

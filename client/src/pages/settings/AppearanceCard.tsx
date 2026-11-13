@@ -9,7 +9,7 @@ const THEMES: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
 ];
 
 const SectionLabel = ({ children }: { children: string }) => (
-  <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500 mb-2">{children}</p>
+  <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-zinc-500 mb-2">{children}</p>
 );
 
 export function AppearanceCard() {

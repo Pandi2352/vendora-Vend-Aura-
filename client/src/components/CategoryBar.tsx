@@ -11,7 +11,7 @@ export function CategoryBar({
 }: CategoryBarProps) {
   return (
     <div className="bg-white border-b border-zinc-200 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
-      <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider shrink-0 mr-1">
+      <span className="text-[0.6875rem] font-bold text-zinc-400 uppercase tracking-wider shrink-0 mr-1">
         Department:
       </span>
       {categories.map((cat) => {

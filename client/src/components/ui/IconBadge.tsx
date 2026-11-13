@@ -6,7 +6,7 @@ export function IconBadge({ children, className }: { children: ReactNode; classN
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center w-8 h-8 rounded-md bg-primary-50 text-primary-600 shrink-0 [&>svg]:w-[18px] [&>svg]:h-[18px]',
+        'inline-flex items-center justify-center w-8 h-8 rounded-md bg-primary-50 text-primary-600 shrink-0 [&>svg]:w-[1.125rem] [&>svg]:h-[1.125rem]',
         className,
       )}
     >

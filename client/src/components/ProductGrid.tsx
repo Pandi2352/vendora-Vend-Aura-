@@ -28,9 +28,9 @@ export function ProductGrid({
           placeholder="Scan barcode or type product name / SKU (e.g. Atta, Tea, 890103...)"
           className="w-full pl-9 pr-24 py-2 rounded-md border border-zinc-300 bg-white text-xs sm:text-sm text-zinc-950 focus:border-primary-600 outline-none"
         />
-        <div className="absolute right-3 top-2 flex items-center gap-1 text-[11px] font-mono text-zinc-400">
+        <div className="absolute right-3 top-2 flex items-center gap-1 text-[0.6875rem] font-mono text-zinc-400">
           <Barcode className="w-3.5 h-3.5" />
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-semibold text-[10px]">
+          <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-semibold text-[0.625rem]">
             F1 Focus
           </kbd>
         </div>
@@ -49,10 +49,10 @@ export function ProductGrid({
             >
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1.5">
-                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200 truncate">
+                  <span className="text-[0.625rem] font-semibold px-1.5 py-0.2 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200 truncate">
                     {p.category}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-0.5">
+                  <span className="text-[0.625rem] font-mono text-zinc-400 flex items-center gap-0.5">
                     <Barcode className="w-3 h-3" />
                     <span>{p.barcode}</span>
                   </span>
@@ -63,7 +63,7 @@ export function ProductGrid({
                 </h4>
 
                 {(p.batchNumber || p.expiryDate) && (
-                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-zinc-500 font-mono">
+                  <div className="flex items-center gap-1.5 mt-1 text-[0.625rem] text-zinc-500 font-mono">
                     {p.batchNumber && <span className="bg-zinc-100 px-1 rounded">B:{p.batchNumber}</span>}
                     {p.expiryDate && <span className="text-amber-700">Exp:{p.expiryDate}</span>}
                   </div>
@@ -77,12 +77,12 @@ export function ProductGrid({
                       ₹{p.unitPrice}
                     </span>
                     {p.mrp > p.unitPrice && (
-                      <span className="text-[11px] font-mono text-zinc-400 line-through">
+                      <span className="text-[0.6875rem] font-mono text-zinc-400 line-through">
                         ₹{p.mrp}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-zinc-400 font-medium block">
+                  <span className="text-[0.625rem] text-zinc-400 font-medium block">
                     GST {p.taxRatePercent}%
                   </span>
                 </div>
@@ -106,7 +106,7 @@ export function ProductGrid({
             <div className="col-span-full py-12 text-center text-zinc-500 text-xs">
               <Tag className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
               <p className="font-semibold text-zinc-700">No items match your search.</p>
-              <p className="text-zinc-400 text-[11px] mt-0.5">Try searching with a different keyword or barcode.</p>
+              <p className="text-zinc-400 text-[0.6875rem] mt-0.5">Try searching with a different keyword or barcode.</p>
             </div>
           )}
         </div>

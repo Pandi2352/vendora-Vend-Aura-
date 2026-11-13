@@ -42,7 +42,7 @@ export function CircularProgressRing({
       {/* Centered progress text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-white select-none">
         <span className="font-mono font-black text-xl leading-none">{completed}</span>
-        <span className="text-[10px] font-bold text-white/60 tracking-wider mt-0.5">OF {total}</span>
+        <span className="text-[0.625rem] font-bold text-white/60 tracking-wider mt-0.5">OF {total}</span>
       </div>
     </div>
   );

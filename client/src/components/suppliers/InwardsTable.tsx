@@ -23,7 +23,7 @@ const columns: Column<PurchaseItemRecord>[] = [
     key: 'date',
     header: 'Received date',
     sortValue: (p) => new Date(p.receivedDate),
-    render: (p) => <span className="font-mono text-[11px] text-zinc-500">{formatDate(p.receivedDate)}</span>,
+    render: (p) => <span className="font-mono text-[0.6875rem] text-zinc-500">{formatDate(p.receivedDate)}</span>,
   },
   {
     key: 'supplier',

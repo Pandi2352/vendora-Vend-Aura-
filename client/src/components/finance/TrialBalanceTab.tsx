@@ -57,7 +57,7 @@ export function TrialBalanceTab({ data, loading }: TrialBalanceTabProps) {
           </div>
         </div>
         <div className="text-right">
-          <span className="text-[10px] uppercase font-bold text-zinc-500 block">Variance</span>
+          <span className="text-[0.625rem] uppercase font-bold text-zinc-500 block">Variance</span>
           <span className="font-mono font-bold text-xs">₹{Math.abs(totalDebit - totalCredit).toFixed(2)}</span>
         </div>
       </div>
@@ -66,7 +66,7 @@ export function TrialBalanceTab({ data, loading }: TrialBalanceTabProps) {
       <div className="bg-white rounded-md border border-zinc-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-100/75 border-b border-zinc-200 text-zinc-600 font-semibold uppercase text-[10px] tracking-wider">
+            <thead className="bg-zinc-100/75 border-b border-zinc-200 text-zinc-600 font-semibold uppercase text-[0.625rem] tracking-wider">
               <tr>
                 <th className="py-2.5 px-4">Account Code</th>
                 <th className="py-2.5 px-4">Account Head Name</th>
@@ -83,7 +83,7 @@ export function TrialBalanceTab({ data, loading }: TrialBalanceTabProps) {
                   <td className="py-2.5 px-4 font-semibold text-zinc-900">{acc.name}</td>
                   <td className="py-2.5 px-4">
                     <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                      className={`px-2 py-0.5 rounded-md text-[0.625rem] font-bold border ${
                         TYPE_COLORS[acc.type] || 'bg-zinc-100 text-zinc-700 border-zinc-200'
                       }`}
                     >
@@ -105,7 +105,7 @@ export function TrialBalanceTab({ data, loading }: TrialBalanceTabProps) {
             {/* Grand Totals Footer */}
             <tfoot className="bg-zinc-100 border-t-2 border-zinc-300 font-bold text-xs text-zinc-950">
               <tr>
-                <td colSpan={3} className="py-3 px-4 uppercase tracking-wider text-[11px]">
+                <td colSpan={3} className="py-3 px-4 uppercase tracking-wider text-[0.6875rem]">
                   Total Ledger Sums:
                 </td>
                 <td className="py-3 px-4 text-right font-mono text-sm text-blue-700">

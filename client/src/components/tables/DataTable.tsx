@@ -103,7 +103,7 @@ export function DataTable<T>({
     setSort((s) => (s?.key !== key ? { key, direction: 'asc' } : s.direction === 'asc' ? { key, direction: 'desc' } : null));
 
   const headerCell =
-    'relative px-4 py-3 text-[13px] font-bold text-slate-800 whitespace-nowrap after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-slate-500/25 last:after:hidden';
+    'relative px-4 py-3 text-[0.8125rem] font-bold text-slate-800 whitespace-nowrap after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-slate-500/25 last:after:hidden';
 
   return (
     <div className={compact ? '' : 'bg-white border border-zinc-200 rounded-md p-3 sm:p-4'}>

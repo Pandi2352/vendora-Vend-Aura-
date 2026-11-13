@@ -79,7 +79,7 @@ export function ProfitLossTab({ data, loading }: ProfitLossTabProps) {
                 <div key={acc.code} className="flex items-center justify-between py-1.5 border-b border-zinc-100">
                   <div>
                     <span className="font-semibold text-zinc-900">{acc.name}</span>
-                    <span className="text-[11px] text-zinc-400 font-mono ml-2">({acc.code})</span>
+                    <span className="text-[0.6875rem] text-zinc-400 font-mono ml-2">({acc.code})</span>
                   </div>
                   <span className="font-mono font-bold text-zinc-950">
                     ₹{(acc.totalCredit - acc.totalDebit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -105,7 +105,7 @@ export function ProfitLossTab({ data, loading }: ProfitLossTabProps) {
                 <div key={acc.code} className="flex items-center justify-between py-1.5 border-b border-zinc-100">
                   <div>
                     <span className="font-semibold text-zinc-900">{acc.name}</span>
-                    <span className="text-[11px] text-zinc-400 font-mono ml-2">({acc.code})</span>
+                    <span className="text-[0.6875rem] text-zinc-400 font-mono ml-2">({acc.code})</span>
                   </div>
                   <span className="font-mono font-bold text-red-600">
                     ₹{(acc.totalDebit - acc.totalCredit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}

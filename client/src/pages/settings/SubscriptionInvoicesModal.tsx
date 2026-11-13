@@ -87,7 +87,7 @@ export function SubscriptionInvoicesModal({ isOpen, onClose, shopName }: Subscri
             </div>
             <div>
               <h3 className="font-bold text-sm text-zinc-950">Subscription Billing History</h3>
-              <p className="text-[11px] text-zinc-500">Official tax receipts for your store SaaS plan</p>
+              <p className="text-[0.6875rem] text-zinc-500">Official tax receipts for your store SaaS plan</p>
             </div>
           </div>
           <button
@@ -118,11 +118,11 @@ export function SubscriptionInvoicesModal({ isOpen, onClose, shopName }: Subscri
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-zinc-950">{inv.invoiceNumber}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold inline-flex items-center gap-0.5">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[0.625rem] font-bold inline-flex items-center gap-0.5">
                       <CheckCircle weight="fill" className="w-3 h-3 text-emerald-600" /> PAID
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">
+                  <p className="text-[0.6875rem] text-zinc-500 mt-0.5">
                     {inv.planCode} Plan ({inv.billingCycle}) · {formatDate(inv.paidAt)}
                   </p>
                 </div>

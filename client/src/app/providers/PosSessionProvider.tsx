@@ -1,4 +1,4 @@
-import { createContext, useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { useDrawerShift } from '../../hooks/useDrawerShift';
@@ -7,6 +7,7 @@ import { usePosCheckout } from '../../hooks/usePosCheckout';
 import { useConfirm } from '../../hooks/useConfirm';
 import type { CustomerItem } from '../../types/pos.types';
 import type { HeldCart } from '../../types/shift-return.types';
+import { PosSessionContext } from './PosSessionContext';
 
 export type PosModal = 'checkout' | 'heldCarts' | 'returns' | 'drawer' | null;
 
@@ -110,8 +111,6 @@ function usePosSessionState() {
 }
 
 export type PosSessionValue = ReturnType<typeof usePosSessionState>;
-
-export const PosSessionContext = createContext<PosSessionValue | null>(null);
 
 export function PosSessionProvider({ children }: { children: ReactNode }) {
   const value = usePosSessionState();

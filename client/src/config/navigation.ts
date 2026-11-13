@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import { ROUTES } from './routes';
 import { ROLE_GROUPS, hasRole, type UserRole } from '../lib/permissions';
-import { ms } from '../components/ui/MsIcon';
+import { ms } from '../components/ui/ms';
 
 export interface NavItem {
   label: string;
@@ -99,18 +99,14 @@ export const NAVIGATION: NavItem[] = [
     icon: ms('sync_alt'),
     roles: ROLE_GROUPS.MANAGEMENT,
     sectionTitle: 'Outlet Stock Transfers',
-    children: [
-      { label: 'Inter-Branch Transfers', path: `${ROUTES.SETTINGS}?tab=outlets`, icon: ms('sync_alt') },
-    ],
+    children: [{ label: 'Inter-Branch Transfers', path: `${ROUTES.SETTINGS}?tab=outlets`, icon: ms('sync_alt') }],
   },
   {
     label: 'Users & Roles',
     icon: ms('group'),
     roles: ROLE_GROUPS.MANAGEMENT,
     sectionTitle: 'Access Control',
-    children: [
-      { label: 'Staff & Cashiers', path: `${ROUTES.SETTINGS}?tab=users`, icon: ms('group') },
-    ],
+    children: [{ label: 'Staff & Cashiers', path: `${ROUTES.SETTINGS}?tab=users`, icon: ms('group') }],
   },
   {
     label: 'Administrator',

@@ -149,7 +149,7 @@ function SelectAllBox({ id, label, checked, mixed, disabled, readOnly, onToggle 
           aria-readonly={readOnly || undefined}
           onChange={onToggle}
           className={cn(
-            'peer appearance-none w-[18px] h-[18px] rounded-md border bg-white transition-colors cursor-[inherit]',
+            'peer appearance-none w-[1.125rem] h-[1.125rem] rounded-md border bg-white transition-colors cursor-[inherit]',
             'checked:bg-primary-600 checked:border-primary-600 indeterminate:bg-primary-600 indeterminate:border-primary-600',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 border-zinc-300',
           )}

@@ -83,7 +83,7 @@ export function ExpensesTable({ expenses, loading }: ExpensesTableProps) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-zinc-100/75 border-b border-zinc-200 text-zinc-600 font-semibold uppercase text-[10px] tracking-wider">
+          <thead className="bg-zinc-100/75 border-b border-zinc-200 text-zinc-600 font-semibold uppercase text-[0.625rem] tracking-wider">
             <tr>
               <th className="py-2.5 px-4">Date</th>
               <th className="py-2.5 px-4">Expense #</th>
@@ -113,7 +113,7 @@ export function ExpensesTable({ expenses, loading }: ExpensesTableProps) {
                   <td className="py-2.5 px-4 font-mono text-zinc-600">{formatDate(item.expenseDate)}</td>
                   <td className="py-2.5 px-4 font-mono font-bold text-zinc-950">{item.expenseNumber}</td>
                   <td className="py-2.5 px-4">
-                    <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 font-semibold border border-zinc-200 text-[11px] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 font-semibold border border-zinc-200 text-[0.6875rem] inline-flex items-center gap-1">
                       <Tag className="w-3 h-3 text-zinc-500" />
                       {CATEGORY_NAMES[item.category] || item.category}
                     </span>

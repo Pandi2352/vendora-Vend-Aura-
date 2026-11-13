@@ -31,7 +31,7 @@ export function CustomersTable({ customers, loading, shopName, onRepay, onOpenSt
       render: (c) => (
         <div>
           <div className="font-bold text-zinc-950">{c.name}</div>
-          {c.gstin && <div className="font-mono text-[11px] text-zinc-400">GST: {c.gstin}</div>}
+          {c.gstin && <div className="font-mono text-[0.6875rem] text-zinc-400">GST: {c.gstin}</div>}
         </div>
       ),
     },
@@ -67,7 +67,7 @@ export function CustomersTable({ customers, loading, shopName, onRepay, onOpenSt
       render: (c) => (
         <div className="font-mono tabular-nums">
           <div>{formatInr(c.totalSpent)}</div>
-          <div className="text-[11px] text-zinc-400">{c.totalPurchasesCount} orders</div>
+          <div className="text-[0.6875rem] text-zinc-400">{c.totalPurchasesCount} orders</div>
         </div>
       ),
     },
@@ -123,7 +123,7 @@ function KhataBalance({ customer: c }: { customer: CustomerItem }) {
   return (
     <div className="inline-flex flex-col items-end">
       <span className="flex items-center gap-2">
-        {due && <span className="text-[11px] text-zinc-400 font-mono">({pct}%)</span>}
+        {due && <span className="text-[0.6875rem] text-zinc-400 font-mono">({pct}%)</span>}
         <span className={cn('font-mono font-black tabular-nums', due ? 'text-red-600' : 'text-emerald-600')}>
           {formatInr(c.currentCreditBalance)}
         </span>

@@ -21,7 +21,7 @@ export function SuppliersTable({ suppliers, loading, error, onRetry, onPayDues }
       render: (s) => (
         <div>
           <div className="font-bold text-zinc-950">{s.name}</div>
-          {s.gstin && <div className="font-mono text-[11px] text-zinc-400">GST: {s.gstin}</div>}
+          {s.gstin && <div className="font-mono text-[0.6875rem] text-zinc-400">GST: {s.gstin}</div>}
         </div>
       ),
     },
@@ -35,7 +35,7 @@ export function SuppliersTable({ suppliers, loading, error, onRetry, onPayDues }
             <Phone aria-hidden className="w-3.5 h-3.5 text-zinc-400" />
             {s.phone}
           </span>
-          {s.email && <div className="text-[11px] text-zinc-400">{s.email}</div>}
+          {s.email && <div className="text-[0.6875rem] text-zinc-400">{s.email}</div>}
         </div>
       ),
     },

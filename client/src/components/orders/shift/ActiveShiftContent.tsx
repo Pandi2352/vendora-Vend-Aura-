@@ -20,7 +20,7 @@ export function ActiveShiftContent({ activeShift, defaultOpeningFloat, onOpenShi
           <Warning weight="bold" className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <span className="font-bold">No cash drawer shift is open.</span>
-            <p className="text-[11px] text-amber-800 mt-0.5">
+            <p className="text-[0.6875rem] text-amber-800 mt-0.5">
               Open a new shift to record the opening float in the till and start taking orders.
             </p>
           </div>
@@ -39,7 +39,7 @@ export function ActiveShiftContent({ activeShift, defaultOpeningFloat, onOpenShi
           <span className="font-mono font-bold text-primary-300">{activeShift.shiftNumber}</span>
           <span className="text-zinc-400 ml-2">Cashier: {activeShift.cashierName}</span>
         </div>
-        <div className="flex items-center gap-1 text-[11px] text-zinc-300 font-mono">
+        <div className="flex items-center gap-1 text-[0.6875rem] text-zinc-300 font-mono">
           <Clock className="w-3.5 h-3.5 text-zinc-400" />
           <span>{formatTime(activeShift.openedAt)}</span>
         </div>
@@ -55,7 +55,7 @@ export function ActiveShiftContent({ activeShift, defaultOpeningFloat, onOpenShi
       <div className="p-3 rounded-md bg-zinc-100 border border-zinc-200 text-xs flex justify-between items-center gap-3">
         <div>
           <span className="font-semibold text-zinc-800">Expected cash in drawer</span>
-          <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+          <p className="text-[0.625rem] text-zinc-500 font-mono mt-0.5">
             Float ({formatInr(activeShift.openingFloat)}) + Cash sales ({formatInr(activeShift.cashSalesTotal)}) - Refunds (
             {formatInr(refunds)})
           </p>
@@ -74,7 +74,7 @@ export function ActiveShiftContent({ activeShift, defaultOpeningFloat, onOpenShi
 function Kpi({ label, value, tone = 'text-zinc-900', bg = 'bg-zinc-50' }: { label: string; value: string; tone?: string; bg?: string }) {
   return (
     <div className={cn('p-2.5 rounded-md border border-zinc-200', bg)}>
-      <span className="text-[10px] text-zinc-500 block">{label}</span>
+      <span className="text-[0.625rem] text-zinc-500 block">{label}</span>
       <span className={cn('font-mono font-bold text-sm', tone)}>{value}</span>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { ToastContext } from '@/components/feedback/ToastProvider';
+import { ToastContext } from '@/components/feedback/ToastContext';
 
 /** toast.success('Customer saved') / toast.error('Could not save', reason) */
 export function useToast() {

@@ -1,13 +1,8 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { loadPreferences, resolveScale, savePreferences, type Preferences } from '../../lib/preferences';
+import { PreferencesContext } from './PreferencesContext';
 
-export interface PreferencesContextValue extends Preferences {
-  update: (patch: Partial<Preferences>) => void;
-  toggleTheme: () => void;
-  toggleSidebar: () => void;
-}
-
-export const PreferencesContext = createContext<PreferencesContextValue | null>(null);
+export type { PreferencesContextValue } from './PreferencesContext';
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [prefs, setPrefs] = useState<Preferences>(loadPreferences);
@@ -21,10 +16,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, [prefs]);
 
   const update = useCallback((patch: Partial<Preferences>) => setPrefs((p) => ({ ...p, ...patch })), []);
-  const toggleTheme = useCallback(
-    () => setPrefs((p) => ({ ...p, theme: p.theme === 'dark' ? 'light' : 'dark' })),
-    [],
-  );
+  const toggleTheme = useCallback(() => setPrefs((p) => ({ ...p, theme: p.theme === 'dark' ? 'light' : 'dark' })), []);
   const toggleSidebar = useCallback(() => setPrefs((p) => ({ ...p, sidebarCollapsed: !p.sidebarCollapsed })), []);
 
   const value = useMemo(

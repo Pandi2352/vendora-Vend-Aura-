@@ -91,19 +91,19 @@ export function SetupStepItem({
       >
         <div className="space-y-0.5 flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-[13.5px] text-slate-800 tracking-[-0.01em]">{title}</h3>
+            <h3 className="font-semibold text-[0.84375rem] text-slate-800 tracking-[-0.01em]">{title}</h3>
             {isOptional ? (
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-bold text-[9.5px] uppercase tracking-wider">
+              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-bold text-[0.59375rem] uppercase tracking-wider">
                 Optional
               </span>
             ) : count !== undefined ? (
-              <span className="min-w-4.5 h-4.5 px-1.5 rounded-full bg-[#ecfdf5] text-[#16a34a] font-mono text-[10.5px] font-bold inline-flex items-center justify-center border border-[#bbf7d0]">
+              <span className="min-w-4.5 h-4.5 px-1.5 rounded-full bg-[#ecfdf5] text-[#16a34a] font-mono text-[0.65625rem] font-bold inline-flex items-center justify-center border border-[#bbf7d0]">
                 {count}
               </span>
             ) : null}
           </div>
 
-          <p className="text-[12px] text-slate-400 font-normal leading-relaxed max-w-2xl">{description}</p>
+          <p className="text-[0.75rem] text-slate-400 font-normal leading-relaxed max-w-2xl">{description}</p>
 
           {/* Sub-master Badges on Step 3 matching reference image exactly */}
           {subMasters && subMasters.length > 0 && (

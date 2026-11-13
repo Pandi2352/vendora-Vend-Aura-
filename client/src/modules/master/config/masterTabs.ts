@@ -1,4 +1,4 @@
-import { ms } from '@/components/ui/MsIcon';
+import { ms } from '@/components/ui/ms';
 import type { TabOption } from '@/components/ui/tab-nav';
 
 export type MasterMacro = 'general' | 'operations';

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   api,
   unwrap,
@@ -10,8 +10,9 @@ import {
   LOGOUT_EVENT,
 } from '../../lib/api';
 import type { AuthUser } from '../../types/pos.types';
+import { AuthContext, type AuthContextValue, type AuthStatus } from './AuthContext';
 
-export type AuthStatus = 'anonymous' | 'password-change' | 'authenticated';
+export type { AuthContextValue, AuthStatus } from './AuthContext';
 
 interface LoginResponse {
   accessToken: string;
@@ -19,18 +20,6 @@ interface LoginResponse {
   mustChangePassword: boolean;
   user: AuthUser;
 }
-
-export interface AuthContextValue {
-  status: AuthStatus;
-  user: AuthUser | null;
-  /** Temporary password kept in memory right after login, to prefill the change-password form. */
-  temporaryPassword: string;
-  login: (shopId: string, username: string, password: string) => Promise<AuthStatus>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  logout: () => void;
-}
-
-export const AuthContext = createContext<AuthContextValue | null>(null);
 
 function readStoredSession(): { status: AuthStatus; user: AuthUser | null } {
   try {

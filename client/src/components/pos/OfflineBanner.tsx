@@ -26,7 +26,7 @@ export function OfflineBanner() {
           </span>
         </div>
         {pendingCount > 0 && (
-          <span className="font-mono font-bold px-2 py-0.5 rounded bg-amber-100 border border-amber-300 text-[11px]">
+          <span className="font-mono font-bold px-2 py-0.5 rounded bg-amber-100 border border-amber-300 text-[0.6875rem]">
             {pendingCount} order{pendingCount > 1 ? 's' : ''} queued locally
           </span>
         )}

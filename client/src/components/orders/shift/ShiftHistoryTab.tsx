@@ -27,7 +27,7 @@ const columns: Column<ShiftSummary>[] = [
     render: (s) => (
       <div>
         <span className="font-mono font-bold text-zinc-900">{s.shiftNumber}</span>
-        <span className="block text-[11px] text-zinc-500">by {s.cashierName}</span>
+        <span className="block text-[0.6875rem] text-zinc-500">by {s.cashierName}</span>
       </div>
     ),
   },

@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { PreferencesContext } from '../app/providers/PreferencesProvider';
+import { PreferencesContext } from '../app/providers/PreferencesContext';
 
 export function usePreferences() {
   const ctx = useContext(PreferencesContext);

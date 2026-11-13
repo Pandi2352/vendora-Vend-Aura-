@@ -29,7 +29,7 @@ export function OptionTile({ selected, onSelect, title, subtitle, icon, classNam
       <span className="min-w-0">
         <span className="block text-sm font-semibold">{title}</span>
         {subtitle && (
-          <span className={cn('block text-[11px] mt-0.5', selected ? 'text-white/75' : 'text-zinc-400')}>{subtitle}</span>
+          <span className={cn('block text-[0.6875rem] mt-0.5', selected ? 'text-white/75' : 'text-zinc-400')}>{subtitle}</span>
         )}
       </span>
     </button>

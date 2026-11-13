@@ -214,7 +214,7 @@ function MenuGroup({ label, id, divided, children }: { label?: string; id: strin
   if (!label) return <>{children}</>;
   return (
     <div role="group" aria-labelledby={id} className={cn(divided && 'mt-1 pt-1 border-t border-zinc-100')}>
-      <div id={id} role="presentation" className="px-2.5 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+      <div id={id} role="presentation" className="px-2.5 pt-1.5 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wide text-zinc-400">
         {label}
       </div>
       {children}

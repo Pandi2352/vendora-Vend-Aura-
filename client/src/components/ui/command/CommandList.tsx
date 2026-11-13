@@ -20,7 +20,7 @@ export function CommandList({ id, label, groups, active, optionId, onHover, onSe
           <div
             id={`${id}-group-${g}`}
             role="presentation"
-            className="px-2.5 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+            className="px-2.5 pt-1.5 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wide text-zinc-400"
           >
             {group.heading}
           </div>

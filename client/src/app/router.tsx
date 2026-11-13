@@ -1,7 +1,5 @@
-import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
-import { PageLoader } from '../components/ui/Spinner';
 import { ROLE_GROUPS } from '../lib/permissions';
 import { AppLayout } from '../layouts/AppLayout';
 import { RedirectIfAuthenticated, RequireAuth, RequirePasswordChange, RequireRole } from '../routes/guards';
@@ -13,19 +11,17 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { PosPage } from '../pages/PosPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { RouteErrorPage, UnauthorizedPage } from '../pages/StatusPages';
-
-// Back-office pages load on demand to keep the till's first load small.
-const OrdersPage = lazy(() => import('../pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
-const CustomersPage = lazy(() => import('../pages/CustomersPage').then((m) => ({ default: m.CustomersPage })));
-const SuppliersPage = lazy(() => import('../pages/SuppliersPage').then((m) => ({ default: m.SuppliersPage })));
-const FinancePage = lazy(() => import('../pages/FinancePage').then((m) => ({ default: m.FinancePage })));
-const ReportsPage = lazy(() => import('../pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
-const SettingsPage = lazy(() => import('../pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
-const MasterPage = lazy(() => import('../modules/master').then((m) => ({ default: m.MasterPage })));
-const SetupPage = lazy(() => import('../pages/SetupPage').then((m) => ({ default: m.SetupPage })));
-
-const PageFallback = () => <PageLoader />;
-const lazyPage = (page: ReactNode) => <Suspense fallback={<PageFallback />}>{page}</Suspense>;
+import {
+  OrdersPage,
+  CustomersPage,
+  SuppliersPage,
+  FinancePage,
+  ReportsPage,
+  SettingsPage,
+  MasterPage,
+  SetupPage,
+  LazyPage,
+} from './lazyPages';
 
 /**
  * Flow: welcome email link -> /login?shopId=… -> (first login) /change-password -> /dashboard.
@@ -78,24 +74,83 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to={ROUTES.DASHBOARD} replace /> },
           { path: ROUTES.DASHBOARD, element: <DashboardPage /> },
           { path: ROUTES.POS, element: <PosPage /> },
-          { path: ROUTES.ORDERS, element: lazyPage(<OrdersPage />) },
-          { path: ROUTES.CUSTOMERS, element: lazyPage(<CustomersPage />) },
+          {
+            path: ROUTES.ORDERS,
+            element: (
+              <LazyPage>
+                <OrdersPage />
+              </LazyPage>
+            ),
+          },
+          {
+            path: ROUTES.CUSTOMERS,
+            element: (
+              <LazyPage>
+                <CustomersPage />
+              </LazyPage>
+            ),
+          },
           {
             path: ROUTES.SUPPLIERS,
-            element: <RequireRole roles={ROLE_GROUPS.MANAGEMENT}>{lazyPage(<SuppliersPage />)}</RequireRole>,
+            element: (
+              <RequireRole roles={ROLE_GROUPS.MANAGEMENT}>
+                {
+                  <LazyPage>
+                    <SuppliersPage />
+                  </LazyPage>
+                }
+              </RequireRole>
+            ),
           },
           {
             path: ROUTES.FINANCE,
-            element: <RequireRole roles={ROLE_GROUPS.MANAGEMENT}>{lazyPage(<FinancePage />)}</RequireRole>,
+            element: (
+              <RequireRole roles={ROLE_GROUPS.MANAGEMENT}>
+                {
+                  <LazyPage>
+                    <FinancePage />
+                  </LazyPage>
+                }
+              </RequireRole>
+            ),
           },
           { path: ROUTES.REPORTS, element: <Navigate to={ROUTES.REPORTS_OVERVIEW} replace /> },
           {
             path: `${ROUTES.REPORTS}/:tab`,
-            element: <RequireRole roles={ROLE_GROUPS.FINANCE}>{lazyPage(<ReportsPage />)}</RequireRole>,
+            element: (
+              <RequireRole roles={ROLE_GROUPS.FINANCE}>
+                {
+                  <LazyPage>
+                    <ReportsPage />
+                  </LazyPage>
+                }
+              </RequireRole>
+            ),
           },
-          { path: ROUTES.MASTER, element: lazyPage(<MasterPage />) },
-          { path: ROUTES.SETTINGS, element: lazyPage(<SettingsPage />) },
-          { path: ROUTES.SETUP, element: lazyPage(<SetupPage />) },
+          {
+            path: ROUTES.MASTER,
+            element: (
+              <LazyPage>
+                <MasterPage />
+              </LazyPage>
+            ),
+          },
+          {
+            path: ROUTES.SETTINGS,
+            element: (
+              <LazyPage>
+                <SettingsPage />
+              </LazyPage>
+            ),
+          },
+          {
+            path: ROUTES.SETUP,
+            element: (
+              <LazyPage>
+                <SetupPage />
+              </LazyPage>
+            ),
+          },
           { path: ROUTES.UNAUTHORIZED, element: <UnauthorizedPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],

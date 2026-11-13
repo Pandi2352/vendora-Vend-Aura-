@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Storefront, Plus, ArrowsLeftRight, CheckCircle, Clock, Phone } from '@phosphor-icons/react';
 import { Card, CardHeader } from '../../components/ui';
-import { api } from '../../lib/api';
+import { api, getErrorMessage } from '../../lib/api';
 import { Spinner } from '../../components/ui/Spinner';
 
 interface OutletItem {
@@ -40,10 +40,7 @@ export function OutletsManagementCard() {
 
   const fetchOutlets = useCallback(async () => {
     try {
-      const [outletsRes, transfersRes] = await Promise.all([
-        api.get('/outlets'),
-        api.get('/outlets/transfers'),
-      ]);
+      const [outletsRes, transfersRes] = await Promise.all([api.get('/outlets'), api.get('/outlets/transfers')]);
       setOutlets(outletsRes.data?.data || []);
       setTransfers(transfersRes.data?.data || []);
     } catch {
@@ -70,8 +67,8 @@ export function OutletsManagementCard() {
       setOutletCode('');
       setOutletPhone('');
       fetchOutlets();
-    } catch (err: any) {
-      setAddOutletError(err?.response?.data?.message || 'Could not add branch. Check your plan limit.');
+    } catch (err) {
+      setAddOutletError(getErrorMessage(err, 'Could not add branch. Check your plan limit.'));
     } finally {
       setIsSubmittingOutlet(false);
     }
@@ -110,18 +107,18 @@ export function OutletsManagementCard() {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-zinc-950 text-sm">{o.name}</span>
                 {o.isPrimary ? (
-                  <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200 text-[0.625rem] font-bold">
                     Primary / Head Office
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-700 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-700 text-[0.625rem] font-bold">
                     Branch Location
                   </span>
                 )}
               </div>
-              <p className="font-mono text-zinc-500 text-[11px]">Code: {o.code}</p>
+              <p className="font-mono text-zinc-500 text-[0.6875rem]">Code: {o.code}</p>
               {o.phone && (
-                <p className="flex items-center gap-1.5 text-zinc-600 text-[11px]">
+                <p className="flex items-center gap-1.5 text-zinc-600 text-[0.6875rem]">
                   <Phone className="w-3 h-3 text-zinc-400" />
                   <span>{o.phone}</span>
                 </p>
@@ -136,7 +133,7 @@ export function OutletsManagementCard() {
         <CardHeader icon={<ArrowsLeftRight />} title="Inter-Store Stock Transfers (STN)" />
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-100/75 border-b border-zinc-200 text-zinc-600 font-semibold uppercase text-[10px] tracking-wider">
+            <thead className="bg-zinc-100/75 border-b border-zinc-200 text-zinc-600 font-semibold uppercase text-[0.625rem] tracking-wider">
               <tr>
                 <th className="py-2 px-3">STN Number</th>
                 <th className="py-2 px-3">Source & Destination</th>
@@ -166,11 +163,11 @@ export function OutletsManagementCard() {
                     </td>
                     <td className="py-2.5 px-3">
                       {t.status === 'RECEIVED' ? (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold inline-flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[0.625rem] font-bold inline-flex items-center gap-1">
                           <CheckCircle weight="fill" className="w-3 h-3 text-emerald-600" /> Received
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold inline-flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-[0.625rem] font-bold inline-flex items-center gap-1">
                           <Clock weight="fill" className="w-3 h-3 text-blue-600" /> In-Transit
                         </span>
                       )}
@@ -180,7 +177,7 @@ export function OutletsManagementCard() {
                         <button
                           onClick={() => handleReceiveTransfer(t.id)}
                           disabled={receivingId === t.id}
-                          className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-[11px] cursor-pointer"
+                          className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-[0.6875rem] cursor-pointer"
                         >
                           {receivingId === t.id ? 'Receiving…' : 'Acknowledge Receipt'}
                         </button>
@@ -206,8 +203,11 @@ export function OutletsManagementCard() {
             )}
             <form onSubmit={handleCreateOutlet} className="space-y-3">
               <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Branch Name *</label>
+                <label htmlFor="outlet-name" className="block text-zinc-700 font-semibold mb-1">
+                  Branch Name *
+                </label>
                 <input
+                  id="outlet-name"
                   type="text"
                   required
                   placeholder="e.g. West End Branch"
@@ -217,8 +217,11 @@ export function OutletsManagementCard() {
                 />
               </div>
               <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Branch Code *</label>
+                <label htmlFor="outlet-code" className="block text-zinc-700 font-semibold mb-1">
+                  Branch Code *
+                </label>
                 <input
+                  id="outlet-code"
                   type="text"
                   required
                   placeholder="e.g. OUT-02"
@@ -228,8 +231,11 @@ export function OutletsManagementCard() {
                 />
               </div>
               <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Phone Number</label>
+                <label htmlFor="outlet-phone" className="block text-zinc-700 font-semibold mb-1">
+                  Phone Number
+                </label>
                 <input
+                  id="outlet-phone"
                   type="text"
                   placeholder="e.g. +91 9876543210"
                   value={outletPhone}

@@ -24,7 +24,7 @@ export function SetupHeroBanner({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         {/* Left Column: Heading, subtitle, and dynamic status pill */}
         <div className="space-y-3 flex-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[10.5px] font-bold tracking-wider uppercase border border-white/10">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[0.65625rem] font-bold tracking-wider uppercase border border-white/10">
             <RocketLaunch className="w-3.5 h-3.5 text-blue-400" />
             <span>Getting Started</span>
           </div>

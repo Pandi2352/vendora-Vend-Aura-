@@ -25,9 +25,9 @@ export function FinanceKpiStrip({
             <Wallet weight="bold" className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Total Expenses</p>
+            <p className="text-[0.6875rem] uppercase tracking-wider font-bold text-zinc-500">Total Expenses</p>
             <p className="text-xl font-black text-zinc-950 mt-0.5">₹{totalSpent.toLocaleString('en-IN')}</p>
-            <p className="text-[11px] text-zinc-400">{expensesCount} recorded items</p>
+            <p className="text-[0.6875rem] text-zinc-400">{expensesCount} recorded items</p>
           </div>
         </div>
       </div>
@@ -38,9 +38,9 @@ export function FinanceKpiStrip({
             <Money weight="bold" className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Cash Outflow</p>
+            <p className="text-[0.6875rem] uppercase tracking-wider font-bold text-zinc-500">Cash Outflow</p>
             <p className="text-xl font-black text-zinc-950 mt-0.5">₹{cashSpent.toLocaleString('en-IN')}</p>
-            <p className="text-[11px] text-zinc-400">Till cash drawer</p>
+            <p className="text-[0.6875rem] text-zinc-400">Till cash drawer</p>
           </div>
         </div>
       </div>
@@ -51,9 +51,9 @@ export function FinanceKpiStrip({
             <Bank weight="bold" className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Bank & Digital</p>
+            <p className="text-[0.6875rem] uppercase tracking-wider font-bold text-zinc-500">Bank & Digital</p>
             <p className="text-xl font-black text-zinc-950 mt-0.5">₹{digitalSpent.toLocaleString('en-IN')}</p>
-            <p className="text-[11px] text-zinc-400">UPI / Card / NEFT</p>
+            <p className="text-[0.6875rem] text-zinc-400">UPI / Card / NEFT</p>
           </div>
         </div>
       </div>
@@ -68,11 +68,11 @@ export function FinanceKpiStrip({
             {isProfitable ? <TrendUp weight="bold" className="w-5 h-5" /> : <TrendDown weight="bold" className="w-5 h-5" />}
           </div>
           <div>
-            <p className="text-[11px] uppercase tracking-wider font-bold text-zinc-500">Net Profit / Loss</p>
+            <p className="text-[0.6875rem] uppercase tracking-wider font-bold text-zinc-500">Net Profit / Loss</p>
             <p className={`text-xl font-black mt-0.5 ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>
               ₹{(netProfit ?? 0).toLocaleString('en-IN')}
             </p>
-            <p className="text-[11px] text-zinc-400">{isProfitable ? 'Net Surplus' : 'Operating Deficit'}</p>
+            <p className="text-[0.6875rem] text-zinc-400">{isProfitable ? 'Net Surplus' : 'Operating Deficit'}</p>
           </div>
         </div>
       </div>

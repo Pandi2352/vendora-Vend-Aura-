@@ -6,7 +6,7 @@ import { cn } from '../ui/cn';
 import { FormField } from './FormField';
 import { useFieldBinding } from './useFormFieldController';
 import { splitFieldProps, type FieldCommonProps } from './types';
-import { digitsOnly } from '@/utils/string';
+import { normalizeIndianMobile } from '@/utils/string';
 
 type NativeInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -107,20 +107,15 @@ export function TextField(props: TextFieldProps) {
         disabled={disabled}
         readOnly={readOnly}
         invalid={invalid}
-        leftAddon={leftAddon ?? (leftIcon ? <span className="text-zinc-400 [&>svg]:w-4 [&>svg]:h-4">{leftIcon}</span> : undefined)}
+        leftAddon={
+          leftAddon ??
+          (leftIcon ? <span className="text-zinc-400 [&>svg]:w-4 [&>svg]:h-4">{leftIcon}</span> : undefined)
+        }
         rightAddon={trailing}
         className={cn(readOnly && 'bg-zinc-50', inputClassName)}
       />
     </FormField>
   );
-}
-
-/** Keeps the 10-digit national number: strips spaces/dashes and a pasted +91 / 0 prefix. */
-export function normalizeIndianMobile(value: string) {
-  const digits = digitsOnly(value);
-  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
-  if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1);
-  return digits.slice(0, 10);
 }
 
 /** 10-digit mobile: digits only (also when pasted), +91 prefix, numeric keypad. */

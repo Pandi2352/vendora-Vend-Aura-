@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Wallet, Check } from '@phosphor-icons/react';
-import { api } from '../../lib/api';
+import { api, getErrorMessage } from '../../lib/api';
+import { Dropdown } from '../ui/dropdown/Dropdown';
 import { Spinner } from '../ui/Spinner';
 
 interface RecordExpenseModalProps {
@@ -9,6 +10,15 @@ interface RecordExpenseModalProps {
   onSuccess: () => void;
   outletId: string;
 }
+
+type PaymentMode = 'CASH' | 'BANK' | 'UPI' | 'CARD';
+
+const PAYMENT_MODES: { value: PaymentMode; label: string }[] = [
+  { value: 'CASH', label: 'Cash (Draw from Till Cash)' },
+  { value: 'UPI', label: 'UPI / QR Payment' },
+  { value: 'BANK', label: 'Bank Account / IMPS' },
+  { value: 'CARD', label: 'Debit / Credit Card' },
+];
 
 const CATEGORIES = [
   { value: 'RENT', label: 'Store Rent (5020)' },
@@ -26,7 +36,7 @@ const CATEGORIES = [
 export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: RecordExpenseModalProps) {
   const [category, setCategory] = useState('RENT');
   const [amount, setAmount] = useState('');
-  const [paymentMode, setPaymentMode] = useState<'CASH' | 'BANK' | 'UPI' | 'CARD'>('CASH');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('CASH');
   const [vendorName, setVendorName] = useState('');
   const [description, setDescription] = useState('');
   const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -57,8 +67,8 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: Rec
       });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Could not record expense. Please try again.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not record expense. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,7 +85,7 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: Rec
             </div>
             <div>
               <h3 className="font-bold text-sm text-zinc-950">Record Store Expense</h3>
-              <p className="text-[11px] text-zinc-500">Auto-posts double-entry transaction to General Ledger</p>
+              <p className="text-[0.6875rem] text-zinc-500">Auto-posts double-entry transaction to General Ledger</p>
             </div>
           </div>
           <button
@@ -94,23 +104,23 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: Rec
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-zinc-700 font-semibold mb-1">Expense Category *</label>
-              <select
+              <label htmlFor="expense-category" className="block text-zinc-700 font-semibold mb-1">
+                Expense Category *
+              </label>
+              <Dropdown
+                id="expense-category"
+                options={CATEGORIES}
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-zinc-300 rounded-md text-xs bg-white text-zinc-900 font-medium"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => next && setCategory(next)}
+              />
             </div>
 
             <div>
-              <label className="block text-zinc-700 font-semibold mb-1">Amount (₹) *</label>
+              <label htmlFor="expense-amount" className="block text-zinc-700 font-semibold mb-1">
+                Amount (₹) *
+              </label>
               <input
+                id="expense-amount"
                 type="number"
                 step="0.01"
                 min="0.01"
@@ -125,22 +135,23 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: Rec
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-zinc-700 font-semibold mb-1">Payment Mode *</label>
-              <select
+              <label htmlFor="expense-payment-mode" className="block text-zinc-700 font-semibold mb-1">
+                Payment Mode *
+              </label>
+              <Dropdown<PaymentMode>
+                id="expense-payment-mode"
+                options={PAYMENT_MODES}
                 value={paymentMode}
-                onChange={(e) => setPaymentMode(e.target.value as any)}
-                className="w-full px-3 py-2 border border-zinc-300 rounded-md text-xs bg-white text-zinc-900 font-medium"
-              >
-                <option value="CASH">Cash (Draw from Till Cash)</option>
-                <option value="UPI">UPI / QR Payment</option>
-                <option value="BANK">Bank Account / IMPS</option>
-                <option value="CARD">Debit / Credit Card</option>
-              </select>
+                onChange={(next) => next && setPaymentMode(next)}
+              />
             </div>
 
             <div>
-              <label className="block text-zinc-700 font-semibold mb-1">Date *</label>
+              <label htmlFor="expense-date" className="block text-zinc-700 font-semibold mb-1">
+                Date *
+              </label>
               <input
+                id="expense-date"
                 type="date"
                 required
                 value={expenseDate}
@@ -151,8 +162,11 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: Rec
           </div>
 
           <div>
-            <label className="block text-zinc-700 font-semibold mb-1">Payee / Vendor Name</label>
+            <label htmlFor="expense-vendor" className="block text-zinc-700 font-semibold mb-1">
+              Payee / Vendor Name
+            </label>
             <input
+              id="expense-vendor"
               type="text"
               placeholder="e.g. Landlord, State Electricity Board, Cleaner"
               value={vendorName}
@@ -162,8 +176,11 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: Rec
           </div>
 
           <div>
-            <label className="block text-zinc-700 font-semibold mb-1">Narration / Note</label>
+            <label htmlFor="expense-note" className="block text-zinc-700 font-semibold mb-1">
+              Narration / Note
+            </label>
             <textarea
+              id="expense-note"
               rows={2}
               placeholder="e.g. Monthly shop rental payment for November"
               value={description}
@@ -196,4 +213,3 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess, outletId }: Rec
     </div>
   );
 }
-

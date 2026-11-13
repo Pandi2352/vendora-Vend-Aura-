@@ -1,19 +1,9 @@
-import { createContext, useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
+import { ConfirmContext, type ConfirmFn, type ConfirmOptions } from './ConfirmContext';
 
-export interface ConfirmOptions {
-  title: string;
-  message?: ReactNode;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  /** Red confirm button for destructive actions (delete, suspend, discard). */
-  danger?: boolean;
-}
-
-type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;
-
-export const ConfirmContext = createContext<ConfirmFn | null>(null);
+export type { ConfirmOptions } from './ConfirmContext';
 
 /**
  * App-wide confirmation dialog. `const confirm = useConfirm();

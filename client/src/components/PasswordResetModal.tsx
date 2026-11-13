@@ -77,7 +77,7 @@ export function PasswordResetModal({ initialCurrentPassword = '', onSubmit, onSi
             <button
               type="button"
               onClick={onSignOut}
-              className="mt-3 w-full text-[11px] text-zinc-500 hover:text-red-600 font-semibold cursor-pointer"
+              className="mt-3 w-full text-[0.6875rem] text-zinc-500 hover:text-red-600 font-semibold cursor-pointer"
             >
               Sign out
             </button>
@@ -99,7 +99,7 @@ function PasswordChecklist() {
   ];
 
   return (
-    <ul className="p-3 mb-2 rounded-md bg-zinc-50 border border-zinc-200 space-y-1.5 text-[11px]" aria-label="Password requirements">
+    <ul className="p-3 mb-2 rounded-md bg-zinc-50 border border-zinc-200 space-y-1.5 text-[0.6875rem]" aria-label="Password requirements">
       {checks.map((c) => (
         <li key={c.label} className={cn('flex items-center gap-1.5', c.ok ? 'text-emerald-700 font-semibold' : 'text-zinc-500')}>
           <CheckCircle aria-hidden weight={c.ok ? 'bold' : 'regular'} className="w-3.5 h-3.5" />

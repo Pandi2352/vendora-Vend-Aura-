@@ -33,7 +33,7 @@ export function RecentBillsCard({ orders, isLoading }: { orders: OrderItemRecord
               </div>
               <div className="text-right shrink-0">
                 <p className="text-sm font-bold text-zinc-900">{formatInr(o.grandTotal)}</p>
-                <p className="text-[11px] font-semibold text-zinc-400">{o.paymentMode}</p>
+                <p className="text-[0.6875rem] font-semibold text-zinc-400">{o.paymentMode}</p>
               </div>
             </li>
           ))}

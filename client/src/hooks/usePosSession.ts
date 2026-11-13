@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { PosSessionContext } from '../app/providers/PosSessionProvider';
+import { PosSessionContext } from '../app/providers/PosSessionContext';
 
 export function usePosSession() {
   const ctx = useContext(PosSessionContext);

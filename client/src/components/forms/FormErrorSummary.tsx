@@ -1,23 +1,6 @@
-import { useFormContext, type FieldErrors } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { WarningCircle } from '@phosphor-icons/react';
-import { ROOT_SERVER_ERROR } from './server-errors';
-
-interface ErrorEntry {
-  path: string;
-  message: string;
-}
-
-/** Flattens RHF's nested error object into [{ path: 'items.0.qty', message }]. */
-export function flattenErrors(errors: FieldErrors, prefix = ''): ErrorEntry[] {
-  return Object.entries(errors).flatMap(([key, value]) => {
-    if (!value || typeof value !== 'object') return [];
-    const path = prefix ? `${prefix}.${key}` : key;
-    if (path === ROOT_SERVER_ERROR || key === 'ref') return [];
-    const own = typeof (value as { message?: unknown }).message === 'string' ? [{ path, message: (value as { message: string }).message }] : [];
-    const nested = Object.entries(value).filter(([k]) => !['message', 'type', 'ref', 'types'].includes(k));
-    return [...own, ...flattenErrors(Object.fromEntries(nested) as FieldErrors, path)];
-  });
-}
+import { flattenErrors } from './flattenErrors';
 
 /**
  * "There is a problem" box after a failed submit (GOV.UK pattern): every error
@@ -30,7 +13,11 @@ export function FormErrorSummary({ title = 'There is a problem' }: { title?: str
   if (entries.length === 0) return null;
 
   return (
-    <div role="alert" aria-labelledby="form-error-summary-title" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3">
+    <div
+      role="alert"
+      aria-labelledby="form-error-summary-title"
+      className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3"
+    >
       <p id="form-error-summary-title" className="flex items-center gap-1.5 text-sm font-bold text-red-700">
         <WarningCircle aria-hidden weight="fill" className="w-4 h-4" />
         {title}

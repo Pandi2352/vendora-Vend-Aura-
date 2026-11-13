@@ -72,7 +72,7 @@ export function LoginScreen({ initialShopId = '', storeShopId, onLogin }: LoginS
           normalize={normalizeShopId}
           readOnly={!!storeShopId}
           leftAddon={icon(Storefront)}
-          rightAddon={<span className="pr-2 text-[11px] font-mono text-zinc-400">{tenantHostSuffix()}</span>}
+          rightAddon={<span className="pr-2 text-[0.6875rem] font-mono text-zinc-400">{tenantHostSuffix()}</span>}
           hint={storeShopId ? 'This sign-in page belongs to your store. Bookmark it for next time.' : undefined}
           labelAction={
             storeShopId ? (

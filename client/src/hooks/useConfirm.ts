@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { ConfirmContext } from '@/components/feedback/ConfirmProvider';
+import { ConfirmContext } from '@/components/feedback/ConfirmContext';
 
 /** `if (await confirm({ title: 'Discard bill?', danger: true })) …` */
 export function useConfirm() {

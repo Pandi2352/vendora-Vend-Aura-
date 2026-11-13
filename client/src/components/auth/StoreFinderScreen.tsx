@@ -43,7 +43,7 @@ export function StoreFinderScreen({ initialShopId = '' }: { initialShopId?: stri
           spellCheck={false}
           normalize={normalizeShopId}
           leftAddon={<Storefront aria-hidden className="w-4 h-4 text-zinc-400" />}
-          rightAddon={<span className="pr-2 text-[11px] font-mono text-zinc-400">{tenantHostSuffix()}</span>}
+          rightAddon={<span className="pr-2 text-[0.6875rem] font-mono text-zinc-400">{tenantHostSuffix()}</span>}
           hint={`Your store has its own address, like ${tenantHost('yourshop')}. Bookmark it after signing in.`}
         />
         <FormActions

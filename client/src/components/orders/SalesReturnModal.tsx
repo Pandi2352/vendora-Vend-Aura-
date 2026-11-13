@@ -68,7 +68,7 @@ export function SalesReturnModal({ onClose, onReturnSuccess }: SalesReturnModalP
               <div>
                 <span className="text-zinc-500">Paid: </span>
                 <span className="font-mono font-bold text-zinc-900">{formatInr(order.grandTotal)}</span>
-                <span className="text-zinc-400 text-[10px] ml-1">({order.paymentMode})</span>
+                <span className="text-zinc-400 text-[0.625rem] ml-1">({order.paymentMode})</span>
               </div>
             </div>
           )}

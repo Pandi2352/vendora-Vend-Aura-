@@ -109,7 +109,7 @@ export function PaymentModePanels({
           <QrCode className="w-20 h-20 text-zinc-950" />
         </div>
         <p className="font-mono text-xs font-bold text-zinc-900">vendora.store@upi</p>
-        <p className="text-[11px] text-zinc-500">
+        <p className="text-[0.6875rem] text-zinc-500">
           Customer scans dynamic QR with PhonePe, Google Pay, or Paytm.
         </p>
       </div>
@@ -123,7 +123,7 @@ export function PaymentModePanels({
           <span>POS EDC Terminal:</span>
           <span className="font-mono text-zinc-950 font-bold">READY (PinPad #01)</span>
         </div>
-        <p className="text-zinc-500 text-[11px]">
+        <p className="text-zinc-500 text-[0.6875rem]">
           Insert or tap Visa, Mastercard, or RuPay on the counter EDC card reader.
         </p>
       </div>
@@ -142,7 +142,7 @@ export function PaymentModePanels({
       ) : (
         <div className="space-y-2">
           <div className="font-bold text-zinc-900">Khata Credit Sale for {selectedCustomer.name}</div>
-          <div className="grid grid-cols-3 gap-2 font-mono text-[11px] pt-1">
+          <div className="grid grid-cols-3 gap-2 font-mono text-[0.6875rem] pt-1">
             <div className="bg-white p-2 rounded-md border border-amber-200">
               <span className="text-zinc-500 block">Credit Limit</span>
               <span className="font-bold text-zinc-900">₹{selectedCustomer.creditLimit.toLocaleString('en-IN')}</span>
@@ -157,7 +157,7 @@ export function PaymentModePanels({
             </div>
           </div>
 
-          <div className="pt-1 text-[11px] text-zinc-600">
+          <div className="pt-1 text-[0.6875rem] text-zinc-600">
             New Khata Balance after this bill:{' '}
             <strong className="text-zinc-950 font-mono">
               ₹{(selectedCustomer.currentCreditBalance + grandTotal).toLocaleString('en-IN')}
@@ -165,7 +165,7 @@ export function PaymentModePanels({
           </div>
 
           {isCreditExceeded && (
-            <div className="flex items-start gap-2 text-[11px] text-red-700 font-semibold">
+            <div className="flex items-start gap-2 text-[0.6875rem] text-red-700 font-semibold">
               <WarningCircle weight="bold" className="w-4 h-4 shrink-0" />
               <span>
                 Credit limit exceeded: this bill would take the khata balance above the limit of ₹

@@ -33,7 +33,7 @@ export function InvoiceLookupForm({ onFound, onSearchStart }: InvoiceLookupFormP
           className="flex-1"
           leftAddon={<MagnifyingGlass className="w-4 h-4" />}
         />
-        <Button type="submit" loading={form.formState.isSubmitting} className="mt-[22px] shrink-0">
+        <Button type="submit" loading={form.formState.isSubmitting} className="mt-[1.375rem] shrink-0">
           Find bill
         </Button>
       </div>

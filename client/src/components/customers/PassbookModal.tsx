@@ -17,7 +17,7 @@ const columns: Column<CustomerStatementItem>[] = [
     key: 'date',
     header: 'Date',
     sortValue: (st) => new Date(st.createdAt),
-    render: (st) => <span className="font-mono text-[11px] text-zinc-500">{formatDate(st.createdAt)}</span>,
+    render: (st) => <span className="font-mono text-[0.6875rem] text-zinc-500">{formatDate(st.createdAt)}</span>,
   },
   {
     key: 'type',
@@ -32,7 +32,7 @@ const columns: Column<CustomerStatementItem>[] = [
   {
     key: 'ref',
     header: 'Ref ID',
-    render: (st) => <span className="font-mono text-[11px] text-zinc-500">{st.referenceId}</span>,
+    render: (st) => <span className="font-mono text-[0.6875rem] text-zinc-500">{st.referenceId}</span>,
   },
   {
     key: 'debit',

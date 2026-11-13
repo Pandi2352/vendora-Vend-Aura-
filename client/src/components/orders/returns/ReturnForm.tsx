@@ -6,7 +6,8 @@ import { round2 } from '@/lib/totals';
 import type { InvoiceReturnLookup, OrderReturnRecord } from '@/types/shift-return.types';
 import { REFUND_MODES, REFUND_MODE_LABELS, makeSalesReturnSchema, type SalesReturnValues } from '@/validations/orders';
 import { formatInr } from '@/utils';
-import { ReturnItemsSelector, lineQty } from './ReturnItemsSelector';
+import { ReturnItemsSelector } from './ReturnItemsSelector';
+import { lineQty } from './lineQty';
 
 interface ReturnFormProps {
   lookup: InvoiceReturnLookup;

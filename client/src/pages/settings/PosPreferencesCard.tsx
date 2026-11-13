@@ -16,7 +16,7 @@ export function PosPreferencesCard() {
     <Card>
       <CardHeader icon={<Printer />} title="Billing counter" description="Saved on this device." />
 
-      <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500 mb-2">Receipt paper</p>
+      <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-zinc-500 mb-2">Receipt paper</p>
       <div className="grid grid-cols-2 gap-2 mb-5">
         {RECEIPT_WIDTHS.map((w) => (
           <OptionTile

@@ -50,7 +50,7 @@ export function OrdersTable({ orders, loading, error, onRetry, onReprint, toolba
         o.customerName ? (
           <div>
             <span className="font-semibold text-zinc-900">{o.customerName}</span>
-            {o.customerPhone && <span className="block font-mono text-[11px] text-zinc-400">{o.customerPhone}</span>}
+            {o.customerPhone && <span className="block font-mono text-[0.6875rem] text-zinc-400">{o.customerPhone}</span>}
           </div>
         ) : (
           <span className="text-zinc-400 text-xs italic">Walk-in customer</span>

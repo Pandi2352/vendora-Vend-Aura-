@@ -1,5 +1,5 @@
 import { useController, useFormContext } from 'react-hook-form';
-import { useFieldIds } from './FormField';
+import { useFieldIds } from './useFieldIds';
 import type { FieldCommonProps } from './types';
 
 /**
@@ -57,5 +57,11 @@ export function useFieldBinding(props: FieldCommonProps) {
 /** @deprecated Prefer useFieldBinding(props). Kept for existing feature components. */
 export function useFormFieldController(name: string, id?: string) {
   const binding = useFieldBinding({ name, id });
-  return { field: binding.field, error: binding.error, invalid: binding.invalid, ids: binding.ids, isSubmitting: binding.isSubmitting };
+  return {
+    field: binding.field,
+    error: binding.error,
+    invalid: binding.invalid,
+    ids: binding.ids,
+    isSubmitting: binding.isSubmitting,
+  };
 }

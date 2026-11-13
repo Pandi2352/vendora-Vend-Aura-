@@ -60,7 +60,7 @@ export function RadioGroup<V extends string>({
               onChange={() => onChange(option.value)}
               onBlur={onBlur}
               className={cn(
-                'appearance-none mt-0.5 w-[18px] h-[18px] shrink-0 rounded-full border bg-white transition-colors cursor-[inherit]',
+                'appearance-none mt-0.5 w-[1.125rem] h-[1.125rem] shrink-0 rounded-full border bg-white transition-colors cursor-[inherit]',
                 'checked:border-[5px] checked:border-primary-600',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600',
                 invalid ? 'border-red-500' : 'border-zinc-300',

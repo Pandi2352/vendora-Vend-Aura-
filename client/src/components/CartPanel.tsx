@@ -41,7 +41,7 @@ export function CartPanel({
         <div className="flex items-center gap-2">
           <ShoppingCart weight="bold" className="w-4 h-4 text-primary-600" />
           <h3 className="font-bold text-sm text-zinc-950">Current Register Bill</h3>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-zinc-100 text-zinc-700 font-bold">
+          <span className="text-[0.625rem] font-mono px-1.5 py-0.2 rounded-md bg-zinc-100 text-zinc-700 font-bold">
             {itemCount} {itemCount === 1 ? 'item' : 'items'}
           </span>
         </div>
@@ -50,7 +50,7 @@ export function CartPanel({
           {heldCartsCount > 0 && onOpenHeldCarts && (
             <button
               onClick={onOpenHeldCarts}
-              className="text-[11px] text-red-600 hover:text-red-700 font-bold cursor-pointer flex items-center gap-1"
+              className="text-[0.6875rem] text-red-600 hover:text-red-700 font-bold cursor-pointer flex items-center gap-1"
             >
               <ClockCounterClockwise className="w-3.5 h-3.5" />
               <span>Held ({heldCartsCount})</span>
@@ -60,7 +60,7 @@ export function CartPanel({
           {cart.length > 0 && (
             <button
               onClick={onClearCart}
-              className="text-[11px] text-zinc-400 hover:text-red-600 font-semibold cursor-pointer transition-colors"
+              className="text-[0.6875rem] text-zinc-400 hover:text-red-600 font-semibold cursor-pointer transition-colors"
             >
               Clear
             </button>
@@ -82,7 +82,7 @@ export function CartPanel({
                   <h5 className="font-semibold text-xs text-zinc-950 truncate leading-tight">
                     {item.name}
                   </h5>
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono mt-0.5">
+                  <div className="flex items-center gap-2 text-[0.625rem] text-zinc-500 font-mono mt-0.5">
                     <span>₹{item.unitPrice} each</span>
                     <span>•</span>
                     <span>GST {item.taxRatePercent}%</span>
@@ -110,7 +110,7 @@ export function CartPanel({
                 </div>
 
                 {/* Line Total & Delete */}
-                <div className="text-right shrink-0 min-w-[50px]">
+                <div className="text-right shrink-0 min-w-[3.125rem]">
                   <span className="font-mono font-bold text-xs text-zinc-950 block">
                     ₹{lineTotal.toFixed(2)}
                   </span>
@@ -128,7 +128,7 @@ export function CartPanel({
           <div className="h-full flex flex-col items-center justify-center text-center text-zinc-400 py-12">
             <ShoppingCart className="w-10 h-10 text-zinc-300 mb-2" />
             <p className="text-xs font-semibold text-zinc-600">Register is empty</p>
-            <p className="text-[11px] text-zinc-400 max-w-[200px] mt-0.5">
+            <p className="text-[0.6875rem] text-zinc-400 max-w-[12.5rem] mt-0.5">
               Click items from the product grid or scan barcodes to begin billing.
             </p>
           </div>
@@ -163,7 +163,7 @@ export function CartPanel({
         </div>
 
         {!isShiftOpen && cart.length > 0 && (
-          <div className="p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold">
+          <div className="p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[0.6875rem] font-semibold">
             Cash drawer is closed. Open a shift from the header before completing this bill.
           </div>
         )}
@@ -178,7 +178,7 @@ export function CartPanel({
             >
               <PauseCircle weight="bold" className="w-4 h-4 text-amber-600" />
               <span>Hold</span>
-              <kbd className="text-[10px] text-zinc-400 font-mono">F2</kbd>
+              <kbd className="text-[0.625rem] text-zinc-400 font-mono">F2</kbd>
             </button>
           )}
 
@@ -188,7 +188,7 @@ export function CartPanel({
             className="flex-1 py-2.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span>Tender Bill</span>
-            <kbd className="text-[10px] text-white/70 font-mono">F8</kbd>
+            <kbd className="text-[0.625rem] text-white/70 font-mono">F8</kbd>
             <ArrowRight weight="bold" className="w-4 h-4" />
           </button>
         </div>

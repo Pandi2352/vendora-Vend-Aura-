@@ -5,11 +5,9 @@ import { Badge, cn } from '@/components/ui';
 import type { ReturnableItem } from '@/types/shift-return.types';
 import { RETURN_REASONS, RETURN_REASON_LABELS, type SalesReturnInput } from '@/validations/orders';
 import { formatInr } from '@/utils';
+import { lineQty } from './lineQty';
 
 const REASON_OPTIONS = RETURN_REASONS.map((value) => ({ value, label: RETURN_REASON_LABELS[value] }));
-
-/** Line quantity as entered (empty box = 0). */
-export const lineQty = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 
 interface ReturnItemsSelectorProps {
   /** Same order as the form's `lines` field array. */
@@ -32,18 +30,24 @@ export function ReturnItemsSelector({ items, fieldIds }: ReturnItemsSelectorProp
           const qty = lineQty(lines[i]?.quantity);
           const fullyReturned = it.returnableQty <= 0;
           return (
-            <div key={fieldIds[i] ?? it.productId} className={cn('p-3', fullyReturned && 'opacity-60', qty > 0 && 'bg-primary-50/40')}>
+            <div
+              key={fieldIds[i] ?? it.productId}
+              className={cn('p-3', fullyReturned && 'opacity-60', qty > 0 && 'bg-primary-50/40')}
+            >
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-zinc-900 truncate">{it.name}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono">
-                    {formatInr(it.unitRefund)} each incl. {it.taxRatePercent}% GST · sold {it.soldQty} · returned {it.returnedQty}
+                  <p className="text-[0.6875rem] text-zinc-500 font-mono">
+                    {formatInr(it.unitRefund)} each incl. {it.taxRatePercent}% GST · sold {it.soldQty} · returned{' '}
+                    {it.returnedQty}
                   </p>
                 </div>
                 {fullyReturned ? (
                   <Badge>Fully returned</Badge>
                 ) : (
-                  <span className="text-sm font-mono font-bold text-zinc-950 shrink-0">{formatInr(it.unitRefund * qty)}</span>
+                  <span className="text-sm font-mono font-bold text-zinc-950 shrink-0">
+                    {formatInr(it.unitRefund * qty)}
+                  </span>
                 )}
               </div>
               {!fullyReturned && (

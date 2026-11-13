@@ -25,7 +25,7 @@ export function CardHeader({ icon, title, description, action }: CardHeaderProps
       <div className="flex items-center gap-2.5 min-w-0">
         {icon && <IconBadge>{icon}</IconBadge>}
         <div className="min-w-0">
-          <h2 className="text-[15px] font-bold text-zinc-900 truncate">{title}</h2>
+          <h2 className="text-[0.9375rem] font-bold text-zinc-900 truncate">{title}</h2>
           {description && <p className="text-xs text-zinc-500 mt-0.5">{description}</p>}
         </div>
       </div>

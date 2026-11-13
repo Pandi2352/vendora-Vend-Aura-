@@ -15,7 +15,7 @@ export function UsageMeter({ label, used, limit, caption }: UsageMeterProps) {
   return (
     <div className="py-2.5">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">{label}</span>
+        <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-zinc-400">{label}</span>
         <span className="text-sm font-bold text-zinc-900">
           {used.toLocaleString('en-IN')}
           <span className="text-zinc-400 font-medium"> / {limit.toLocaleString('en-IN')}</span>
@@ -31,7 +31,7 @@ export function UsageMeter({ label, used, limit, caption }: UsageMeterProps) {
       >
         <div className={cn('h-full rounded-full transition-all', tone)} style={{ width: `${percent}%` }} />
       </div>
-      {caption && <p className="text-[11px] text-zinc-400 mt-1.5">{caption}</p>}
+      {caption && <p className="text-[0.6875rem] text-zinc-400 mt-1.5">{caption}</p>}
     </div>
   );
 }

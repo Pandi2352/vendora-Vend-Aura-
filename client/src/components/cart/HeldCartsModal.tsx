@@ -55,10 +55,10 @@ export function HeldCartsModal({ isOpen, onClose, heldCarts, onResumeCart, onDis
                     <span className="font-bold text-xs text-zinc-900">{label}</span>
                     {hc.customerName && <Badge tone="primary">{hc.customerName}</Badge>}
                   </div>
-                  <p className="text-[11px] text-zinc-600 truncate mt-1">
+                  <p className="text-[0.6875rem] text-zinc-600 truncate mt-1">
                     {hc.items.map((i) => `${i.name} (x${i.quantity})`).join(', ')}
                   </p>
-                  <div className="flex items-center gap-3 text-[10px] text-zinc-400 font-mono mt-1.5">
+                  <div className="flex items-center gap-3 text-[0.625rem] text-zinc-400 font-mono mt-1.5">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatTime(hc.heldAt)}

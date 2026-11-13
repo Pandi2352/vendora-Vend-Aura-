@@ -35,7 +35,7 @@ function ThermalReceipt({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-      <div className={`bg-white rounded-md border border-zinc-300 w-full ${receiptWidth === '58mm' ? 'max-w-[280px]' : 'max-w-sm'} overflow-hidden`}>
+      <div className={`bg-white rounded-md border border-zinc-300 w-full ${receiptWidth === '58mm' ? 'max-w-[17.5rem]' : 'max-w-sm'} overflow-hidden`}>
         {/* Receipt Header Actions */}
         <div className="p-3 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between print:hidden">
           <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-bold">
@@ -55,15 +55,15 @@ function ThermalReceipt({
           {/* Store Info */}
           <div className="text-center space-y-1">
             {invoice.isOffline && (
-              <div className="p-1 mb-1 rounded bg-amber-50 border border-amber-300 text-center text-[10px] font-bold text-amber-900 tracking-wide uppercase">
+              <div className="p-1 mb-1 rounded bg-amber-50 border border-amber-300 text-center text-[0.625rem] font-bold text-amber-900 tracking-wide uppercase">
                 *** OFFLINE TILL SALE (QUEUED) ***
               </div>
             )}
             <h2 className="font-bold text-base uppercase tracking-tight">{invoice.shopName}</h2>
-            {invoice.address && <p className="text-[11px] text-zinc-600">{invoice.address}</p>}
-            {invoice.phone && <p className="text-[11px] text-zinc-600">Ph: {invoice.phone}</p>}
-            {invoice.gstin && <p className="text-[11px] text-zinc-600">GSTIN: {invoice.gstin}</p>}
-            <p className="text-[10px] text-zinc-500">
+            {invoice.address && <p className="text-[0.6875rem] text-zinc-600">{invoice.address}</p>}
+            {invoice.phone && <p className="text-[0.6875rem] text-zinc-600">Ph: {invoice.phone}</p>}
+            {invoice.gstin && <p className="text-[0.6875rem] text-zinc-600">GSTIN: {invoice.gstin}</p>}
+            <p className="text-[0.625rem] text-zinc-500">
               {invoice.terminal ? `Terminal: ${invoice.terminal} • ` : ''}Cashier: {invoice.cashier}
             </p>
           </div>
@@ -71,13 +71,13 @@ function ThermalReceipt({
           <div className="border-t border-dashed border-zinc-400 my-2" />
 
           {/* Invoice Meta */}
-          <div className="flex justify-between text-[11px] text-zinc-700">
+          <div className="flex justify-between text-[0.6875rem] text-zinc-700">
             <span>Bill: {invoice.invoiceNumber}</span>
             <span>{invoice.date} {invoice.time}</span>
           </div>
 
           {invoice.customerName && (
-            <div className="text-[11px] text-zinc-800 flex justify-between font-bold mt-1">
+            <div className="text-[0.6875rem] text-zinc-800 flex justify-between font-bold mt-1">
               <span>Customer: {invoice.customerName}</span>
               {invoice.customerPhone && <span className="font-mono">{invoice.customerPhone}</span>}
             </div>
@@ -86,7 +86,7 @@ function ThermalReceipt({
           <div className="border-t border-dashed border-zinc-400 my-2" />
 
           {/* Items Header */}
-          <div className="flex justify-between font-bold text-[11px] pb-1 border-b border-zinc-300">
+          <div className="flex justify-between font-bold text-[0.6875rem] pb-1 border-b border-zinc-300">
             <span className="w-1/2">ITEM</span>
             <span className="w-1/6 text-center">QTY</span>
             <span className="w-1/6 text-right">RATE</span>
@@ -94,7 +94,7 @@ function ThermalReceipt({
           </div>
 
           {/* Items List */}
-          <div className="space-y-1.5 text-[11px]">
+          <div className="space-y-1.5 text-[0.6875rem]">
             {invoice.items.map((item, idx) => (
               <div key={`${item.id}-${idx}`} className="space-y-0.5">
                 <div className="flex justify-between">
@@ -104,7 +104,7 @@ function ThermalReceipt({
                   <span className="w-1/6 text-right font-bold">₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
                 </div>
                 {(item.batchNumber || item.expiryDate) && (
-                  <div className="text-[9px] text-zinc-500 pl-1 font-mono">
+                  <div className="text-[0.5625rem] text-zinc-500 pl-1 font-mono">
                     {item.batchNumber && <span>B:{item.batchNumber} </span>}
                     {item.expiryDate && <span>Exp:{item.expiryDate}</span>}
                   </div>
@@ -116,7 +116,7 @@ function ThermalReceipt({
           <div className="border-t border-dashed border-zinc-400 my-2" />
 
           {/* Taxes & Totals */}
-          <div className="space-y-1 text-[11px]">
+          <div className="space-y-1 text-[0.6875rem]">
             <div className="flex justify-between">
               <span>Subtotal (Net):</span>
               <span>₹{invoice.subTotal.toFixed(2)}</span>
@@ -144,7 +144,7 @@ function ThermalReceipt({
           <div className="border-t border-dashed border-zinc-400 my-2" />
 
           {/* Payment Mode details */}
-          <div className="text-[11px] space-y-0.5">
+          <div className="text-[0.6875rem] space-y-0.5">
             <div className="flex justify-between">
               <span>Mode:</span>
               <span className="font-bold">{invoice.paymentMode}</span>
@@ -168,10 +168,10 @@ function ThermalReceipt({
             <div className="flex justify-center text-zinc-800">
               <Barcode className="w-32 h-10" />
             </div>
-            <p className="text-[10px] text-zinc-500 font-sans">
+            <p className="text-[0.625rem] text-zinc-500 font-sans">
               Thank you for shopping with us!
             </p>
-            <p className="text-[9px] text-zinc-400 font-sans">
+            <p className="text-[0.5625rem] text-zinc-400 font-sans">
               Powered by Vendora Cloud RetailPOS
             </p>
           </div>

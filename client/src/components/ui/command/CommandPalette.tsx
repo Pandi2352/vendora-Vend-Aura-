@@ -61,7 +61,7 @@ function PaletteDialog({
       <div className="absolute inset-0 bg-zinc-950/40 dark:bg-black/60" aria-hidden onClick={close} />
       <div role="dialog" aria-modal="true" aria-label={label} className="relative w-full max-w-xl bg-white border border-zinc-200 rounded-md overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 border-b border-zinc-200">
-          <MagnifyingGlass aria-hidden className="w-[18px] h-[18px] shrink-0 text-zinc-400" />
+          <MagnifyingGlass aria-hidden className="w-[1.125rem] h-[1.125rem] shrink-0 text-zinc-400" />
           <input
             ref={inputRef}
             type="text"

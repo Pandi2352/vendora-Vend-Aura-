@@ -32,7 +32,7 @@ export function CustomerTagSelector({
           <button
             type="button"
             onClick={() => onSelectCustomer(null)}
-            className="text-red-600 hover:text-red-700 font-semibold text-[11px] cursor-pointer"
+            className="text-red-600 hover:text-red-700 font-semibold text-[0.6875rem] cursor-pointer"
           >
             Detach
           </button>
@@ -43,10 +43,10 @@ export function CustomerTagSelector({
         <div className="flex items-center justify-between bg-white p-2.5 rounded-md border border-zinc-200 font-mono">
           <div>
             <span className="font-bold font-sans text-zinc-950 text-xs block">{selectedCustomer.name}</span>
-            <span className="text-zinc-500 text-[11px]">Mob: {selectedCustomer.phone}</span>
+            <span className="text-zinc-500 text-[0.6875rem]">Mob: {selectedCustomer.phone}</span>
           </div>
           <div className="text-right">
-            <span className="text-[10px] text-zinc-400 block uppercase">Khata Balance</span>
+            <span className="text-[0.625rem] text-zinc-400 block uppercase">Khata Balance</span>
             <span
               className={`font-bold text-xs ${
                 selectedCustomer.currentCreditBalance > 0 ? 'text-red-600' : 'text-emerald-600'
@@ -80,9 +80,9 @@ export function CustomerTagSelector({
                 >
                   <span>
                     <span className="font-bold text-zinc-900">{c.name}</span>
-                    <span className="text-zinc-400 font-mono text-[11px] ml-2">{c.phone}</span>
+                    <span className="text-zinc-400 font-mono text-[0.6875rem] ml-2">{c.phone}</span>
                   </span>
-                  <span className="font-mono text-zinc-500 text-[11px]">
+                  <span className="font-mono text-zinc-500 text-[0.6875rem]">
                     Khata: ₹{c.currentCreditBalance}
                   </span>
                 </button>

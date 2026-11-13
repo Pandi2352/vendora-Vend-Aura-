@@ -46,3 +46,11 @@ export const digitsOnly = (value = '', maxLength?: number) => {
 
 /** First letter for avatars. */
 export const initialOf = (name?: string) => (name?.trim()?.[0] || '?').toUpperCase();
+
+/** Keeps the 10-digit national number: strips spaces/dashes and a pasted +91 / 0 prefix. */
+export function normalizeIndianMobile(value: string) {
+  const digits = digitsOnly(value);
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1);
+  return digits.slice(0, 10);
+}

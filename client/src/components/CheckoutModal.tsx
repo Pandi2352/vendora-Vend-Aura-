@@ -94,7 +94,7 @@ export function CheckoutModal({
         <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between shrink-0">
           <div>
             <h3 className="font-bold text-sm text-zinc-950">Payment Tender & Checkout</h3>
-            <p className="text-[11px] text-zinc-500">Tag customer & select settlement tender</p>
+            <p className="text-[0.6875rem] text-zinc-500">Tag customer & select settlement tender</p>
           </div>
           <button
             onClick={onClose}
@@ -115,7 +115,7 @@ export function CheckoutModal({
 
           {/* Amount Due Banner */}
           <div className="p-3.5 rounded-md bg-ink text-white text-center">
-            <span className="text-[11px] text-zinc-400 uppercase tracking-wider block">Total Amount Due</span>
+            <span className="text-[0.6875rem] text-zinc-400 uppercase tracking-wider block">Total Amount Due</span>
             <span className="font-mono font-black text-2xl text-white mt-0.5 block">
               ₹{grandTotal.toLocaleString('en-IN')}
             </span>
@@ -137,9 +137,9 @@ export function CheckoutModal({
                   }`}
                 >
                   <Icon weight="bold" className="w-4 h-4" />
-                  <span className="text-[11px]">{tab.label}</span>
+                  <span className="text-[0.6875rem]">{tab.label}</span>
                   {tab.hotkey && (
-                    <span className="text-[9px] font-mono opacity-60 px-1 rounded bg-black/5 dark:bg-white/10">
+                    <span className="text-[0.5625rem] font-mono opacity-60 px-1 rounded bg-black/5 dark:bg-white/10">
                       {tab.hotkey}
                     </span>
                   )}

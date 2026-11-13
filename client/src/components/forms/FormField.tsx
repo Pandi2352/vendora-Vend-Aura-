@@ -4,32 +4,22 @@ import { Label } from '../ui/Label';
 import { Tooltip } from '../ui/overlay/Tooltip';
 import { cn } from '../ui/cn';
 import type { FieldCommonProps } from './types';
-
-export interface FieldIds {
-  id: string;
-  messageId: string;
-  descriptionId: string;
-  /** For aria-describedby on the control. */
-  describedBy: string | undefined;
-}
-
-/** Stable ids for a field's control, description and message line. */
-export function useFieldIds(name: string, id?: string, hasDescription = false): FieldIds {
-  const auto = useId();
-  const controlId = id ?? `f-${name.replace(/\W/g, '-')}-${auto}`;
-  const messageId = `${controlId}-msg`;
-  const descriptionId = `${controlId}-desc`;
-  return {
-    id: controlId,
-    messageId,
-    descriptionId,
-    describedBy: [hasDescription ? descriptionId : null, messageId].filter(Boolean).join(' '),
-  };
-}
+import type { FieldIds } from './useFieldIds';
 
 type ShellProps = Pick<
   FieldCommonProps,
-  'label' | 'hideLabel' | 'required' | 'optional' | 'tooltip' | 'labelAction' | 'description' | 'hint' | 'warning' | 'success' | 'layout' | 'className'
+  | 'label'
+  | 'hideLabel'
+  | 'required'
+  | 'optional'
+  | 'tooltip'
+  | 'labelAction'
+  | 'description'
+  | 'hint'
+  | 'warning'
+  | 'success'
+  | 'layout'
+  | 'className'
 >;
 
 export interface FormFieldProps extends ShellProps {
@@ -43,9 +33,18 @@ export interface FormFieldProps extends ShellProps {
 }
 
 const MESSAGE_TONES = {
-  error: { className: 'text-red-600 font-medium', icon: <WarningCircle aria-hidden weight="fill" className="w-3.5 h-3.5 shrink-0" /> },
-  warning: { className: 'text-amber-700 font-medium', icon: <Warning aria-hidden weight="fill" className="w-3.5 h-3.5 shrink-0" /> },
-  success: { className: 'text-emerald-700 font-medium', icon: <CheckCircle aria-hidden weight="fill" className="w-3.5 h-3.5 shrink-0" /> },
+  error: {
+    className: 'text-red-600 font-medium',
+    icon: <WarningCircle aria-hidden weight="fill" className="w-3.5 h-3.5 shrink-0" />,
+  },
+  warning: {
+    className: 'text-amber-700 font-medium',
+    icon: <Warning aria-hidden weight="fill" className="w-3.5 h-3.5 shrink-0" />,
+  },
+  success: {
+    className: 'text-emerald-700 font-medium',
+    icon: <CheckCircle aria-hidden weight="fill" className="w-3.5 h-3.5 shrink-0" />,
+  },
 } as const;
 
 /**
@@ -79,7 +78,13 @@ export function FormField({
   const horizontal = layout === 'horizontal';
 
   const labelRow = label ? (
-    <div className={cn('flex items-center justify-between gap-2 mb-1', hideLabel && 'sr-only', horizontal && 'sm:mb-0 sm:pt-2.5')}>
+    <div
+      className={cn(
+        'flex items-center justify-between gap-2 mb-1',
+        hideLabel && 'sr-only',
+        horizontal && 'sm:mb-0 sm:pt-2.5',
+      )}
+    >
       <span className="flex items-center gap-1 min-w-0">
         {labelAsText ? (
           <span id={labelId ?? autoLabelId} className="text-xs font-semibold text-zinc-700 leading-none">
@@ -125,7 +130,10 @@ export function FormField({
         <p
           id={ids.messageId}
           aria-live="polite"
-          className={cn('flex items-start gap-1 min-h-5 pt-1 text-xs leading-4', tone ? MESSAGE_TONES[tone].className : 'text-zinc-500')}
+          className={cn(
+            'flex items-start gap-1 min-h-5 pt-1 text-xs leading-4',
+            tone ? MESSAGE_TONES[tone].className : 'text-zinc-500',
+          )}
         >
           {tone && MESSAGE_TONES[tone].icon}
           {message && <span className="min-w-0">{message}</span>}

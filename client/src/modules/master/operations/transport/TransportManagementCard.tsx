@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, MagnifyingGlass, SquaresFour, List } from '@phosphor-icons/react';
-import { ms } from '@/components/ui/MsIcon';
+import { ms } from '@/components/ui/ms';
 
 /**
  * TransportManagementCard renders the Operations > Transport view matching Image 3:
