@@ -31,3 +31,4 @@ export const TRANSPORTER_DEFAULTS: TransporterInput = {
   address: '',
   active: true,
 };
+

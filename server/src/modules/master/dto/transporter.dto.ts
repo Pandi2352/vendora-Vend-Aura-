@@ -74,3 +74,4 @@ export class UpdateTransporterDto {
   @IsBoolean()
   active?: boolean;
 }
+

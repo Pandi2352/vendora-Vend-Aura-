@@ -35,3 +35,4 @@ export class Transporter {
 
 export const TransporterSchema = SchemaFactory.createForClass(Transporter);
 TransporterSchema.index({ tenantId: 1, code: 1 }, { unique: true });
+

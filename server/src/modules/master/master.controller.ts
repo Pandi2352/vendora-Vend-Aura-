@@ -22,7 +22,7 @@ export class MasterController {
     private readonly reasonService: ReasonService,
     private readonly paramService: ParamService,
     private readonly transporterService: TransporterService,
-  ) {}
+  ) { }
 
   // --- Warehouses ---
   @Get('warehouses')
